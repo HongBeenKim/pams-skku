@@ -9,5 +9,5 @@
 ## 팀원 (7)
 김홍빈 노인호 박주은 박준혁 유지찬 임정한 한일석
 
-# Program Architecture
-고민 중. . .
+# ThinKingo
+Thinking Kingo, `thinkingo` 디렉토리에서 모든 프로젝트 소스 코드를 관리합니다.
