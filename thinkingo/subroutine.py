@@ -15,7 +15,6 @@ class Subroutine(object):
         data 인스턴스에 접근해서 얻고 수정합니다.
         """
         self.data = data
-        raise NotImplementedError
 
     def main(self):
         """
@@ -25,4 +24,4 @@ class Subroutine(object):
         :return:
         리턴 값은 없습니다.
         """
-        raise NotImplementedError
+        pass
