@@ -28,16 +28,16 @@ def main():
     writerR = cv2.VideoWriter("c:\\log_data\\rightcam\\" + timeLabel + ".avi", fourcc, 30, (800, 448))
 
 
-    # while True:
-    #     # 라이다, 캠 1, 2, 3 저장
-    #     if data[0] is not None and data[1] is not None:
-    #         cv2.imshow("left", data[0])
-    #         cv2.imshow("right", data[1])
-    #         writerL.write(data[0])
-    #         writerR.write(data[1])
-    #     if cv2.waitKey(1) & 0xff == ord(' '): break
-    #
-    # data[3] = True
+    while True:
+        # 라이다, 캠 1, 2, 3 저장
+        if data[0] is not None and data[1] is not None:
+            cv2.imshow("left", data[0])
+            cv2.imshow("right", data[1])
+            writerL.write(data[0])
+            writerR.write(data[1])
+        if cv2.waitKey(1) & 0xff == ord(' '): break
+
+    data[3] = True
 
 
 def lidar(data_set: list):
@@ -57,14 +57,13 @@ def lidar(data_set: list):
 def cam(arg_num: int, cam_num: int, width: int, height: int, data_set: list):
     cap = cv2.VideoCapture(cam_num)
     cap.set(3, width); cap.set(4, height)
+
     while True:
         _, frame = cap.read()
         data_set[arg_num] = frame
 
-        cv2.imshow(str(cam_num), frame)
-        if cv2.waitKey(1) & 0xff == ord(' '): break
+        if data_set[3]: break
 
-        #if data_set[3]: break
 
 if __name__ == "__main__":
     main()
