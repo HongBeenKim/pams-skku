@@ -16,36 +16,20 @@ class CarPlatform(Subroutine):
             self.receive()
             self.send()
 
+    def receive(self):
+        try:
+            binary_message = self.serial.read(18)
+        except Exception as e:
+            print("car_platform RECEIVE ERROR: ", e)
+            return
+        self.data.read_packet.read_bytes(binary_message)
+
     def send(self):
         self.data.write_packet.alive = self.data.read_packet.alive
         try:
             self.serial.write(self.data.write_packet.write_bytes())
         except Exception as e:
             print("car_platform SEND ERROR: ", e)
-
-    def receive(self):
-        try:
-            binary_message = self.serial.read(18)
-        except Exception as e:
-            print("car_platform RESEIVE ERROR: ", e)
-            return
-        self.data.read_packet.read_bytes(binary_message)
-
-    def read(self):
-        return self.data.read_packet.speed, self.data.read_packet.enc
-
-    def write(self, gear, speed, steer, brake):
-        self.data.write_packet.gear = gear
-        self.data.write_packet.speed = speed
-        self.data.write_packet.steer = steer
-        self.data.write_packet.brake = brake
-
-    def status(self):
-        gear = self.data.read_packet.gear
-        speed = self.data.read_packet.speed / 10
-        steer = self.data.read_packet.steer / 71
-        brake = self.data.read_packet.brake / 200
-        return gear, speed, steer, brake
 
 
 if __name__ == "__main__":
