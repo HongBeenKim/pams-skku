@@ -24,9 +24,9 @@ def main():
 
     specific_time = time.localtime()
     timeLabel = str(specific_time.tm_hour) + "+" + str(specific_time.tm_min) + "+" + str(specific_time.tm_sec)
-    writerL = cv2.VideoWriter("c:\\log_data\\leftcam\\" + timeLabel + ".avi", fourcc, 30, (800, 448))
-    writerR = cv2.VideoWriter("c:\\log_data\\rightcam\\" + timeLabel + ".avi", fourcc, 30, (800, 448))
-
+    writerL = cv2.VideoWriter("c:\\log_data\\leftcam\\" + timeLabel + ".avi", fourcc, 60, (800, 448))
+    writerR = cv2.VideoWriter("c:\\log_data\\rightcam\\" + timeLabel + ".avi", fourcc, 60, (800, 448))
+    lidar_fd = open("c:\\log_data\\lidar\\" + timeLabel + ".txt", 'w')
 
     while True:
         # 라이다, 캠 1, 2, 3 저장
@@ -35,10 +35,13 @@ def main():
             cv2.imshow("right", data[1])
             writerL.write(data[0])
             writerR.write(data[1])
+            lidar_fd.write(data[2])
         if cv2.waitKey(1) & 0xff == ord(' '): break
 
     data[3] = True
-
+    writerL.release()
+    writerR.release()
+    lidar_fd.close()
 
 def lidar(data_set: list):
     INIT_MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
