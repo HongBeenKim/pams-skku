@@ -3,6 +3,9 @@ from serial_packet import SerialPacket
 
 class Data(object):
     def __init__(self):
+        self.GEAR_FORWARD = 0x00
+        self.GEAR_NEUTRAL = 0x01
+        self.GEAR_BACKWARD = 0x02
         self._read_packet = SerialPacket()
         self._write_packet = SerialPacket()
 
@@ -15,9 +18,21 @@ class Data(object):
         return self._write_packet
 
     def set_control_value(self, gear, speed, steer, brake):
+        # gear -> 0x00: forward drive
+        #         0x01: neutral
+        #         0x02: backward drive
         self._write_packet.gear = gear
+
+        # speed -> actual speed (KPH) * 10
         self._write_packet.speed = speed
+
+        # steer -> actual steering degree (degree) * 71
+        #          오차율: 4%
+        #          negative is left steer
         self._write_packet.steer = steer
+
+        # brake -> 1: no braking
+        #          33: full braking
         self._write_packet.brake = brake
 
     # TODO: 주은: 준혁아 엔코더 값 필요하면 말해라.
