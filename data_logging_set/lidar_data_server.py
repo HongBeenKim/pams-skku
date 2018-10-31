@@ -1,6 +1,7 @@
 """
 자율주행 시스템 코드에 마치 라이다를 연결한 것처럼
 미리 로깅한 라이다 데이터(.txt)를 읽어서 TCP로 쏴 주는 코드
+2018-10-31
 """
 
 import socket
@@ -9,10 +10,11 @@ HOST = ''
 PORT = 10018
 BUFFER = 57600
 
-DATA_ROOT = 'C:\\pams-skku-data\\lidar\\'
+DATA_PATH = 'C:\\pams-skku-data\\lidar\\'
 
 # PLEASE GIVE ME THE INPUT .txt FILE NAME
-LOG_FILE_NAME = DATA_ROOT + ''
+LOG_FILE_NAME = DATA_PATH + ''
+# LOG_FILE_NAME = 'C:\\Users\\Jueun\\Desktop\\sensor-data-logging-HEVEN\\data\\GLG0320_2.txt'
 
 
 def send_data():
