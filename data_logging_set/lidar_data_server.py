@@ -1,6 +1,6 @@
 """
-라이다 데이터(.txt)를 읽어서 TCP로 쏴 주는 코드
-포트 대충 하고 호스트는 로컬로 짜셈
+자율주행 시스템 코드에 마치 라이다를 연결한 것처럼
+미리 로깅한 라이다 데이터(.txt)를 읽어서 TCP로 쏴 주는 코드
 """
 
 import socket
@@ -9,7 +9,7 @@ HOST = ''
 PORT = 10018
 BUFFER = 57600
 
-DATA_ROOT = 'C://pams-skku-data//lidar//'
+DATA_ROOT = 'C:\\pams-skku-data\\lidar\\'
 
 # PLEASE GIVE ME THE INPUT .txt FILE NAME
 LOG_FILE_NAME = DATA_ROOT + ''
@@ -38,3 +38,7 @@ def send_data():
             pass
 
     server_socket.close()
+
+
+if __name__ == "__main__":
+    send_data()
