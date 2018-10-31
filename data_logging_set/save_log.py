@@ -17,16 +17,16 @@ left_cam_size = (800, 448)
 right_cam_size = (800, 448)
 sign_cam_size = (800, 448)
 
-left_cam_num = 0
-right_cam_num = 1
-sign_cam_num = 2
+left_cam_num = 1
+right_cam_num = 2
+sign_cam_num = 3
 # -----------------------------------------------------------------------------------
 
 def main():
     data = [None, None, None, None, False]  # 순서대로 left frame, right frame, lidar frame, stop flag
-    camThreadL = threading.Thread(target=cam, args=(left_cam_num, 0, *left_cam_size, data))
-    camThreadR = threading.Thread(target=cam, args=(right_cam_num, 1, *right_cam_size, data))
-    camThreadS = threading.Thread(target=cam, args=(sign_cam_num, 2, *sign_cam_size, data))
+    camThreadL = threading.Thread(target=cam, args=(0, left_cam_num, *left_cam_size, data))
+    camThreadR = threading.Thread(target=cam, args=(1, right_cam_num, *right_cam_size, data))
+    camThreadS = threading.Thread(target=cam, args=(2, sign_cam_num, *sign_cam_size, data))
     lidarThread = threading.Thread(target=lidar, args=(data,))
 
     lidarThread.start()
