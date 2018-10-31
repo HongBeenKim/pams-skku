@@ -1,11 +1,14 @@
 """
 라이다와 캠 데이터를 동시에 저장하는 코드
+김홍빈
+2018-10-31
 """
 import threading
 import cv2
 import socket
 import time
 
+# ---------------------------- Configuration Values ---------------------------------
 LIDAR_IP = '169.254.248.220'
 LIDAR_PORT = 2111
 LIDAR_BUF = 57600
@@ -17,7 +20,7 @@ sign_cam_size = (800, 448)
 left_cam_num = 0
 right_cam_num = 1
 sign_cam_num = 2
-
+# -----------------------------------------------------------------------------------
 
 def main():
     data = [None, None, None, None, False]  # 순서대로 left frame, right frame, lidar frame, stop flag
