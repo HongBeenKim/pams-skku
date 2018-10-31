@@ -32,8 +32,23 @@ class CarPlatform(Subroutine):
             print("car_platform SEND ERROR: ", e)
 
 
+def steer_left_test(test_data: Data):
+    test_data.set_control_value(gear=test_data.GEAR_NEUTRAL, speed=0, steer=-200, brake=0)
+
+
+def steer_right_test(test_data: Data):
+    test_data.set_control_value(gear=test_data.GEAR_NEUTRAL, speed=0, steer=200, brake=0)
+
+
 if __name__ == "__main__":
+    import time
     test_data = Data()
-    test_platform = CarPlatform('COM6', test_data)
+    test_platform = CarPlatform('COM5', test_data)
     test_platform.main()
     # TODO: 테스트 코드 만들고 테스트 해 보기
+    while True:
+        print(test_data.car_platform_status())
+        steer_left_test(test_data)
+        time.sleep(1)
+        steer_right_test(test_data)
+        time.sleep(1)
