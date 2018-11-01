@@ -53,11 +53,10 @@ if __name__ == "__main__":
     import threading
 
     test_data = Data()
-    test_platform = CarPlatform('COM5', test_data)
+    test_platform = CarPlatform('COM6', test_data)  # PLEASE CHECK YOUR COMPORT
     platform_thread = threading.Thread(target=test_platform.main)
     platform_thread.start()
 
-    # TODO: 테스트 되게 만들기 (시리얼 케이블 문제로 추정)
     if test_data.read_packet.aorm == SerialPacket.AORM_AUTO:
         t = time.time()
         i = 1
