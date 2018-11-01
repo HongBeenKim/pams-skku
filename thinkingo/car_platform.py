@@ -1,119 +1,76 @@
-"""
-플랫폼-프로세서 간 통신 프로그램
-https://github.com/Jueun-Park/HEVEN_AutonomousCar_2018/blob/master/src/communication.py
-"""
-
-import threading
-import time
 import serial
-
 from serial_packet import SerialPacket
+from subroutine import Subroutine
+from data_class import Data
 
 
-class PlatformSerial:
-    def __init__(self, platform_port):
-        self.port = platform_port
+class CarPlatform(Subroutine):
+    def __init__(self, port: str, data: Data):
+        super().__init__(data)
         try:
-            self.ser = serial.Serial(self.port, 115200)
+            self.serial = serial.Serial(port, 115200)
         except Exception as e:
-            print('[PlatformSerial| INIT ERROR: ', e, ']')
+            print("car_platform INIT ERROR: ", e)
 
-        # TODO: 데이터 밖으로 빼기
-        self.read_packet = SerialPacket()
-        self.write_packet = SerialPacket()
-
-        self.stop_fg = False
-        # TODO: 쓰레딩 밖으로 빼기
-        self.threading = threading.Thread(target=self.communicate)
-        self.threading.start()
-
-    def restart(self):
-        self.stop_fg = True
-        self.threading.join()
-        self.threading.start()
-
-    def communicate(self):
+    def main(self):
         while True:
-            self.recv()
+            self.receive()
             self.send()
-            if self.stop_fg is True: break
-        self.stop_fg = False
+
+    def receive(self):
+        try:
+            binary_message = self.serial.read(18)
+        except Exception as e:
+            print("car_platform RECEIVE ERROR: ", e)
+            return
+        self.data.read_packet.read_bytes(binary_message)
 
     def send(self):
-        self.write_packet.alive = self.read_packet.alive
+        self.data.write_packet.alive = self.data.read_packet.alive
         try:
-            self.ser.write(self.write_packet.write_bytes())
+            self.serial.write(self.data.write_packet.write_bytes())
         except Exception as e:
-            print('[PlatformSerial| WRITE ERROR', e, ']')
-
-    def recv(self):
-        try:
-            b = self.ser.read(18)
-        except Exception as e:
-            print('[PlatformSerial| READ ERROR', e, ']')
-            return
-        self.read_packet.read_bytes(b)
-
-    def read(self):
-        return self.read_packet.speed, self.read_packet.enc
-
-    def write(self, gear, speed, steer, brake):
-        self.write_packet.gear = gear
-        self.write_packet.speed = speed
-        self.write_packet.steer = steer
-        self.write_packet.brake = brake
-
-    def status(self):
-        gear = self.read_packet.gear
-        speed = self.read_packet.speed / 10
-        steer = self.read_packet.steer / 71
-        brake = self.read_packet.brake / 200
-        # print('[READ]')
-        # print(self.read_packet.get_attr(mode='a'))
-        # print(str(speed) + 'kph', str(round(steer, 4)) + 'deg', str(round(brake, 4)) + 'brake')
-        # print()
-        return gear, speed, steer, brake
-
-    def stop(self):
-        self.stop_fg = True
+            print("car_platform SEND ERROR: ", e)
 
 
-def t_move():
-    platform.write(SerialPacket.GEAR_FORWARD, 40, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
+def steer_left_test(test_data: Data):
+    test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
+                                steer=SerialPacket.STEER_MAXLEFT, brake=SerialPacket.BRAKE_NOBRAKE)
 
 
-def t_back():
-    platform.write(SerialPacket.GEAR_BACKWARD, 60, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
+def steer_straight_test(test_data: Data):
+    test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
+                                steer=SerialPacket.STEER_STRAIGHT, brake=SerialPacket.BRAKE_NOBRAKE)
 
 
-def t_stop():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, 60)
+def steer_right_test(test_data: Data):
+    test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
+                                steer=SerialPacket.STEER_MAXRIGHT, brake=SerialPacket.BRAKE_NOBRAKE)
 
 
-def t_neutral():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_STRAIGHT, SerialPacket.BRAKE_NOBRAKE)
+if __name__ == "__main__":
+    import time
+    import threading
 
+    test_data = Data()
+    test_platform = CarPlatform('COM6', test_data)  # PLEASE CHECK YOUR COMPORT
+    platform_thread = threading.Thread(target=test_platform.main)
+    platform_thread.start()
 
-def t_left():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXLEFT, SerialPacket.BRAKE_NOBRAKE)
-
-
-def t_right():
-    platform.write(SerialPacket.GEAR_NEUTRAL, 0, SerialPacket.STEER_MAXRIGHT, SerialPacket.BRAKE_NOBRAKE)
-
-
-if __name__ == '__main__':
-    platform = PlatformSerial('COM6')
-    while True:
-        platform.status()
-        t_stop()
-
-        if platform.read_packet.aorm == SerialPacket.AORM_AUTO:
-            t = time.time()
-            while time.time() - t < 2:
-                platform.status()
-                t_move()
-            t = time.time()
-            while time.time() - t < 2:
-                platform.status()
-                t_stop()
+    if test_data.read_packet.aorm == SerialPacket.AORM_AUTO:
+        t = time.time()
+        i = 1
+        while True:
+            print("read: ", test_data.car_platform_status())
+            print("WRITE: ", test_data.write_packet.steer)
+            if time.time() - t < 2:
+                if i == 1:
+                    steer_right_test(test_data)
+                else:
+                    steer_left_test(test_data)
+            else:
+                t = time.time()
+                if i == 1:
+                    i = 0
+                else:
+                    i = 1
