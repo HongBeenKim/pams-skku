@@ -1,12 +1,15 @@
 """
-라이다와 캠 데이터를 동시에 저장하는 코드
-김홍빈
-2018-10-31
+라이다, 캠, 차량 플랫폼 데이터를 동시에 저장하는 코드
+김홍빈, 박주은
+2018-11=04
 """
 import threading
 import cv2
 import socket
 import time
+
+from thinkingo.data_class import Data
+from thinkingo.car_platform import CarPlatform
 
 # ---------------------------- Configuration Values ---------------------------------
 LIDAR_IP = '169.254.248.220'
@@ -20,6 +23,12 @@ sign_cam_size = (800, 448)
 left_cam_num = 1
 right_cam_num = 2
 sign_cam_num = 3
+
+COMPORT = 'COM5'
+
+DATA_ROOT_PATH = "C:\\pams-skku-data\\"
+
+
 # -----------------------------------------------------------------------------------
 
 def main():
@@ -38,10 +47,14 @@ def main():
 
     specific_time = time.localtime()
     timeLabel = str(specific_time.tm_hour) + "+" + str(specific_time.tm_min) + "+" + str(specific_time.tm_sec)
-    writerL = cv2.VideoWriter("c:\\log_data\\leftcam\\" + timeLabel + ".avi", fourcc, 60, left_cam_size)
-    writerR = cv2.VideoWriter("c:\\log_data\\rightcam\\" + timeLabel + ".avi", fourcc, 60, right_cam_size)
-    writerS = cv2.VideoWriter("c:\\log_data\\signcam\\" + timeLabel + ".avi", fourcc, 60, sign_cam_size)
-    lidar_fd = open("c:\\log_data\\lidar\\" + timeLabel + ".txt", 'w')
+    writerL = cv2.VideoWriter(DATA_ROOT_PATH + "leftcam\\" + timeLabel + ".avi", fourcc, 60, left_cam_size)
+    writerR = cv2.VideoWriter(DATA_ROOT_PATH + "rightcam\\" + timeLabel + ".avi", fourcc, 60, right_cam_size)
+    writerS = cv2.VideoWriter(DATA_ROOT_PATH + "signcam\\" + timeLabel + ".avi", fourcc, 60, sign_cam_size)
+    lidar_fd = open(DATA_ROOT_PATH + "lidar\\" + timeLabel + ".txt", 'w')
+
+    car_platform_fd = open(DATA_ROOT_PATH + "car_platform\\" + timeLabel + ".txt", 'w')
+    platform_thread = threading.Thread(target=log_car_platform(car_platform_fd))
+    platform_thread.start()
 
     while True:
         # 라이다, 캠 1, 2, 3 저장
@@ -86,6 +99,14 @@ def cam(arg_num: int, cam_num: int, width: int, height: int, data_set: list):
         data_set[arg_num] = frame
 
         if data_set[4]: break
+
+
+def log_car_platform(file):
+    data = Data()
+    platform = CarPlatform(COMPORT, data)
+    while True:
+        platform.receive()g
+        file.write(data.read_packet.write_bytes())
 
 
 if __name__ == "__main__":
