@@ -17,9 +17,9 @@ left_cam_size = (800, 448)
 right_cam_size = (800, 448)
 sign_cam_size = (800, 448)
 
-left_cam_num = 1
-right_cam_num = 2
-sign_cam_num = 3
+left_cam_num = 0
+right_cam_num = 1
+sign_cam_num = 2
 # -----------------------------------------------------------------------------------
 
 def main():
@@ -38,10 +38,10 @@ def main():
 
     specific_time = time.localtime()
     timeLabel = str(specific_time.tm_hour) + "+" + str(specific_time.tm_min) + "+" + str(specific_time.tm_sec)
-    writerL = cv2.VideoWriter("c:\\log_data\\leftcam\\" + timeLabel + ".avi", fourcc, 60, left_cam_size)
-    writerR = cv2.VideoWriter("c:\\log_data\\rightcam\\" + timeLabel + ".avi", fourcc, 60, right_cam_size)
-    writerS = cv2.VideoWriter("c:\\log_data\\signcam\\" + timeLabel + ".avi", fourcc, 60, sign_cam_size)
-    lidar_fd = open("c:\\log_data\\lidar\\" + timeLabel + ".txt", 'w')
+    writerL = cv2.VideoWriter("c:\\pams-skku-data\\leftcam\\" + timeLabel + ".avi", fourcc, 60, left_cam_size)
+    writerR = cv2.VideoWriter("c:\\pams-skku-data\\rightcam\\" + timeLabel + ".avi", fourcc, 60, right_cam_size)
+    writerS = cv2.VideoWriter("c:\\pams-skku-data\\signcam\\" + timeLabel + ".avi", fourcc, 60, sign_cam_size)
+    lidar_fd = open("c:\\pams-skku-data\\lidar\\" + timeLabel + ".txt", 'w')
 
     while True:
         # 라이다, 캠 1, 2, 3 저장
