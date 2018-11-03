@@ -1,12 +1,13 @@
 """
 라이다, 캠, 차량 플랫폼 데이터를 동시에 저장하는 코드
 김홍빈, 박주은
-2018-11=04
+2018-11
 """
 import threading
 import cv2
 import socket
 import time
+import datetime
 
 from thinkingo.data_class import Data
 from thinkingo.car_platform import CarPlatform
@@ -20,41 +21,43 @@ left_cam_size = (800, 448)
 right_cam_size = (800, 448)
 sign_cam_size = (800, 448)
 
+left_cam_num = 0
+right_cam_num = 1
+sign_cam_num = 2
 
-COMPORT = 'COM5'
+COMPORT = 'COM3'
 
 DATA_ROOT_PATH = "C:\\pams-skku-data\\"
 
 
-left_cam_num = 0
-right_cam_num = 1
-sign_cam_num = 2
 # -----------------------------------------------------------------------------------
 
 def main():
+    platform_data = Data()
     data = [None, None, None, None, False]  # 순서대로 left frame, right frame, lidar frame, stop flag
     camThreadL = threading.Thread(target=cam, args=(0, left_cam_num, *left_cam_size, data))
     camThreadR = threading.Thread(target=cam, args=(1, right_cam_num, *right_cam_size, data))
     camThreadS = threading.Thread(target=cam, args=(2, sign_cam_num, *sign_cam_size, data))
     lidarThread = threading.Thread(target=lidar, args=(data,))
+    platform_thread = threading.Thread(target=log_car_platform, args=(platform_data, data))
 
     lidarThread.start()
     camThreadL.start()
     camThreadR.start()
     camThreadS.start()
+    platform_thread.start()
 
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
 
     specific_time = time.localtime()
-    timeLabel = str(specific_time.tm_hour) + "+" + str(specific_time.tm_min) + "+" + str(specific_time.tm_sec)
+    today = datetime.datetime.now()
+    timeLabel = today.strftime("%Y-%m-%d-%H-%M-%S")
     writerL = cv2.VideoWriter(DATA_ROOT_PATH + "leftcam\\" + timeLabel + ".avi", fourcc, 60, left_cam_size)
     writerR = cv2.VideoWriter(DATA_ROOT_PATH + "rightcam\\" + timeLabel + ".avi", fourcc, 60, right_cam_size)
     writerS = cv2.VideoWriter(DATA_ROOT_PATH + "signcam\\" + timeLabel + ".avi", fourcc, 60, sign_cam_size)
     lidar_fd = open(DATA_ROOT_PATH + "lidar\\" + timeLabel + ".txt", 'w')
 
-    car_platform_fd = open(DATA_ROOT_PATH + "car_platform\\" + timeLabel + ".txt", 'w')
-    platform_thread = threading.Thread(target=log_car_platform(car_platform_fd))
-    platform_thread.start()
+    car_platform_fd = open(DATA_ROOT_PATH + "car_platform\\" + timeLabel + ".txt", 'wb')
 
     while True:
         # 라이다, 캠 1, 2, 3 저장
@@ -66,13 +69,16 @@ def main():
             writerR.write(data[1])
             writerS.write(data[2])
             lidar_fd.write(data[3])
-        if cv2.waitKey(1) & 0xff == ord(' '): break
+            car_platform_fd.write(platform_data.read_packet.write_bytes())
+        if cv2.waitKey(1) & 0xff == ord(' '):
+            break
 
     data[4] = True
     writerL.release()
     writerR.release()
     writerS.release()
     lidar_fd.close()
+    car_platform_fd.close()
 
 
 def lidar(data_set: list):
@@ -82,11 +88,13 @@ def lidar(data_set: list):
     sock_lidar.send(str.encode(INIT_MESG))
 
     while True:
-        lidar_data = str(sock_lidar.recv(LIDAR_BUF))
-        if lidar_data.__contains__('sEA'): continue
+        lidar_data = sock_lidar.recv(LIDAR_BUF).decode()
+        if lidar_data.__contains__('sEA'):
+            continue
         data_set[3] = lidar_data
 
-        if data_set[4]: break
+        if data_set[4]:
+            break
 
 
 def cam(arg_num: int, cam_num: int, width: int, height: int, data_set: list):
@@ -98,15 +106,17 @@ def cam(arg_num: int, cam_num: int, width: int, height: int, data_set: list):
         _, frame = cap.read()
         data_set[arg_num] = frame
 
-        if data_set[4]: break
+        if data_set[4]:
+            break
 
 
-def log_car_platform(file):
-    data = Data()
+def log_car_platform(data: Data, data_set: list):
     platform = CarPlatform(COMPORT, data)
     while True:
         platform.receive()
-        file.write(data.read_packet.write_bytes())
+        print(data.car_platform_status())
+        if data_set[4]:
+            break
 
 
 if __name__ == "__main__":
