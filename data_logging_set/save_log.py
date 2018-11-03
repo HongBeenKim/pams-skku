@@ -105,7 +105,7 @@ def log_car_platform(file):
     data = Data()
     platform = CarPlatform(COMPORT, data)
     while True:
-        platform.receive()g
+        platform.receive()
         file.write(data.read_packet.write_bytes())
 
 
