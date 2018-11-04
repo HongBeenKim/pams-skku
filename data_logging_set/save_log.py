@@ -1,6 +1,5 @@
 """
 라이다, 캠, 차량 플랫폼 데이터를 동시에 저장하는 코드
-김홍빈, 박주은
 2018-11
 """
 import threading
@@ -25,7 +24,7 @@ left_cam_num = 0
 right_cam_num = 1
 sign_cam_num = 2
 
-COMPORT = 'COM3'
+COMPORT = 'COM4'
 
 DATA_ROOT_PATH = "C:\\pams-skku-data\\"
 
@@ -60,18 +59,22 @@ def main():
     car_platform_fd = open(DATA_ROOT_PATH + "car_platform\\" + timeLabel + ".txt", 'wb')
 
     while True:
-        # 라이다, 캠 1, 2, 3 저장
-        if data[0] is not None and data[1] is not None and data[2] is not None:
-            cv2.imshow("left", data[0])
-            cv2.imshow("right", data[1])
-            cv2.imshow("sign", data[2])
-            writerL.write(data[0])
-            writerR.write(data[1])
-            writerS.write(data[2])
-            lidar_fd.write(data[3])
-            car_platform_fd.write(platform_data.read_packet.write_bytes())
-        if cv2.waitKey(1) & 0xff == ord(' '):
-            break
+        try:
+            # 라이다, 캠 1, 2, 3 저장
+            if data[0] is not None and data[1] is not None and data[2] is not None:
+                cv2.imshow("left", data[0])
+                cv2.imshow("right", data[1])
+                cv2.imshow("sign", data[2])
+                writerL.write(data[0])
+                writerR.write(data[1])
+                writerS.write(data[2])
+                lidar_fd.write(data[3])
+                car_platform_fd.write(platform_data.read_packet.write_bytes())
+            if cv2.waitKey(1) & 0xff == ord(' '):
+                break
+        except Exception as e:
+            print(e)
+            pass
 
     data[4] = True
     writerL.release()

@@ -3,13 +3,12 @@
 미리 로깅한 라이다 데이터(.txt)를 읽어서 TCP로 쏴 주는 코드
 2018-11
 """
-
 import socket
 import time
 
 HOST = ''
 PORT = 10018
-BUFFER = 57600
+BUFFER = 2500
 
 DATA_PATH = 'C:\\pams-skku-data\\lidar\\'
 
@@ -28,13 +27,23 @@ def send_data():
     print("txt file name: ", txt_file_name)
     # PLEASE GIVE ME THE INPUT .txt FILE NAME
     LOG_FILE_NAME = DATA_PATH + txt_file_name
-    lidar_file = open(LOG_FILE_NAME, 'r')
+    lidar_file = open(LOG_FILE_NAME, 'rb')
 
     stop_flag = False
+    file_cursor = 0
     while True:
+        time.sleep(0.015)  # FIXME: 싱크 안 맞음
+
         data_for_send = lidar_file.read(BUFFER)
+        data_for_send = data_for_send.decode()
+        end_index = data_for_send.find('')
+
+        data_for_send = data_for_send[:end_index + 1]
+        print(data_for_send)
         client_socket.send(data_for_send.encode())
-        time.sleep(0.5)  # FIXME: 싱크 안 맞음. 어떻게 맞추는 거지?
+
+        file_cursor += end_index + 1
+        lidar_file.seek(file_cursor)
 
         if stop_flag:
             print("Shutdown")
