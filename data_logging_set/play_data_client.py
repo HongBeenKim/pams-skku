@@ -16,6 +16,8 @@ timeLabel = "2018-11-04-16-24-41"
 MESG = timeLabel + ".txt"
 RAD = 500
 
+flag = [False]
+
 data_list = None
 
 stop = False
@@ -29,9 +31,9 @@ sock_lidar.connect((HOST, PORT))
 
 
 def data_handling_loop():
-    t_L = threading.Thread(target=video_streaming_loop, args=(cap_left, "left", 0, 632))
-    t_M = threading.Thread(target=video_streaming_loop, args=(cap_mid, "middle", 0, 0))
-    t_R = threading.Thread(target=video_streaming_loop, args=(cap_right, "right", 800, 632))
+    t_L = threading.Thread(target=video_streaming_loop, args=(flag, cap_left, "left", 0, 632))
+    t_M = threading.Thread(target=video_streaming_loop, args=(flag, cap_mid, "middle", 0, 0))
+    t_R = threading.Thread(target=video_streaming_loop, args=(flag, cap_right, "right", 800, 632))
     sock_lidar.send(MESG.encode())
     t_L.start()
     t_M.start()
@@ -41,12 +43,13 @@ def data_handling_loop():
     cv2.moveWindow("LiDAR", 920, 0)
 
     while True:
+        if flag[0]: break
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
         data = sock_lidar.recv(BUFF).decode()
+
         if data.__contains__('sEA'):
             continue
-        print(data)
 
         temp = data.split(' ')[116:477]
 
@@ -67,25 +70,24 @@ def data_handling_loop():
             for point in points:  # 장애물들에 대하여
                 cv2.circle(current_frame, tuple(point), 2, 255, -1)  # 캔버스에 점 찍기
             cv2.imshow("LiDAR", current_frame)
-            if cv2.waitKey(33) & 0xff == ord(' '): break
+            if cv2.waitKey(1) & 0xff == ord(' '): break
         except Exception:
             pass
 
         # TODO: 끝나면 자연스럽게 프로그램 종료하는 코드 작성하기
 
 
-def video_streaming_loop(cap, window_name, x, y):
+def video_streaming_loop(flag, cap, window_name, x, y):
     _, frame = cap.read()
     cv2.imshow(window_name, frame)
     cv2.moveWindow(window_name, x, y)
     while True:
-        t = time.time()
         _, frame = cap.read()
         cv2.imshow(window_name, frame)
 
         if cv2.waitKey(10) & 0xff == ord(' '):  # FIXME: 싱크 안 맞음
-            break
-        print("time: ", time.time() - t)
+            flag[0] = True
 
+        if flag[0]: break
 
 data_handling_loop()
