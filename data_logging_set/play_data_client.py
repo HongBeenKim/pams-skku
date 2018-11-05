@@ -1,18 +1,22 @@
 """
-서버에서 주는 데이터 받아서 단순히 그림만 그려주는 클라이언트
+서버에서 주는 라이다 데이터 받아서 단순히 그림만 그려주는 클라이언트
+해당하는 시간에 함께 로깅한 영상도 같이 틀어준다.
 2018-11
 """
 import socket
 import numpy as np
 import cv2
 import threading
+import time
 
 HOST = '127.0.0.1'
 PORT = 10018
 BUFF = 57600
-timeLabel = "2018-11-04-17-01-16"
+timeLabel = "2018-11-04-16-24-41"
 MESG = timeLabel + ".txt"
 RAD = 500
+
+flag = [False]
 
 data_list = None
 
@@ -27,21 +31,25 @@ sock_lidar.connect((HOST, PORT))
 
 
 def data_handling_loop():
-    t_L = threading.Thread(target=video_streaming_loop, args=(cap_left, "left"))
-    t_M = threading.Thread(target=video_streaming_loop, args=(cap_mid, "middle"))
-    t_R = threading.Thread(target=video_streaming_loop, args=(cap_right, "right"))
+    t_L = threading.Thread(target=video_streaming_loop, args=(flag, cap_left, "left", 0, 632))
+    t_M = threading.Thread(target=video_streaming_loop, args=(flag, cap_mid, "middle", 0, 0))
+    t_R = threading.Thread(target=video_streaming_loop, args=(flag, cap_right, "right", 800, 632))
     sock_lidar.send(MESG.encode())
     t_L.start()
     t_M.start()
     t_R.start()
 
+    cv2.imshow("LiDAR", np.zeros((RAD, RAD * 2), np.uint8))
+    cv2.moveWindow("LiDAR", 920, 0)
+
     while True:
+        if flag[0]: break
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
         data = sock_lidar.recv(BUFF).decode()
+        
         if data.__contains__('sEA'):
             continue
-        print(data)
 
         temp = data.split(' ')[116:477]
 
@@ -53,7 +61,7 @@ def data_handling_loop():
                 if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                     # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
-                    x = -r * np.cos(np.radians(0.5 * theta))
+                    x = r * np.cos(np.radians(0.5 * theta))
                     y = r * np.sin(np.radians(0.5 * theta))
 
                     # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
@@ -65,17 +73,21 @@ def data_handling_loop():
             if cv2.waitKey(1) & 0xff == ord(' '): break
         except Exception:
             pass
-        
+
         # TODO: 끝나면 자연스럽게 프로그램 종료하는 코드 작성하기
 
 
-def video_streaming_loop(cap, window_name):
+def video_streaming_loop(flag, cap, window_name, x, y):
+    _, frame = cap.read()
+    cv2.imshow(window_name, frame)
+    cv2.moveWindow(window_name, x, y)
     while True:
         _, frame = cap.read()
         cv2.imshow(window_name, frame)
 
-        if cv2.waitKey(1) & 0xff == ord(' '):
-            break
+        if cv2.waitKey(10) & 0xff == ord(' '):  # FIXME: 싱크 안 맞음
+            flag[0] = True
 
+        if flag[0]: break
 
 data_handling_loop()
