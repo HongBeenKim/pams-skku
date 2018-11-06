@@ -32,8 +32,6 @@ def send_data():
     stop_flag = False
     file_cursor = 0
     while True:
-        time.sleep(0.02)  # FIXME: 싱크 안 맞음
-
         data_for_send = lidar_file.read(BUFFER)
         data_for_send = data_for_send.decode()
         end_index = data_for_send.find('')
