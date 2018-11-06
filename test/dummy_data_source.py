@@ -19,6 +19,7 @@ class DummySource():
     def data_stream(self):
         file_cursor = 0
         while True:
+            time.sleep(0.01)
             ret, self.left_frame = self.cap_left.read()
             ret, self.right_frame = self.cap_right.read()
             ret, self.mid_frame = self.cap_mid.read()
