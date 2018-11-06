@@ -8,8 +8,9 @@ import socket
 import time
 import datetime
 import sys
+import os
 
-sys.path.append("..")
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from thinkingo.data_class import Data
 from thinkingo.car_platform import CarPlatform
 
@@ -28,7 +29,7 @@ sign_cam_num = 2
 
 COMPORT = 'COM4'
 
-DATA_ROOT_PATH = "C:\\pams-skku-data\\"
+DATA_ROOT_PATH = "C:"
 
 
 # -----------------------------------------------------------------------------------
