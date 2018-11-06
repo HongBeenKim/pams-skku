@@ -1,4 +1,6 @@
 import serial
+import sys
+sys.path.append(".")
 from serial_packet import SerialPacket
 from subroutine import Subroutine
 from data_class import Data
