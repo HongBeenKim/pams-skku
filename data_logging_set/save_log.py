@@ -7,7 +7,9 @@ import cv2
 import socket
 import time
 import datetime
+import sys
 
+sys.path.append("..")
 from thinkingo.data_class import Data
 from thinkingo.car_platform import CarPlatform
 
