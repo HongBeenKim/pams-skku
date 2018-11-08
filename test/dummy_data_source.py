@@ -19,7 +19,7 @@ class DummySource():
     def data_stream(self):
         file_cursor = 0
         while True:
-            time.sleep(0.01)
+            #time.sleep(0.01)
             ret, self.left_frame = self.cap_left.read()
             ret, self.right_frame = self.cap_right.read()
             ret, self.mid_frame = self.cap_mid.read()
@@ -38,13 +38,15 @@ class DummySource():
         stream_thread = threading.Thread(target=self.data_stream)
         stream_thread.start()
 
+        while self.left_frame is None or self.right_frame is None or self.mid_frame is None or self.lidar_data is None:
+            pass
+
 
 if __name__ == "__main__":
     import numpy as np
-    RAD = 500
-    dmsc = DummySource('2018-11-04-16-47-21')
+    RAD = 600
+    dmsc = DummySource('2018-11-04-15-56-04')
     dmsc.start()
-    time.sleep(1)
 
     while True:
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
@@ -65,11 +67,12 @@ if __name__ == "__main__":
                 points[theta][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), 2, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(current_frame, tuple(point), 20, 255, -1)  # 캔버스에 점 찍기
 
 
         cv2.imshow("LiDAR", current_frame)
         cv2.imshow('test_left', dmsc.left_frame)
+        cv2.imshow('test_mid', dmsc.mid_frame)
         cv2.imshow('test_right', dmsc.right_frame)
         if cv2.waitKey(1) & 0xff == ord(' '): break
 
