@@ -1,15 +1,44 @@
+import socket
+import msvcrt
+
+import sys
+import os
+
+sys.path.append(os.path.dirname(__file__))
 from subroutine import Subroutine
 from data_class import Data
+
+YOLO_HOST = ''
+YOLO_PORT = 20002
 
 
 class SignCam(Subroutine):
     def __init__(self, data: Data):
         super().__init__(data)
-        self.detected_mission = 'DEFAULT'
-        self.sign_data = "a"
+        self.yolo_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.yolo_sock.bind((YOLO_HOST, YOLO_PORT))
+        print("bind complete. Waiting YOLO server...")
+
+        self.sign_data = b''
         self.signs_and_percents = [[0 for col in range(2)] for row in range(50)]
         self.sign = [[0 for col in range(9)] for row in range(3)]
         self.sign_init()
+        self.stop_flag = False
+
+    def main(self):
+        while True:
+            self.sign_data, address = self.yolo_sock.recvfrom(1024)
+            print(self.sign_data.decode())
+            self.data_decoding()
+            self.first_selection()
+            self.second_selection()
+            self.third_selection()
+            print(self.data.detected_mission_number)
+            self.sign_reinit()
+
+            if self.stop_flag:
+                break
+        self.yolo_sock.close()
 
     def sign_init(self):
         self.sign[0][0] = 'default'
@@ -69,27 +98,11 @@ class SignCam(Subroutine):
         self.sign[2][6] = 0
         self.sign[2][7] = 0
 
-    def main(self):
-        while True:
-            self.data_decoding()
-            self.first_selection()
-            self.second_selection()
-            self.third_selection()
-            print(self.detected_mission)
-            self.sign_reinit()
-
 
 if __name__ == "__main__":
-    import socket
-    import msvcrt
+    import threading
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('127.0.0.1', 20002))
-
-    test = SignCam()
-    while True:
-        sign_data, addr = sock.recvfrom(1024)
-        print(sign_data.decode())
-        test.sign_data = sign_data
-
-    sock.close()
+    test_data = Data()
+    test_sign_cam = SignCam(data=test_data)
+    sign_cam_thread = threading.Thread(target=test_sign_cam.main)
+    sign_cam_thread.start()
