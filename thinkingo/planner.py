@@ -10,6 +10,10 @@ class MotionPlanner(Subroutine):
         while True:
             temp_frame = self.data.mid_frame[290:448, 0:800]
             edged = cv2.Canny(temp_frame, 100, 200)
+
+            image, contours, hierachy = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(temp_frame, contours, -1, (0, 255, 0), 10)
+
             cv2.imshow('test', temp_frame)
             cv2.imshow('edged', edged)
             if cv2.waitKey(1) & 0xff == ord(' '): break
