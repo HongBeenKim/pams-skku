@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(__file__))
 from subroutine import Subroutine
 from data_class import Data
 
-YOLO_HOST = ''
+YOLO_HOST = '127.0.0.1'
 YOLO_PORT = 20002
 
 
@@ -19,7 +19,7 @@ class SignCam(Subroutine):
         self.yolo_sock.bind((YOLO_HOST, YOLO_PORT))
         print("bind complete. Waiting YOLO server...")
 
-        self.sign_data = b''
+        self.yolo_data = b''
         self.signs_and_percents = [[0 for col in range(2)] for row in range(50)]
         self.sign = [[0 for col in range(9)] for row in range(3)]
         self.sign_init()
@@ -27,14 +27,13 @@ class SignCam(Subroutine):
 
     def main(self):
         while True:
-            self.sign_data, address = self.yolo_sock.recvfrom(1024)
-            print(self.sign_data.decode())
             self.data_decoding()
+            print(self.yolo_data.decode())
             self.first_selection()
             self.second_selection()
             self.third_selection()
-            print(self.data.detected_mission_number)
             self.sign_reinit()
+            print(self.data.detected_mission_number)
 
             if self.stop_flag:
                 break
@@ -54,10 +53,8 @@ class SignCam(Subroutine):
     # 최근 몇개의 데이터를 가져와 저장한다!
     def data_decoding(self):
         for i in range(0, 50):
-            if self.sign_data.decode() == self.sign_data.decode():
-                i = i - 1
-            else:
-                self.signs_and_percents[i] = self.sign_data.decode().split(' : ')
+            self.yolo_data, address = self.yolo_sock.recvfrom(1024)
+            self.signs_and_percents[i] = self.yolo_data.decode().split(' : ')
 
     #  조건1 최근 몇개의 데이터에서 특정 인식률 이상 인것에 (sign[1][#]+=1)
     def first_selection(self):
@@ -75,10 +72,10 @@ class SignCam(Subroutine):
 
     #  조건3  sign[2][a]=1의 a를 sign[3][#]=1(가장 최근에 수행한미션)의 #을 비교하여 a <= # 이면 default인 a > # 이면 current_mission=self[0][i]
     def third_selection(self):
-        for j in range(0, 8):
-            if self.sign[2][j] == 1:
-                if self.data.is_next_mission(self.sign[0][j]):
-                    self.data.detected_mission_number = self.sign[0][j]
+        for i in range(0, 8):
+            if self.sign[2][i] == 1:
+                if self.data.is_next_mission(self.sign[0][i]):
+                    self.data.detected_mission_number = i
 
     def sign_reinit(self):
         self.sign[1][0] = 0
