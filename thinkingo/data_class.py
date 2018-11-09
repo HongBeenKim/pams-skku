@@ -1,13 +1,24 @@
 import sys
 import os
+
 sys.path.append(os.path.dirname(__file__))
 from serial_packet import SerialPacket
+
+modes = {"default": 0, "narrow": 1, "u_turn": 2,
+         "crosswalk": 3, "target_tracking": 4,
+         "parking": 5,
+         }
+parking_mode = {"parking_a": 6, "parking_b": 7}
+light_mode = {"green_light": 8}
+NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
 
 
 class Data(object):
     def __init__(self):
         self._read_packet = SerialPacket()
         self._write_packet = SerialPacket()
+        self._detected_mission_number = 0
+        self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}
 
     @property
     def read_packet(self):
@@ -44,3 +55,27 @@ class Data(object):
         aorm = self._read_packet.aorm
         alive = self._read_packet.alive
         return gear, speed, steer, brake, aorm, alive
+
+    @property
+    def detected_mission_number(self):
+        return self._detected_mission_number
+
+    @detected_mission_number.setter
+    def detected_mission_number(self, mission: str):
+        self._detected_mission_number = modes[mission]
+
+    def check_mission_completed(self, mission: str):
+        mission_num = modes[mission]
+        self._mission_checklist[mission_num] = True
+
+    def is_next_mission(self, mission: str):  # TODO: 제대로 짠 거 맞는지 리뷰 필요
+        result = False
+        for num, okay in self._mission_checklist.items():
+            if okay:
+                continue
+            else:
+                if num == modes[mission]:
+                    result = True
+                else:
+                    result = False
+        return result
