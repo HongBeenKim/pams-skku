@@ -68,7 +68,7 @@ class Data(object):
         mission_num = modes[mission]
         self._mission_checklist[mission_num] = True
 
-    def is_next_mission(self, mission: str):  # TODO: 제대로 짠 거 맞는지 리뷰 필요
+    def is_next_mission(self, mission: str):
         result = False
         for num, okay in self._mission_checklist.items():
             if okay:
@@ -76,6 +76,8 @@ class Data(object):
             else:
                 if num == modes[mission]:
                     result = True
+                    break
                 else:
                     result = False
+                    break
         return result
