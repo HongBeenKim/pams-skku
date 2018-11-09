@@ -45,7 +45,7 @@ class DummySource():
 if __name__ == "__main__":
     import numpy as np
     RAD = 600
-    dmsc = DummySource('2018-11-04-15-56-04')
+    dmsc = DummySource('2018-11-04-17-01-16')
     dmsc.start()
 
     while True:
