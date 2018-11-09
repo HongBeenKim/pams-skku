@@ -21,6 +21,7 @@ class SignCam(Subroutine):
 
         self.yolo_data = b''
         self.signs_and_percents = [[0 for col in range(2)] for row in range(50)]
+        self.data_decoding_init()
         self.sign = [[0 for col in range(9)] for row in range(3)]
         self.sign_init()
         self.stop_flag = False
@@ -49,11 +50,18 @@ class SignCam(Subroutine):
         self.sign[0][7] = 'parking_b'
         self.sign[0][8] = 'green_light'
 
-    # 최근 몇개의 데이터를 가져와 저장한다!
-    def data_decoding(self):
+        # 최근 몇개의 데이터를 가져와 저장한다!
+
+    def data_decoding_init(self):
         for i in range(0, 50):
             self.yolo_data, address = self.yolo_sock.recvfrom(1024)
             self.signs_and_percents[i] = self.yolo_data.decode().split(' : ')
+
+    # 최근 몇개의 데이터를 가져와 저장한다!
+    def data_decoding(self):
+        self.yolo_data, address = self.yolo_sock.recvfrom(1024)
+        self.signs_and_percents.pop(0)
+        self.signs_and_percents.append(self.yolo_data.decode().split(' : '))
 
     #  조건1 최근 몇개의 데이터에서 특정 인식률 이상 인것에 (sign[1][#]+=1)
     def first_selection(self):
