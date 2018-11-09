@@ -65,8 +65,27 @@ class Data(object):
         self._detected_mission_number = modes[mission]
 
     def check_mission_completed(self, mission: str):
+        """
+        어떤 미션이 끝나면 그 미션을 수행했다고 체크한 뒤 기본 주행으로 넘어간다.
+        :param mission: 미션 이름 string (modes dictionary 참조)
+        """
         mission_num = modes[mission]
         self._mission_checklist[mission_num] = True
+        self._detected_mission_number = modes["default"]
+
+    def check_u_turn_complete(self):
+        """
+        유턴을 끝내고 나면 다음 미션인 횡단보도로 넘어간다.
+        """
+        self._mission_checklist[modes["u_turn"]] = True
+        self._detected_mission_number = modes["crosswalk"]
+
+    def check_crosswalk_complete(self):
+        """
+        횡단보도 미션을 끝내고 나면 다음 미션인 타겟차 트래킹으로 넘어간다.
+        """
+        self._mission_checklist[modes["crosswalk"]] = True
+        self._detected_mission_number = modes["target_tracking"]
 
     def is_next_mission(self, mission: str):
         result = False
