@@ -81,3 +81,9 @@ class Data(object):
                     result = False
                     break
         return result
+
+    def is_in_mission(self):
+        if self._detected_mission_number == 0:
+            return False
+        else:
+            return True
