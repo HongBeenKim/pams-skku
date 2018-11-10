@@ -12,7 +12,7 @@ class LaneCam(Subroutine):
     pts2_L = np.float32([[0, 312], [440, 445], [537, 0], [562, 354]])
     Bird_view_matrix_L = cv2.getPerspectiveTransform(pts1_L, pts2_L)
 
-    lower_white = np.array([187, 194, 187], dtype=np.uint8)
+    lower_white = np.array([187, 180, 160], dtype=np.uint8)
     upper_white = np.array([255, 254, 255], dtype=np.uint8)
 
     def __init__(self, data_source: DummySource, data):
@@ -24,13 +24,20 @@ class LaneCam(Subroutine):
         self.data_source.start()
 
         while True:
-            undistorted_left = cv2.undistort(self.data_source.left_frame, self.camera_matrix_L,
+            origin = self.data_source.left_frame
+            # edged = cv2.Canny(origin, 100, 200)
+            #
+            # image, contours, hierachy = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            # cv2.drawContours(origin, contours, -1, (0, 255, 0), 10)
+
+            undistorted_left = cv2.undistort(origin, self.camera_matrix_L,
                                              self.distortion_coefficients_L, None, None)[10:438, 10:790]
             dst = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (562, 445))
+
             #dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
             dst2 = cv2.inRange(dst, self.lower_white, self.upper_white)
-            cv2.imshow('left', dst)
-            cv2.imshow('dst2', dst2)
+            cv2.imshow('origin', dst)
+            cv2.imshow('left', dst2)
 
             if cv2.waitKey(1) & 0xff == ord(' '):
                 break
@@ -38,6 +45,6 @@ class LaneCam(Subroutine):
 
 if __name__ == "__main__":
     testData = Data()
-    dmsc = DummySource('2018-11-04-15-41-04')
+    dmsc = DummySource('2018-11-04-15-56-04')
     testLC = LaneCam(dmsc, testData)
     testLC.lane_detection()
