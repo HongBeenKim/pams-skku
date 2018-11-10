@@ -106,3 +106,9 @@ class Data(object):
             return False
         else:
             return True
+
+    def is_in_parking_mission(self):
+        if self._detected_mission_number == modes["parking"]:
+            return True
+        else:
+            return False
