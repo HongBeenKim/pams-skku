@@ -15,9 +15,13 @@ class Lidar(Subroutine):
         self.frame = None
         self.stop_fg = False
 
-    def main(self):  # 데이터 받아서 저장하는 메서드
+    def main(self):
+        """
+        데이터 받아서 저장하는 메서드
+        """
         while True:
             temp = self.data_source.lidar_data.split(' ')[116:477]
+            # 가공 후의 라이다 데이터를 데이터베이스에 업데이트
             self.data.lidar_data_list = [int(item, 16) for item in temp]
 
             if self.stop_fg is True:
@@ -28,6 +32,7 @@ class Lidar(Subroutine):
 
 
 if __name__ == "__main__":
+    # TODO: 필요한 테스트 코드 작성 (아래는 검증되지 않은 테스트 코드)
     import threading
     from dummy_data_source import DummySource
 
