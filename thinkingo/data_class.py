@@ -47,7 +47,6 @@ class Data(object):
         #          33: full braking
         self._write_packet.brake = brake
 
-    # TODO: 주은: 준혁아 엔코더 값 필요하면 말해주렴.
     def car_platform_status(self):
         gear = self._read_packet.gear
         speed = self._read_packet.speed / 10
@@ -55,7 +54,8 @@ class Data(object):
         brake = self._read_packet.brake / 200
         aorm = self._read_packet.aorm
         alive = self._read_packet.alive
-        return gear, speed, steer, brake, aorm, alive
+        enc = self._read_packet.enc
+        return gear, speed, steer, brake, aorm, alive, enc
 
     @property
     def detected_mission_number(self):
