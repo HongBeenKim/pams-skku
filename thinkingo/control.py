@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append(".")
+
 from subroutine import Subroutine
 from data_class import Data
 
@@ -7,7 +11,8 @@ import math
 
 class Control(Subroutine):
 
-    def __init__(self):
+    def __init__(self, data: Data):
+        super().__init__(data)
         self.steer = 0  # 계산된 조향각
         self.speed = 0  # 계산된 속도
         self.gear = 0  # 계산된 기어
@@ -33,29 +38,44 @@ class Control(Subroutine):
         self.t_sit = 0
         self.p_sit = 0
 
+    def main(self):
+        """
+        차량 제어 코드가 thinkingo/main.py 에서
+        thread 로 실행될 때 한 루프에서 해야 할
+        모든 행동을 이 메서드에 정의합니다.
+        """
+        while True:
+            # TODO: @박준혁 이곳에 작성하세요!
+            pass
+
     def read(self):
-        #######################################
-        # data_class.py 에서 데이터 받아오기   #
-        gear, speed, steer, brake, aorm, alive, enc = Data.car_platform_status()  # 엔코더 값 추가로 요구하기
+        """
+        data_class.py 에서 데이터 받아오기
+        """
+        gear, speed, steer, brake, aorm, alive, enc = self.data.car_platform_status()
         self.speed_platform = speed
         self.enc_platform = enc
-        #######################################
 
     def mission(self):
-        #######################################
-        # 판단 함수로 부터 필요한 값 받기
-        mission_num, first, second = Subroutine()  # 나중에 수정하기
+        """
+        판단 함수로부터 필요한 값 받기
+        """
+        mission_num = self.data.detected_mission_number
+        first, second = self.data  # TODO: 나중에 수정하기
         self.set_mission(mission_num)
         self.do_mission(first, second)
-
-        speed = self.speed
-        self.accel(speed)
-        #######################################
+        self.accel(self.speed)
 
     def set_mission(self, mission_num):
         self.mission_num = mission_num
 
     def do_mission(self, first, second):
+        """
+        TODO: @박준혁 first 와 second 값 설명 주석 써 주기
+        :param first: first 값은 무엇인가요?
+        :param second: second 값은 무엇인가요?
+        :return: 리턴 값은 없습니다.
+        """
         if self.mission_num == 0:  # default 주행
             if first is None:
                 return
@@ -74,14 +94,13 @@ class Control(Subroutine):
             self.__target__(first / 100)
 
         elif self.mission_num == 4:  # 주차
-        # 후에 추가로 작성하기
+            # TODO: 후에 추가로 작성하기
             return 0
 
         else:
             self.__obs__(first[0] / 100, first[1])
 
-    def accel(self, speed):  # 후에 실험값을 통해서 값 수정
-
+    def accel(self, speed):  # TODO: 후에 실험값을 통해서 값 수정
         if self.speed_platform < (speed / 2):
             self.accel_speed = 2 * self.speed
         else:
@@ -116,9 +135,9 @@ class Control(Subroutine):
         adjust = 0.3
 
         if abs(steer_now) > 15:
-            speed = 60  # 실험값 수정하기
+            speed = 60  # TODO: 실험값 수정하기
         else:
-            speed = 72  # 실험값 수정하기
+            speed = 72  # TODO: 실험값 수정하기
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final
@@ -162,13 +181,13 @@ class Control(Subroutine):
         elif self.u_sit == 1:
             speed = 60
             if self.ct1 == 0:
-                self.ct1 = self.enc
-            self.ct2 = self.enc
+                self.ct1 = self.enc_platform
+            self.ct2 = self.enc_platform
 
-            if (self.ct2 - self.ct1) < 530:  # 실험값 수정
+            if (self.ct2 - self.ct1) < 530:  # TODO: 실험값 수정
                 steer = -1970
 
-            elif 530 <= (self.ct2 - self.ct1) <= 630:  # 실험값 수정
+            elif 530 <= (self.ct2 - self.ct1) <= 630:  # TODO: 실험값 수정
                 speed = 30
                 steer = -1970
 
@@ -180,8 +199,8 @@ class Control(Subroutine):
 
         elif self.u_sit == 2:
             if self.ct3 == 0:
-                self.ct3 = self.enc
-            self.ct4 = self.enc
+                self.ct3 = self.enc_platform
+            self.ct4 = self.enc_platform
 
             if (self.ct4 - self.ct3) < 75:
                 speed = 60
@@ -203,8 +222,8 @@ class Control(Subroutine):
 
         elif self.u_sit == 3:
             if self.ct5 == 0:
-                self.ct5 = self.enc
-            self.ct6 = self.enc
+                self.ct5 = self.enc_platform
+            self.ct6 = self.enc_platform
 
             if (self.ct6 - self.ct5) < 50:
                 speed = 60
@@ -301,7 +320,7 @@ class Control(Subroutine):
 
         self.change_mission = 0
 
-        if abs(stop_line) < 1.7:  # 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+        if abs(stop_line) < 1.7:  # TODO: 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
             if self.t1 == 0:
                 self.t1 = time.time()
             self.t2 = time.time()
@@ -326,7 +345,7 @@ class Control(Subroutine):
         brake = 0
 
         self.change_mission = 0
-        
+
         time = 0.5  # 값 갱신 속도
 
         if self.t_sit == 0:
@@ -350,7 +369,7 @@ class Control(Subroutine):
             if speed > 60:
                 speed = 60
 
-            if distance > 3:  # 실험값 수정
+            if distance > 3:  # TODO: 실험값 수정
                 self.change_mission = 1
 
         self.gear = gear
@@ -370,3 +389,14 @@ class Control(Subroutine):
         self.speed = speed
         self.steer = steer
         self.brake = brake
+
+
+# 테스트용 코드, 아래에 원하는 대로 바꿔서 테스트해볼 수 있습니다.
+if __name__ == '__main__':
+    import threading
+
+    test_data = Data()
+    test_control = Control(test_data)
+    control_thread = threading.Thread(target=test_control.main)
+
+    control_thread.start()
