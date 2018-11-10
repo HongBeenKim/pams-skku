@@ -21,31 +21,43 @@ class LaneCam(Subroutine):
 
 
     def lane_detection(self):
-        self.data_source.start()
+        temp_frame = self.data_source.mid_frame[290:448, 0:800]
+        edged = cv2.Canny(temp_frame, 50, 150)
 
+        # image, contours, hierachy = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # cv2.drawContours(temp_frame, contours, -1, (0, 255, 0), 10)
+
+        hough_lines = cv2.HoughLinesP(edged, rho=1, theta=np.pi / 180, threshold=20, minLineLength=20,
+                                      maxLineGap=300)
+
+        if hough_lines is not None:
+            for i in range(0, len(hough_lines)):
+                for x1, y1, x2, y2 in hough_lines[i]:
+                    if x1 == x2: continue
+                    if (abs(y1 - y2) / abs(x1 - x2)) < 0.1 or np.sqrt(
+                        (x1 - x2) ** 2 + (y1 - y2) ** 2) < 50: continue
+                    cv2.circle(temp_frame, (int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2)), 158), 10, 255, -1)
+                    cv2.line(temp_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
+
+        cv2.imshow('test', temp_frame)
+        cv2.imshow('edged', edged)
+
+    def main(self):
         while True:
-            origin = self.data_source.left_frame
-            # edged = cv2.Canny(origin, 100, 200)
-            #
-            # image, contours, hierachy = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-            # cv2.drawContours(origin, contours, -1, (0, 255, 0), 10)
-
-            undistorted_left = cv2.undistort(origin, self.camera_matrix_L,
-                                             self.distortion_coefficients_L, None, None)[10:438, 10:790]
-            dst = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (562, 445))
-
-            #dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-            dst2 = cv2.inRange(dst, self.lower_white, self.upper_white)
-            cv2.imshow('origin', dst)
-            cv2.imshow('left', dst2)
-
-            if cv2.waitKey(1) & 0xff == ord(' '):
-                break
+            self.lane_detection()
+            if cv2.waitKey(1) & 0xff == ord(' '): break
 
 
 if __name__ == "__main__":
+    import threading
+    import time
+
     testData = Data()
-    dmsc = DummySource('2018-11-04-15-56-04')
-    testLC = LaneCam(dmsc, testData)
-    testLC.lane_detection()
+    testDS = DummySource('2018-11-04-17-01-16')
+    testLC = LaneCam(testDS, testData)
+
+    stream_thread = threading.Thread(target=testDS.main)
+    stream_thread.start()
+    time.sleep(1)
+    testLC.main()
 
