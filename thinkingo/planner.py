@@ -12,7 +12,7 @@ from data_class import Data
 
 
 class MotionPlanner(Subroutine):
-    def __init__(self, data: Data):
+    def __init__(self, data: Data, data_source):
         super().__init__(data)
         # TODO: init할 것 생각하기
 
