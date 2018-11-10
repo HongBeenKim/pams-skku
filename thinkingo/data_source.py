@@ -1,9 +1,6 @@
 import cv2
-import threading
 import time
 import socket
-
-DATA_ROOT_PATH = 'c:\\pams-skku-data\\'
 
 
 class Source():
@@ -23,23 +20,23 @@ class Source():
         self.BUFF = 57600
         self.MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
         self.lidar_data = None
-        self.sock_lidar = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock_lidar.connet((self.HOST, self.PORT))
-        self.sock_lidar.send(str.encode(self.MESG))
+        self.lidar_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.lidar_socket.connect((self.HOST, self.PORT))
+        self.lidar_socket.send(str.encode(self.MESG))
         time.sleep(2)
 
         # stop_flag 초기값
         self.stop_flag = False
 
     def video_stream(self):
-        #time.sleep(0.01)
+        # time.sleep(0.01)
         ret, self.left_frame = self.cap_left.read()
         ret, self.right_frame = self.cap_right.read()
         ret, self.mid_frame = self.cap_mid.read()
 
     def lidar_stream(self):
         while True:
-            lidar_datum = str(self.sock_lidar.recv(self.BUFF))
+            lidar_datum = str(self.lidar_socket.recv(self.BUFF))
             if lidar_datum.__contains__('sEA'): continue
             temp = lidar_datum.split(' ')[116:477]
             try:
@@ -57,21 +54,30 @@ class Source():
             while self.left_frame is None or self.right_frame is None or self.mid_frame is None or self.lidar_data is None:
                 pass
             if self.stop_flag:
-                self.sock_lidar.send(str.encode(chr(2) + 'sEN LMDscandata 0' + chr(3)))
-                self.sock_lidar.close()
+                self.lidar_socket.send(str.encode(chr(2) + 'sEN LMDscandata 0' + chr(3)))
+                self.lidar_socket.close()
                 break
 
 
 if __name__ == "__main__":
     import numpy as np
+    import threading
+    from dummy_data_source import DummySource
+
     RAD = 600
-    dmsc = DummySource('2018-11-04-17-01-16')
-    dmsc.start()
+    test_source = Source()
+    test_source_thread = threading.Thread(target=test_source.main)
+    test_source_thread.start()
+
+    # data가 모두 들어올때까지 blocking
+    while test_source.left_frame is None or test_source.right_frame is None \
+            or test_source.mid_frame is None or test_source.lidar_data is None:
+        pass
 
     while True:
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)
-        lidar_data = dmsc.lidar_data.split(' ')[116:477]
+        lidar_data = test_source.lidar_data.split(' ')[116:477]
         data_list = [int(item, 16) for item in lidar_data]
 
         for theta in range(0, 361):
@@ -89,11 +95,10 @@ if __name__ == "__main__":
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), 20, 255, -1)  # 캔버스에 점 찍기
 
-
         cv2.imshow("LiDAR", current_frame)
-        cv2.imshow('test_left', dmsc.left_frame)
-        cv2.imshow('test_mid', dmsc.mid_frame)
-        cv2.imshow('test_right', dmsc.right_frame)
+        cv2.imshow('test_left', test_source.left_frame)
+        cv2.imshow('test_mid', test_source.mid_frame)
+        cv2.imshow('test_right', test_source.right_frame)
         if cv2.waitKey(1) & 0xff == ord(' '): break
 
     cv2.destroyAllWindows()
