@@ -45,7 +45,8 @@ class Control(Subroutine):
         모든 행동을 이 메서드에 정의합니다.
         """
         while True:
-            # TODO: @박준혁 이곳에 작성하세요!
+            self.mission(self)
+            self.write(self)
             pass
 
     def read(self):
@@ -62,6 +63,7 @@ class Control(Subroutine):
         """
         mission_num = self.data.detected_mission_number
         first, second = self.data  # TODO: 나중에 수정하기
+        self.read(self)
         self.set_mission(mission_num)
         self.do_mission(first, second)
         self.accel(self.speed)
@@ -80,25 +82,48 @@ class Control(Subroutine):
             if first is None:
                 return
             self.__default__(first[0] / 100, first[1])
+            """
+            first[0] = 차선 중앙과의 거리, 넘겨받는 단위: cm
+            first[1] = 차선함수의 기울기
+            임의로 수정할 경우 제어 코드에서 변경하겠음
+            """
 
         elif self.mission_num == 1:  # 유턴
             self.__turn__(first / 100)
+            """
+            11.11일 수정
+            """
 
         elif self.mission_num == 2:  # 횡단보도
             if first is None:
                 self.__cross__(100)
             else:
                 self.__cross__(first / 100)
+            """
+            first = 정지선으로 부터 거리, 넘겨받는 단위: cm
+            아마도 수정 필요 (미션 순서때문에)            
+            """
 
         elif self.mission_num == 3:  # 간격 유지 주행
             self.__target__(first / 100)
+            """
+            first = target car 와의 거리, 넘겨받는 단위: cm
+            """
 
         elif self.mission_num == 4:  # 주차
             # TODO: 후에 추가로 작성하기
             return 0
+            """
+            11일에 수정
+            """
 
         else:
             self.__obs__(first[0] / 100, first[1])
+            """
+            first[0] = 부채꼴함수에서 계산된 거리(반지름), 넘겨받는 단위: cm
+            first[1] = 부채꼴함수에서 계산된 각도
+            임의로 수정할경우 제어 코드에서 변경하겠음
+            """
 
     def accel(self, speed):  # TODO: 후에 실험값을 통해서 값 수정
         if self.speed_platform < (speed / 2):
@@ -249,11 +274,17 @@ class Control(Subroutine):
         obs_mode = 0
         car_circle = 1
 
+        speed_mission = 30  ##미션용 속도, 실험하고 변경바람
+
         if self.mission_num == 2:
-            speed = 60
+            speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
             correction = 1.6
             adjust = 0.05
             obs_mode = 0
+
+            if self.speed_platform > speed_mission:  ## 기울기가 있어서 가속받을 경우 급정지
+                speed = 0
+                brake = 60
 
         else:
             print("MISSION NUMBER ERROR")
@@ -346,7 +377,7 @@ class Control(Subroutine):
 
         self.change_mission = 0
 
-        time = 0.5  # 값 갱신 속도
+        time_change = 0.5  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
             if distance < 1.5:
@@ -356,14 +387,14 @@ class Control(Subroutine):
                 self.t_sit = 1
 
         elif self.t_sit == 1:
+            speed = 0
+
             velocity = distance - 1.5
+            speed = speed + (velocity * 3.6) / time_change
 
             if velocity < 0:
-                velocity = 0
-
-            speed = (velocity * 3.6) / time
-            if velocity == 0:
                 if distance < 1:
+                    speed = 0
                     brake = 60
 
             if speed > 60:
