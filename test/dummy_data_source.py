@@ -1,11 +1,16 @@
 import cv2
-import threading
+
+import sys
+sys.path.append(".")
+from subroutine import Subroutine
+from data_class import Data
 
 DATA_ROOT_PATH = 'c:\\pams-skku-data\\'
 
 
-class DummySource():
-    def __init__(self, filename: str):
+class DummySource(Subroutine):
+    def __init__(self, filename: str, data: Data):
+        super().__init__(data)
         self.cap_left = cv2.VideoCapture(DATA_ROOT_PATH + 'leftcam\\' + filename + '.avi')
         self.cap_right = cv2.VideoCapture(DATA_ROOT_PATH + 'rightcam\\' + filename + '.avi')
         self.cap_mid = cv2.VideoCapture(DATA_ROOT_PATH + 'signcam\\' + filename + '.avi')
@@ -14,7 +19,6 @@ class DummySource():
         self.left_frame = None
         self.right_frame = None
         self.mid_frame = None
-        self.lidar_data = None
 
     def main(self):
         file_cursor = 0
@@ -29,7 +33,7 @@ class DummySource():
             lidar_temp = lidar_temp.decode()
             end_index = lidar_temp.find('')
             lidar_temp = lidar_temp[:end_index + 1]
-            self.lidar_data = lidar_temp
+            self.data.lidar_data_list = lidar_temp
             file_cursor += (end_index + 1)
             self.lidar_file.seek(file_cursor)
 
@@ -39,21 +43,21 @@ if __name__ == "__main__":
     import threading
 
     RAD = 600
-
-    testDS = DummySource('2018-11-04-17-01-16')
+    test_data = Data()
+    testDS = DummySource('2018-11-04-17-01-16', test_data)
     stream_thread = threading.Thread(target=testDS.main)
     stream_thread.start()
 
     # data가 모두 들어올때까지 blocking
     while testDS.left_frame is None or testDS.right_frame is None \
-            or testDS.mid_frame is None or testDS.lidar_data is None:
+            or testDS.mid_frame is None or test_data.lidar_data_list is None:
         pass
 
     while True:
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)
 
-        lidar_data = testDS.lidar_data.split(' ')[116:477]
+        lidar_data = test_data.lidar_data_list.split(' ')[116:477]
         data_list = [int(item, 16) for item in lidar_data]
 
         for theta in range(0, 361):

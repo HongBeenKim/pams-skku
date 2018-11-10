@@ -1,7 +1,6 @@
 import sys
-import os
 
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(".")
 from serial_packet import SerialPacket
 
 modes = {"default": 0, "narrow": 1, "u_turn": 2,
