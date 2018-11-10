@@ -20,6 +20,7 @@ class Subroutine(object):
         """
         각 subroutine 이 한 루프에 해야 할 모든 행동을 이 함수에 정의합니다.
         이 함수는 main.py 에서 thread 로 실행됩니다.
+        따라서 while True 문을 포함하고 있어야 합니다.
 
         :return:
         리턴 값은 없습니다.
