@@ -17,11 +17,6 @@ class DummySource():
         self.lidar_data = None
 
     def main(self):
-        # data가 모두 들어올때까지 blocking
-        # while self.left_frame is None or self.right_frame is None \
-        #         or self.mid_frame is None or self.lidar_data is None:
-        #     pass
-
         file_cursor = 0
         while True:
             ret, self.left_frame = self.cap_left.read()
@@ -39,22 +34,26 @@ class DummySource():
             self.lidar_file.seek(file_cursor)
 
 
-
-
 if __name__ == "__main__":
     import numpy as np
     import threading
 
     RAD = 600
-    dmsc = DummySource('2018-11-04-16-39-23')
-    dmsc_thread = threading.Thread(target=dmsc.main)
-    dmsc_thread.start()
+
+    testDS = DummySource('2018-11-04-17-01-16')
+    stream_thread = threading.Thread(target=testDS.main)
+    stream_thread.start()
+
+    # data가 모두 들어올때까지 blocking
+    while testDS.left_frame is None or testDS.right_frame is None \
+            or testDS.mid_frame is None or testDS.lidar_data is None:
+        pass
 
     while True:
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)
-        if dmsc.lidar_data is None: continue
-        lidar_data = dmsc.lidar_data.split(' ')[116:477]
+
+        lidar_data = testDS.lidar_data.split(' ')[116:477]
         data_list = [int(item, 16) for item in lidar_data]
 
         for theta in range(0, 361):
@@ -73,9 +72,9 @@ if __name__ == "__main__":
             cv2.circle(current_frame, tuple(point), 100, 255, -1)  # 캔버스에 점 찍기
 
         cv2.imshow("LiDAR", current_frame)
-        cv2.imshow('test_left', dmsc.left_frame)
-        cv2.imshow('test_mid', dmsc.mid_frame)
-        cv2.imshow('test_right', dmsc.right_frame)
+        cv2.imshow('test_left', testDS.left_frame)
+        cv2.imshow('test_mid', testDS.mid_frame)
+        cv2.imshow('test_right', testDS.right_frame)
         if cv2.waitKey(1) & 0xff == ord(' '): break
 
     cv2.destroyAllWindows()
