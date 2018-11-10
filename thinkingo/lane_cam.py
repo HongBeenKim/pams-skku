@@ -1,7 +1,10 @@
-from subroutine import Subroutine
-from dummy_data_source import DummySource
 import cv2
 import numpy as np
+import sys
+sys.path.append(".")
+sys.path.append("../test")
+from subroutine import Subroutine
+from dummy_data_source import DummySource
 from data_class import Data
 
 
