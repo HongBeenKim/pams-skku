@@ -2,10 +2,16 @@ import cv2
 import time
 import socket
 
+import sys
+sys.path.append(".")
+from subroutine import Subroutine
+from data_class import Data
 
-class Source():
-    def __init__(self):
-        #  웹캠 부분 (left : ),(right : ),(mid : )
+
+class Source(Subroutine):
+    def __init__(self, data: Data):
+        super().__init__(data)
+        # 웹캠 부분 (left : ),(right : ),(mid : )
         self.cap_left = cv2.VideoCapture(0)
         self.cap_right = cv2.VideoCapture(1)
         self.cap_mid = cv2.VideoCapture(2)
@@ -19,7 +25,7 @@ class Source():
         self.PORT = 2111
         self.BUFF = 57600
         self.MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
-        self.lidar_data = None
+        self.data.lidar_data_list = None
         self.lidar_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.lidar_socket.connect((self.HOST, self.PORT))
         self.lidar_socket.send(str.encode(self.MESG))
@@ -35,12 +41,15 @@ class Source():
         ret, self.mid_frame = self.cap_mid.read()
 
     def lidar_stream(self):
+        """
+        LiDAR 데이터 받아서 저장하는 메서드
+        """
         while True:
             lidar_datum = str(self.lidar_socket.recv(self.BUFF))
             if lidar_datum.__contains__('sEA'): continue
             temp = lidar_datum.split(' ')[116:477]
             try:
-                self.lidar_data = [int(item, 16) for item in temp]
+                self.data.lidar_data_list = [int(item, 16) for item in temp]
             except:
                 pass
 
@@ -51,7 +60,8 @@ class Source():
         while True:
             self.video_stream()
             self.lidar_stream()
-            while self.left_frame is None or self.right_frame is None or self.mid_frame is None or self.lidar_data is None:
+            while self.left_frame is None or self.right_frame is None \
+                    or self.mid_frame is None or self.data.lidar_data_list is None:
                 pass
             if self.stop_flag:
                 self.lidar_socket.send(str.encode(chr(2) + 'sEN LMDscandata 0' + chr(3)))
@@ -62,22 +72,22 @@ class Source():
 if __name__ == "__main__":
     import numpy as np
     import threading
-    from dummy_data_source import DummySource
 
     RAD = 600
-    test_source = Source()
+    test_data = Data()
+    test_source = Source(test_data)
     test_source_thread = threading.Thread(target=test_source.main)
     test_source_thread.start()
 
     # data가 모두 들어올때까지 blocking
     while test_source.left_frame is None or test_source.right_frame is None \
-            or test_source.mid_frame is None or test_source.lidar_data is None:
+            or test_source.mid_frame is None or test_data.lidar_data_list is None:
         pass
 
     while True:
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)
-        lidar_data = test_source.lidar_data.split(' ')[116:477]
+        lidar_data = test_data.lidar_data_list.split(' ')[116:477]
         data_list = [int(item, 16) for item in lidar_data]
 
         for theta in range(0, 361):
