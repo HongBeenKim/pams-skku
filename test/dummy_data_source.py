@@ -16,7 +16,12 @@ class DummySource():
         self.mid_frame = None
         self.lidar_data = None
 
-    def data_stream(self):
+    def main(self):
+        # data가 모두 들어올때까지 blocking
+        # while self.left_frame is None or self.right_frame is None \
+        #         or self.mid_frame is None or self.lidar_data is None:
+        #     pass
+
         file_cursor = 0
         while True:
             ret, self.left_frame = self.cap_left.read()
@@ -33,26 +38,22 @@ class DummySource():
             file_cursor += (end_index + 1)
             self.lidar_file.seek(file_cursor)
 
-    def start(self):
-        stream_thread = threading.Thread(target=self.data_stream)
-        stream_thread.start()
 
-        # data가 모두 들어올때까지 blocking
-        while self.left_frame is None or self.right_frame is None \
-                or self.mid_frame is None or self.lidar_data is None:
-            pass
 
 
 if __name__ == "__main__":
     import numpy as np
+    import threading
 
     RAD = 600
-    dmsc = DummySource('2018-11-04-17-01-16')
-    dmsc.start()
+    dmsc = DummySource('2018-11-04-16-39-23')
+    dmsc_thread = threading.Thread(target=dmsc.main)
+    dmsc_thread.start()
 
     while True:
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)
+        if dmsc.lidar_data is None: continue
         lidar_data = dmsc.lidar_data.split(' ')[116:477]
         data_list = [int(item, 16) for item in lidar_data]
 
@@ -69,7 +70,7 @@ if __name__ == "__main__":
                 points[theta][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), 20, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(current_frame, tuple(point), 100, 255, -1)  # 캔버스에 점 찍기
 
         cv2.imshow("LiDAR", current_frame)
         cv2.imshow('test_left', dmsc.left_frame)
