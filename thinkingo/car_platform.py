@@ -1,5 +1,6 @@
 import serial
 import sys
+
 sys.path.append(".")
 from serial_packet import SerialPacket
 from subroutine import Subroutine
@@ -35,24 +36,25 @@ class CarPlatform(Subroutine):
             print("car_platform SEND ERROR: ", e)
 
 
-def steer_left_test(test_data: Data):
-    test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
-                                steer=SerialPacket.STEER_MAXLEFT, brake=SerialPacket.BRAKE_NOBRAKE)
-
-
-def steer_straight_test(test_data: Data):
-    test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
-                                steer=SerialPacket.STEER_STRAIGHT, brake=SerialPacket.BRAKE_NOBRAKE)
-
-
-def steer_right_test(test_data: Data):
-    test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
-                                steer=SerialPacket.STEER_MAXRIGHT, brake=SerialPacket.BRAKE_NOBRAKE)
-
-
 if __name__ == "__main__":
     import time
     import threading
+
+
+    def steer_left_test(test_data: Data):
+        test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
+                                    steer=SerialPacket.STEER_MAXLEFT, brake=SerialPacket.BRAKE_NOBRAKE)
+
+
+    def steer_straight_test(test_data: Data):
+        test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
+                                    steer=SerialPacket.STEER_STRAIGHT, brake=SerialPacket.BRAKE_NOBRAKE)
+
+
+    def steer_right_test(test_data: Data):
+        test_data.set_control_value(gear=SerialPacket.GEAR_NEUTRAL, speed=SerialPacket.SPEED_MIN,
+                                    steer=SerialPacket.STEER_MAXRIGHT, brake=SerialPacket.BRAKE_NOBRAKE)
+
 
     test_data = Data()
     test_platform = CarPlatform('COM6', test_data)  # PLEASE CHECK YOUR COMPORT
