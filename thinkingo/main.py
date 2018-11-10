@@ -2,6 +2,7 @@ import threading
 import sys
 
 sys.path.append(".")
+from data_source import Source
 from data_class import Data
 
 from car_platform import CarPlatform
@@ -13,9 +14,13 @@ from control import Control
 
 
 def main():
-    data = Data()
-    platform = CarPlatform('COM6', data)
-    sign_cam = SignCam(data)
+    data_source = Source()
+    data_source_thread = threading.Thread(target=data_source.main)
+    data_source_thread.start()
+
+    database = Data()
+    platform = CarPlatform('COM6', database)
+    sign_cam = SignCam(database)
 
     platform_thread = threading.Thread(target=platform.main)
     sign_cam_thread = threading.Thread(target=sign_cam.main)
