@@ -1,6 +1,4 @@
 import socket
-import msvcrt
-
 import sys
 
 sys.path.append(".")
