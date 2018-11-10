@@ -19,6 +19,7 @@ class Data(object):
         self._write_packet = SerialPacket()
         self._detected_mission_number = 0
         self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}
+        self._parking_lot = None  # None or 6 or 7, parking_mode dict 참조
 
     @property
     def read_packet(self):
@@ -112,3 +113,11 @@ class Data(object):
             return True
         else:
             return False
+
+    @property
+    def parking_lot(self):
+        return self._parking_lot
+
+    @parking_lot.setter
+    def parking_lot(self, parking_location: str):
+        self._parking_lot = parking_mode[parking_location]
