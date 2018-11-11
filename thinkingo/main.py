@@ -21,12 +21,21 @@ def main():
 
     platform = CarPlatform('COM6', database)
     sign_cam = SignCam(database)
+    lane_cam = LaneCam(data_source, database)
+    planner = MotionPlanner(database)
+    control = Control(database)
 
     platform_thread = threading.Thread(target=platform.main)
     sign_cam_thread = threading.Thread(target=sign_cam.main)
+    lane_cam_thread = threading.Thread(target=lane_cam.main)
+    planner_thread = threading.Thread(target=planner.main)
+    control_thread = threading.Thread(target=control.main)
 
     platform_thread.start()
     sign_cam_thread.start()
+    lane_cam_thread.start()
+    planner_thread.start()
+    control_thread.start()
 
 
 if __name__ == "__main__":
