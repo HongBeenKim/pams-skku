@@ -209,58 +209,23 @@ class Control(Subroutine):
                 self.ct1 = self.enc_platform
             self.ct2 = self.enc_platform
 
-            if (self.ct2 - self.ct1) < 530:  # TODO: 실험값 수정
-                steer = -1970
+            if (self.ct2 - self.ct1) < 630:  # TODO: 실험값 수정
+                steer = -1469.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 630:  # TODO: 실험값 수정
+            elif 530 <= (self.ct2 - self.ct1) <= 760:  # TODO: 실험값 수정
                 speed = 30
-                steer = -1970
+                steer = -1469.79
 
-            elif (self.ct2 - self.ct1) >= 630:
-                steer = 0
+            elif (self.ct2 - self.ct1) >= 760:
+                steer = -1469.79
+                speed = 0
+                brake = 60
 
                 if self.speed_platform == 0:
+                    steer = 0
+                    speed = 15
                     self.u_sit = 2
-
-        elif self.u_sit == 2:
-            if self.ct3 == 0:
-                self.ct3 = self.enc_platform
-            self.ct4 = self.enc_platform
-
-            if (self.ct4 - self.ct3) < 75:
-                speed = 60
-                steer = 1970
-                brake = 0
-
-            if 75 <= (self.ct4 - self.ct3) <= 145:
-                speed = 30
-                steer = 1970
-
-            elif (self.ct4 - self.ct3) >= 145:
-                speed = 30
-                steer = 0
-
-                if self.speed_platform == 0:
-                    self.u_sit = 3
-
-                self.change_mission = 1
-
-        elif self.u_sit == 3:
-            if self.ct5 == 0:
-                self.ct5 = self.enc_platform
-            self.ct6 = self.enc_platform
-
-            if (self.ct6 - self.ct5) < 50:
-                speed = 60
-                steer = 0
-                brake = 0
-
-            if (self.ct6 - self.ct5) >= 50:
-                speed = 72
-                steer = 0
-
-                if self.speed_platform == 0:
-                    self.u_sit = 4
+                    self.change_mission = 1
 
         self.gear = gear
         self.speed = speed
