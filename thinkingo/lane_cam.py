@@ -5,7 +5,7 @@ import sys
 sys.path.append(".")
 sys.path.append("../test")
 from subroutine import Subroutine
-from dummy_data_source import DummySource
+from data_source import Source
 from data_class import Data
 
 
@@ -19,7 +19,7 @@ class LaneCam(Subroutine):
     # lower_white = np.array([187, 180, 160], dtype=np.uint8)
     # upper_white = np.array([255, 254, 255], dtype=np.uint8)
 
-    def __init__(self, data_source: DummySource, data):
+    def __init__(self, data_source: Source, data):
         super().__init__(data)
         self.data_source = data_source
 
@@ -42,6 +42,8 @@ class LaneCam(Subroutine):
                     cv2.circle(temp_frame, (int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2)), 158), 10, 255, -1)
                     cv2.line(temp_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
 
+        self.data.lane_value  # TODO: set lane values
+
         cv2.imshow('test', temp_frame)
         cv2.imshow('edged', edged)
 
@@ -54,10 +56,11 @@ class LaneCam(Subroutine):
 if __name__ == "__main__":
     import threading
     import time
+    from dummy_data_source import DummySource
 
     testData = Data()
     testDS = DummySource('2018-11-04-17-01-16', testData)
-    testLC = LaneCam(testDS, testData)
+    testLC = LaneCam(testDS, testData)  # DummySource for test
 
     stream_thread = threading.Thread(target=testDS.main)
     stream_thread.start()
