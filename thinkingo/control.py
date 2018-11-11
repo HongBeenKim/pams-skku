@@ -45,8 +45,8 @@ class Control(Subroutine):
         모든 행동을 이 메서드에 정의합니다.
         """
         while True:
-            self.mission(self)
-            self.write(self)
+            self.mission()
+            self.write()
             pass
 
     def read(self):
@@ -62,8 +62,9 @@ class Control(Subroutine):
         판단 함수로부터 필요한 값 받기
         """
         mission_num = self.data.detected_mission_number
-        first, second = self.data  # TODO: 나중에 수정하기
-        self.read(self)
+        first = self.data.lane_value
+        second = None  # TODO: 나중에 수정하기
+        self.read()
         self.set_mission(mission_num)
         self.do_mission(first, second)
         self.accel(self.speed)
