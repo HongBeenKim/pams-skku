@@ -47,7 +47,7 @@ class Control(Subroutine):
         while True:
             mission_num = self.data.detected_mission_number
             first = self.data.lane_value
-            second = None  # TODO: 나중에 수정하기
+            second = self.data.motion_parameter
             self.read()
             self.set_mission(mission_num)
             self.do_mission(first, second)
@@ -73,7 +73,7 @@ class Control(Subroutine):
         :param second: second 값은 무엇인가요?
         :return: 리턴 값은 없습니다.
         """
-        if self.mission_num == 0:  # default 주행
+        if self.mission_num == 0 and second == None:  # default 주행
             if first is None:
                 return
             self.__default__(first[0] / 100, first[1])
@@ -112,8 +112,8 @@ class Control(Subroutine):
             11일에 수정
             """
 
-        else:
-            self.__obs__(first[0] / 100, first[1])
+        elif self.mission_num == 0 and first[0] == 0 and first[1] == 90:
+            self.__obs__(second[1][0] / 100, second[1][1])
             """
             first[0] = 부채꼴함수에서 계산된 거리(반지름), 넘겨받는 단위: cm
             first[1] = 부채꼴함수에서 계산된 각도
@@ -154,9 +154,9 @@ class Control(Subroutine):
         adjust = 0.3
 
         if abs(steer_now) > 15:
-            speed = 60  # TODO: 실험값 수정하기
+            speed = 50  # TODO: 실험값 수정하기 / 60
         else:
-            speed = 72  # TODO: 실험값 수정하기
+            speed = 60  # TODO: 실험값 수정하기 / 72
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final

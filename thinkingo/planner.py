@@ -23,7 +23,6 @@ class MotionPlanner(Subroutine):
         self.previous_data = None
         self.data_stream = data_stream
         self.current_mode = 0  # 모드 번호를 저장하는 변수
-        self.motion_parameter = [None, None, None, None]  # Data class에 올려야 하는 planner의 최종 결과물
 
     def main(self):
         self.init_cuda()  # thread 안에서 initialization 을 해야 합니다.
@@ -32,6 +31,7 @@ class MotionPlanner(Subroutine):
             # 0. 차선 추종 주행 상황
             if self.current_mode == 0:
                 self.lane_handling()
+                self.data.motion_parameter = None
 
             # 1. 협로 주행 상황
             elif self.current_mode == 1:
