@@ -20,39 +20,13 @@ class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
         super().__init__(data)
         # TODO: init할 것 생각하기
+        self.previous_data = None
         self.data_stream = data_stream
         self.current_mode = 0  # 모드 번호를 저장하는 변수
         self.motion_parameter = [None, None, None, None]  # Data class에 올려야 하는 planner의 최종 결과물
 
-        # pycuda alloc
-        drv.init()
-        global context
-        from pycuda.tools import make_default_context
-        context = make_default_context()
-
-        mod = SourceModule(r"""
-                        #include <stdio.h>
-                        #include <math.h>
-                        #define PI 3.14159265
-                        __global__ void detect(int data[][2], int* rad, int* range, unsigned char *frame, int *pcol) {
-                                for(int r = 0; r < rad[0]; r++) {
-                                    const int thetaIdx = threadIdx.x;
-                                    const int theta = thetaIdx + range[0];
-                                    int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
-                                    int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
-                                    if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
-                                    if (*(frame + y * *pcol + x) != 0) data[thetaIdx][0] = 1;
-                                }
-                        }
-                        """)
-
-        self.path = mod.get_function("detect")
-        print("pycuda alloc end")
-        # pycuda alloc end
-
-        time.sleep(2)
-
     def main(self):
+        self.init_cuda()  # thread 안에서 initialization 을 해야 합니다.
         while True:
             if self.data_stream.lidar_data is None: continue
             # 0. 차선 추종 주행 상황
@@ -97,6 +71,35 @@ class MotionPlanner(Subroutine):
             return
 
         # TODO: 차선을 처리하는 코드 넣기
+
+    def init_cuda(self):
+        # pycuda alloc
+        drv.init()
+        global context
+        from pycuda.tools import make_default_context
+        context = make_default_context()
+
+        mod = SourceModule(r"""
+                        #include <stdio.h>
+                        #include <math.h>
+                        #define PI 3.14159265
+                        __global__ void detect(int data[][2], int* rad, int* range, unsigned char *frame, int *pcol) {
+                                for(int r = 0; r < rad[0]; r++) {
+                                    const int thetaIdx = threadIdx.x;
+                                    const int theta = thetaIdx + range[0];
+                                    int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
+                                    int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
+                                    if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
+                                    if (*(frame + y * *pcol + x) != 0) data[thetaIdx][0] = 1;
+                                }
+                        }
+                        """)
+
+        self.path = mod.get_function("detect")
+        print("pycuda alloc end")
+        # pycuda alloc end
+
+        time.sleep(2)
 
     def obs_handling(self, angle, obs_offset):
         if self.is_forward_clear():
@@ -231,5 +234,3 @@ if __name__ == "__main__":
     mid_cam_source_thread.start()
 
     planner_thread.start()
-
-    testMP.stop()
