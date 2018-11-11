@@ -73,7 +73,7 @@ class Control(Subroutine):
         :param second: second 값은 무엇인가요?
         :return: 리턴 값은 없습니다.
         """
-        if self.mission_num == 0 and second == None:  # default 주행
+        if self.mission_num == 0 and second is None:  # default 주행
             if first is None:
                 return
             self.__default__(first[0] / 100, first[1])
@@ -112,7 +112,7 @@ class Control(Subroutine):
             11일에 수정
             """
 
-        elif self.mission_num == 0 and first[0] == 0 and first[1] == 90:
+        elif self.mission_num == 0 and second is not None== 90:
             self.__obs__(second[1][0] / 100, second[1][1])
             """
             first[0] = 부채꼴함수에서 계산된 거리(반지름), 넘겨받는 단위: cm
