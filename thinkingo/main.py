@@ -19,7 +19,7 @@ def main():
     data_source_thread = threading.Thread(target=data_source.main)
     data_source_thread.start()
 
-    platform = CarPlatform('COM6', database)
+    platform = CarPlatform('COM5', database)
     sign_cam = SignCam(database)
     lane_cam = LaneCam(data_source, database)
     planner = MotionPlanner(data_source, database)

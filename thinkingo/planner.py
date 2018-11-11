@@ -27,6 +27,7 @@ class MotionPlanner(Subroutine):
     def main(self):
         self.init_cuda()  # thread 안에서 initialization 을 해야 합니다.
         while True:
+            print("planner current mode: ", self.current_mode)
             if self.data_stream.lidar_data is None: continue
             # 0. 차선 추종 주행 상황
             if self.current_mode == 0:

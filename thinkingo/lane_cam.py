@@ -24,6 +24,7 @@ class LaneCam(Subroutine):
         self.data_source = data_source
 
     def lane_detection(self):
+        if self.data_source.mid_frame is None: return
         temp_frame = self.data_source.mid_frame[290:448, 0:800]
         edged = cv2.Canny(temp_frame, 50, 150)
 
@@ -59,10 +60,21 @@ if __name__ == "__main__":
     from dummy_data_source import DummySource
 
     testData = Data()
-    testDS = DummySource('2018-11-04-17-01-16', testData)
+    testDS = Source(testData)
     testLC = LaneCam(testDS, testData)  # DummySource for test
+
+    lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
+    left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
+    right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
+    mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
 
     stream_thread = threading.Thread(target=testDS.main)
     stream_thread.start()
     time.sleep(1)
+
+    lidar_source_thread.start()
+    left_cam_source_thread.start()
+    right_cam_source_thread.start()
+    mid_cam_source_thread.start()
+
     testLC.main()
