@@ -22,7 +22,7 @@ def main():
     platform = CarPlatform('COM6', database)
     sign_cam = SignCam(database)
     lane_cam = LaneCam(data_source, database)
-    planner = MotionPlanner(database)
+    planner = MotionPlanner(data_source, database)
     control = Control(database)
 
     platform_thread = threading.Thread(target=platform.main)
