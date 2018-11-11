@@ -27,25 +27,27 @@ class Source(Subroutine):
         self.lidar_data = None
 
         self.lidar_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("waiting LiDAR connected. . .")
         self.lidar_socket.connect((self.HOST, self.PORT))
+        print("LiDAR connect complete!")
         self.lidar_socket.send(str.encode(self.MESG))
 
         # stop_flag 초기값
         self.stop_flag = False
 
-    def left_cam_stream(self):
+    def left_cam_stream_main(self):
         while True:
             _, self.left_frame = self.cap_left.read()
 
-    def right_cam_stream(self):
+    def right_cam_stream_main(self):
         while True:
             _, self.right_frame = self.cap_right.read()
 
-    def mid_cam_stream(self):
+    def mid_cam_stream_main(self):
         while True:
             _, self.mid_frame = self.cap_mid.read()
 
-    def lidar_stream(self):
+    def lidar_stream_main(self):
         while True:
             raw_data = str(self.lidar_socket.recv(self.BUFF))
             if raw_data.__contains__('sEA'): continue
