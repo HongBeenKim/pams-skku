@@ -21,6 +21,7 @@ class MotionPlanner(Subroutine):
         # TODO: init할 것 생각하기
 
         self.current_mode = 0  # 모드 번호를 저장하는 변수
+        self.motion_parameter = [None, None, None, None]  # Data class에 올려야 하는 planner의 최종 결과물
 
         # pycuda alloc
         drv.init()
@@ -51,7 +52,7 @@ class MotionPlanner(Subroutine):
 
     def main(self):
         while True:
-            # 0. Default 주행 상황
+            # 0. 차선 추종 주행 상황
             if self.current_mode == 0:
                 self.lane_handling()
 
@@ -80,52 +81,26 @@ class MotionPlanner(Subroutine):
         clear_context_caches()
         # pycuda dealloc end
 
-    def lane_handling(self):
-        ACT_RAD = np.int32(ACTUAL_RADIUS)  # 실제 라이다 화면의 세로 길이 (즉 부채살의 실제 반경)
-        CLR_RAD = np.int32(CLEAR_RADIUS)  # 전방이 깨끗한지 검사할 때 사용하는 부채살의 반경 (<= ACT_RAD)
-
-        AUX_RANGE = np.int32(0)
-
+    def is_forward_clear(self):
         lidar_raw_data = self.data.lidar_data_list
-        current_frame = np.zeros((ACT_RAD, ACT_RAD * 2), np.uint8)  # 그림 그릴 도화지 생성
+        for r in lidar_raw_data:
+            if 20 <= r < 3000:
+                return False
+        return True
 
-        points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
-
-        for theta in range(0, 361):
-            r = lidar_raw_data[theta] / 10  # 차에서 장애물까지의 거리, 단위는 cm
-
-            if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
-
-                # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
-                x = r * np.cos(np.radians(0.5 * theta))
-                y = r * np.sin(np.radians(0.5 * theta))
-
-                # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
-                points[theta][0] = round(x) + ACT_RAD
-                points[theta][1] = ACT_RAD - round(y)
-
-        for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), OBSTACLE_OFFSET, 255, -1)  # 캔버스에 점 찍기
-
-        data_ = np.zeros((181, 2), np.int)
-
-        if current_frame is not None:
-            self.path(drv.InOut(data_), drv.In(ACT_RAD), drv.IN(CLR_RAD), drv.In(AUX_RANGE), drv.In(current_frame),
-                      drv.In(np.int32(ACT_RAD * 2)),
-                      block=(181, 1, 1))
-
-        count_ = np.sum(np.transpose(data_)[0])  # count_: 전방 CLR_RAD 가 깨끗한가? 깨끗하면 0, 뭔가 있으면 > 0
-
-        if count_ > 0:  # 전방에 뭔가 있으면
-            self.current_mode = 1  # 부채살 모드로 전환하고
-            return  # 더이상 할 일이 없으므로 return
+    def lane_handling(self):
+        if not self.is_forward_clear():
+            self.current_mode = 1
+            return
 
         # TODO: 차선을 처리하는 코드 넣기
 
-
     def obs_handling(self, angle, obs_offset):
+        if self.is_forward_clear():
+            self.current_mode = 0
+            return
+
         ACT_RAD = np.int32(ACTUAL_RADIUS)  # 실제 라이다 화면의 세로 길이 (즉 부채살의 실제 반경)
-        CLR_RAD = np.int32(CLEAR_RADIUS)  # 전방이 깨끗한지 검사할 때 사용하는 부채살의 반경 (<= ACT_RAD)
 
         AUX_RANGE = np.int32((180 - angle) / 2)  # 좌우대칭 부채살의 사잇각이 angle, AUX_RANGE 는 +x축 기준 첫 부채살의 각도
 
@@ -150,20 +125,7 @@ class MotionPlanner(Subroutine):
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), obs_offset, 255, -1)  # 캔버스에 점 찍기
 
-        data_ = np.zeros((angle + 1, 2), np.int)
-
-        if current_frame is not None:
-            self.path(drv.InOut(data_), drv.In(ACT_RAD), drv.IN(CLR_RAD), drv.In(AUX_RANGE), drv.In(current_frame),
-                      drv.In(np.int32(ACT_RAD * 2)),
-                      block=(angle + 1, 1, 1))
-
-        count_ = np.sum(np.transpose(data_)[0])  # count_: 전방 CLR_RAD 가 깨끗한가? 깨끗하면 0, 뭔가 있으면 > 0
-
-        if count_ == 0:
-            self.current_mode = 0  # 깨끗하면 모드를 0(차선 추종)으로 바꾸고
-            return  # 더이상 할 일이 없으므로 리턴
-
-        # 뭔가 장애물이 있으면 계속 실행됨
+        # 부채살의 결과가 저장되는 변수
         data = np.zeros((angle + 1, 2), np.int)
 
         color = None
