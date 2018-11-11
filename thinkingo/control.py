@@ -46,11 +46,12 @@ class Control(Subroutine):
         """
         while True:
             # TODO: @박준혁 이곳에 작성하세요!
-            pass
+            self.read()
+            self.mission()
 
     def read(self):
         """
-        data_class.py 에서 데이터 받아오기
+        data_class.py 에서 차량 플랫폼 데이터 받아오기
         """
         gear, speed, steer, brake, aorm, alive, enc = self.data.car_platform_status()
         self.speed_platform = speed
@@ -58,10 +59,10 @@ class Control(Subroutine):
 
     def mission(self):
         """
-        판단 함수로부터 필요한 값 받기
+        판단 함수로부터 필요한 값 받고 제어하기
         """
         mission_num = self.data.detected_mission_number
-        first, second = self.data  # TODO: 나중에 수정하기
+        first, second = self.data.lane_value  # TODO: 나중에 수정하기
         self.set_mission(mission_num)
         self.do_mission(first, second)
         self.accel(self.speed)
