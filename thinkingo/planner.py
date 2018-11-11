@@ -54,6 +54,7 @@ class MotionPlanner(Subroutine):
 
     def main(self):
         while True:
+            if self.data_stream.lidar_data is None: continue
             # 0. 차선 추종 주행 상황
             if self.current_mode == 0:
                 self.lane_handling()
@@ -135,7 +136,7 @@ class MotionPlanner(Subroutine):
 
         if current_frame is not None:
             # 부채살 호출
-            self.path(drv.InOut(data), drv.In(ACTUAL_RADIUS), drv.IN(ACTUAL_RADIUS), drv.In(AUX_RANGE), drv.In(current_frame),
+            self.path(drv.InOut(data), drv.In(ACTUAL_RADIUS), drv.In(ACTUAL_RADIUS), drv.In(AUX_RANGE), drv.In(current_frame),
                       drv.In(np.int32(ACT_RAD * 2)), block=(angle + 1, 1, 1))
 
             # 부채살이 호출되고 나면 data에 부채살 결과가 들어있음
