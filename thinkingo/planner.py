@@ -193,7 +193,7 @@ class MotionPlanner(Subroutine):
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
                 self.data.motion_parameter = (self.current_mode, (data_transposed[1][target - AUX_RANGE], target), None,
-                                         None)
+                                              None)
 
                 self.previous_data = data
                 self.previous_target = target
