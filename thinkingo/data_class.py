@@ -14,6 +14,9 @@ NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
 
 class Data(object):
     def __init__(self):
+        """
+        values set from. . .
+        """
         # car platform
         self._read_packet = SerialPacket()
         self._write_packet = SerialPacket()
@@ -30,8 +33,7 @@ class Data(object):
         self._motion_parameter = None
 
         # lane cam
-        self.intercept = 0
-        self.theta = 0
+        self.lane_value = (0, 90)  # (intercept, theta)
 
     @property
     def read_packet(self):
