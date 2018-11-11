@@ -26,9 +26,6 @@ class Data(object):
         self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}
         self._parking_lot = None  # None or 6 or 7, parking_mode dict 참조
 
-        # data source
-        self._lidar_data_list = None
-
         # planner
         self._motion_parameter = None
 
@@ -135,14 +132,6 @@ class Data(object):
     @parking_lot.setter
     def parking_lot(self, parking_location: str):
         self._parking_lot = parking_mode[parking_location]
-
-    @property
-    def lidar_data_list(self):
-        return self._lidar_data_list
-
-    @lidar_data_list.setter
-    def lidar_data_list(self, lidar_data: list):
-        self._lidar_data_list = lidar_data
 
     @property
     def motion_parameter(self):
