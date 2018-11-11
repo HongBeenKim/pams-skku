@@ -1,7 +1,6 @@
 import sys
-import os
 
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(".")
 from serial_packet import SerialPacket
 
 modes = {"default": 0, "narrow": 1, "u_turn": 2,
@@ -15,11 +14,23 @@ NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
 
 class Data(object):
     def __init__(self):
+        """
+        values set from. . .
+        """
+        # car platform
         self._read_packet = SerialPacket()
         self._write_packet = SerialPacket()
+
+        # sign cam
         self._detected_mission_number = 0
         self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}
         self._parking_lot = None  # None or 6 or 7, parking_mode dict 참조
+
+        # planner
+        self._motion_parameter = None
+
+        # lane cam
+        self.lane_value = (0, 90)  # (intercept, theta)
 
     @property
     def read_packet(self):
@@ -121,3 +132,11 @@ class Data(object):
     @parking_lot.setter
     def parking_lot(self, parking_location: str):
         self._parking_lot = parking_mode[parking_location]
+
+    @property
+    def motion_parameter(self):
+        return self._motion_parameter
+
+    @motion_parameter.setter
+    def motion_parameter(self, parameter: tuple):
+        self._motion_parameter = parameter
