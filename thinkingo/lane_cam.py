@@ -25,7 +25,7 @@ class LaneCam(Subroutine):
 
     def lane_detection(self):
         if self.data_source.mid_frame is None: return
-        temp_frame = self.data_source.mid_frame[290:448, 0:800]
+        temp_frame = self.data_source.mid_frame.copy()[290:448, 0:800]
         edged = cv2.Canny(temp_frame, 50, 150)
 
         # image, contours, hierachy = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)

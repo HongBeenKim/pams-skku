@@ -19,7 +19,7 @@ class Source(Subroutine):
         # 웹캠 부분 (left : ),(right : ),(mid : )
         self.cap_left = cv2.VideoCapture(0)
         self.cap_right = cv2.VideoCapture(1)
-        self.cap_mid = cv2.VideoCapture(2)
+        self.cap_mid = cv2.VideoCapture(3)
 
         self.left_frame = None
         self.right_frame = None

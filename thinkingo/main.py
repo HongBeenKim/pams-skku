@@ -16,8 +16,15 @@ def main():
     database = Data()
 
     data_source = Source(database)
-    data_source_thread = threading.Thread(target=data_source.main)
-    data_source_thread.start()
+    lidar_source_thread = threading.Thread(target=data_source.lidar_stream_main)
+    left_cam_source_thread = threading.Thread(target=data_source.left_cam_stream_main)
+    right_cam_source_thread = threading.Thread(target=data_source.right_cam_stream_main)
+    mid_cam_source_thread = threading.Thread(target=data_source.mid_cam_stream_main)
+
+    lidar_source_thread.start()
+    left_cam_source_thread.start()
+    right_cam_source_thread.start()
+    mid_cam_source_thread.start()
 
     platform = CarPlatform('COM5', database)
     sign_cam = SignCam(database)
