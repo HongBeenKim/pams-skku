@@ -14,14 +14,24 @@ NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
 
 class Data(object):
     def __init__(self):
+        # car platform
         self._read_packet = SerialPacket()
         self._write_packet = SerialPacket()
 
+        # sign cam
         self._detected_mission_number = 0
         self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}
         self._parking_lot = None  # None or 6 or 7, parking_mode dict 참조
 
+        # data source
         self._lidar_data_list = None
+
+        # planner
+        self._motion_parameter = None
+
+        # lane cam
+        self.intercept = 0
+        self.theta = 0
 
     @property
     def read_packet(self):
@@ -129,5 +139,13 @@ class Data(object):
         return self._lidar_data_list
 
     @lidar_data_list.setter
-    def lidar_data_list(self, lidar_data_list: list):
-        self._lidar_data_list = lidar_data_list
+    def lidar_data_list(self, lidar_data: list):
+        self._lidar_data_list = lidar_data
+
+    @property
+    def motion_parameter(self):
+        return self._motion_parameter
+
+    @motion_parameter.setter
+    def motion_parameter(self, parameter: tuple):
+        self._motion_parameter = parameter
