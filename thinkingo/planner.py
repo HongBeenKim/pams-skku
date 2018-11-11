@@ -15,8 +15,9 @@ CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를
 ARC_ANGLE = 180  # 부채살 적용 각도
 OBSTACLE_OFFSET = 50  # 부채살 적용 시 장애물의 offset (cm 단위)
 
+
 class MotionPlanner(Subroutine):
-    def __init__(self, data: Data, data_source):
+    def __init__(self, data: Data):
         super().__init__(data)
         # TODO: init할 것 생각하기
 
@@ -46,6 +47,7 @@ class MotionPlanner(Subroutine):
                         """)
 
         self.path = mod.get_function("detect")
+        print("pycuda alloc end")
         # pycuda alloc end
 
         time.sleep(2)
@@ -190,7 +192,7 @@ class MotionPlanner(Subroutine):
                 y_target = ACT_RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion_parameter = (self.current_mode, (data_transposed[1][target - AUX_RANGE], target), None,
+                self.data.motion_parameter = (self.current_mode, (data_transposed[1][target - AUX_RANGE], target), None,
                                          None)
 
                 self.previous_data = data
@@ -201,7 +203,7 @@ class MotionPlanner(Subroutine):
                 y_target = ACT_RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.motion_parameter = (self.current_mode, (10, target), None, None)
+                self.data.motion_parameter = (self.current_mode, (10, target), None, None)
 
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
@@ -212,8 +214,12 @@ if __name__ == "__main__":
 
     testDT = Data()
     testDS = Source(testDT)
-    testMP = MotionPlanner(testDT, testDS)
+    testMP = MotionPlanner(testDT)
 
-    # TODO: 여기 스레드 생성하고 켜는것좀 채워주세요
+    data_source_thread = threading.Thread(target=testDS.main)
+    planner_thread = threading.Thread(target=testMP.main)
+
+    data_source_thread.start()
+    planner_thread.start()
 
     testMP.stop()
