@@ -34,12 +34,12 @@ class MotionPlanner(Subroutine):
                         #include <stdio.h>
                         #include <math.h>
                         #define PI 3.14159265
-                        __global__ void detect(int data[][2], int* act_rad, int* clr_rad, int* range, unsigned char *frame, int *pcol) {
-                                for(int r = 0; r < clr_rad[0]; r++) {
+                        __global__ void detect(int data[][2], int* rad, int* range, unsigned char *frame, int *pcol) {
+                                for(int r = 0; r < rad[0]; r++) {
                                     const int thetaIdx = threadIdx.x;
                                     const int theta = thetaIdx + range[0];
-                                    int x = act_rad[0] + int(r * cos(theta * PI/180)) - 1;
-                                    int y = act_rad[0] - int(r * sin(theta * PI/180)) - 1;
+                                    int x = rad[0] + int(r * cos(theta * PI/180)) - 1;
+                                    int y = rad[0] - int(r * sin(theta * PI/180)) - 1;
                                     if (data[thetaIdx][0] == 0) data[thetaIdx][1] = r;
                                     if (*(frame + y * *pcol + x) != 0) data[thetaIdx][0] = 1;
                                 }
@@ -135,7 +135,7 @@ class MotionPlanner(Subroutine):
 
         if current_frame is not None:
             # 부채살 호출
-            self.path(drv.InOut(data), drv.In(ACTUAL_RADIUS), drv.IN(ACTUAL_RADIUS), drv.In(AUX_RANGE), drv.In(current_frame),
+            self.path(drv.InOut(data), drv.In(ACTUAL_RADIUS), drv.In(AUX_RANGE), drv.In(current_frame),
                       drv.In(np.int32(ACT_RAD * 2)), block=(angle + 1, 1, 1))
 
             # 부채살이 호출되고 나면 data에 부채살 결과가 들어있음
