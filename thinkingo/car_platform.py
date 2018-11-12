@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
 
     test_data = Data()
-    test_platform = CarPlatform('COM6', test_data)  # PLEASE CHECK YOUR COMPORT
+    test_platform = CarPlatform('COM5', test_data)  # PLEASE CHECK YOUR COMPORT
     platform_thread = threading.Thread(target=test_platform.main)
     platform_thread.start()
 
