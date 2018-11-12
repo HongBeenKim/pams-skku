@@ -13,8 +13,10 @@ from control import Control
 
 
 def main():
+    # global data
     database = Data()
 
+    # sensor data
     data_source = Source(database)
     lidar_source_thread = threading.Thread(target=data_source.lidar_stream_main)
     left_cam_source_thread = threading.Thread(target=data_source.left_cam_stream_main)
@@ -26,7 +28,8 @@ def main():
     right_cam_source_thread.start()
     mid_cam_source_thread.start()
 
-    platform = CarPlatform('COM5', database)
+    # Subroutines
+    platform = CarPlatform('COM5', database)  # PLEASE CHECK YOUR COMPORT
     sign_cam = SignCam(database)
     lane_cam = LaneCam(data_source, database)
     planner = MotionPlanner(data_source, database)
