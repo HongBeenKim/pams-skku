@@ -3,12 +3,12 @@ from pycuda.compiler import SourceModule
 import time
 import cv2
 import numpy as np
-from data_source import Source
 import sys
 
 sys.path.append(".")
 from subroutine import Subroutine
 from data_class import Data
+from data_source import Source
 
 ACTUAL_RADIUS = 500  # 부채살의 실제 반경
 CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
@@ -19,7 +19,7 @@ OBSTACLE_OFFSET = 50  # 부채살 적용 시 장애물의 offset (cm 단위)
 class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
         super().__init__(data)
-        # TODO: init할 것 생각하기
+        # TODO: init 할 것 생각하기
         self.previous_data = None
         self.data_stream = data_stream
         self.current_mode = 0  # 모드 번호를 저장하는 변수
@@ -27,7 +27,7 @@ class MotionPlanner(Subroutine):
     def main(self):
         self.init_cuda()  # thread 안에서 initialization 을 해야 합니다.
         while True:
-            print("planner current mode: ", self.current_mode)
+            print("PLANNER current mode: ", self.current_mode)
             if self.data_stream.lidar_data is None: continue
             # 0. 차선 추종 주행 상황
             if self.current_mode == 0:
@@ -97,7 +97,7 @@ class MotionPlanner(Subroutine):
                         """)
 
         self.path = mod.get_function("detect")
-        print("pycuda alloc end")
+        print("PLANNER: pycuda alloc end")
         # pycuda alloc end
 
         time.sleep(2)
@@ -197,6 +197,8 @@ class MotionPlanner(Subroutine):
                 y_target = ACT_RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
+                # set control data
+                # TODO: @김홍빈 @박준혁 장애물 제어 완성하기
                 self.data.motion_parameter = (self.current_mode, (data_transposed[1][target - AUX_RANGE], target), None,
                                               None)
 
@@ -219,19 +221,17 @@ if __name__ == "__main__":
 
     testDT = Data()
     testDS = Source(testDT)
-    testMP = MotionPlanner(testDS, testDT)
-    testMP.current_mode = 1
 
     lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
     left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
     right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
     mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
 
-    planner_thread = threading.Thread(target=testMP.main)
-
     lidar_source_thread.start()
     left_cam_source_thread.start()
     right_cam_source_thread.start()
     mid_cam_source_thread.start()
 
+    testMP = MotionPlanner(testDS, testDT)
+    planner_thread = threading.Thread(target=testMP.main)
     planner_thread.start()
