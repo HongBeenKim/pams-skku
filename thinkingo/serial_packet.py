@@ -67,8 +67,8 @@ class SerialPacket(object):
         self.aorm = SerialPacket.AORM_DEFAULT
         self.estop = SerialPacket.ESTOP_DEFAULT
         self.gear = SerialPacket.GEAR_DEFAULT
-        self.speed = 0
-        self.steer = 0
+        self.speed = SerialPacket.SPEED_MIN
+        self.steer = SerialPacket.STEER_STRAIGHT
         self.brake = SerialPacket.BRAKE_DEFAULT
         self.enc = 0
         self.alive = 0
