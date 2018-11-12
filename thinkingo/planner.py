@@ -18,6 +18,7 @@ OBSTACLE_OFFSET = 50  # 부채살 적용 시 장애물의 offset (cm 단위)
 
 class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
+        cv2.setNumThreads(0)
         super().__init__(data)
         # TODO: init 할 것 생각하기
         self.previous_data = None
@@ -37,6 +38,7 @@ class MotionPlanner(Subroutine):
             # 1. 협로 주행 상황
             elif self.current_mode == 1:
                 self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
+
                 if cv2.waitKey(1) & 0xff == ord(' '):
                     cv2.destroyWindow('obstacle avoidance')
                     break  # obs_handling 안에 imshow 들어있어서..
@@ -105,6 +107,7 @@ class MotionPlanner(Subroutine):
         time.sleep(2)
 
     def obs_handling(self, angle, obs_offset):
+
         if self.is_forward_clear():
             self.current_mode = 0
             cv2.destroyWindow('obstacle avoidance')
@@ -119,6 +122,7 @@ class MotionPlanner(Subroutine):
 
         points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
 
+
         for theta in range(0, 361):
             r = lidar_raw_data[theta] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
@@ -131,10 +135,11 @@ class MotionPlanner(Subroutine):
                 # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
                 points[theta][0] = round(x) + ACT_RAD
                 points[theta][1] = ACT_RAD - round(y)
+        t1 = time.time()
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), obs_offset, 255, -1)  # 캔버스에 점 찍기
-
+        print(time.time() - t1)
         # 부채살의 결과가 저장되는 변수
         data = np.zeros((angle + 1, 2), np.int)
 
@@ -214,7 +219,9 @@ class MotionPlanner(Subroutine):
                 y_target = ACT_RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.data.motion_parameter = (self.current_mode, 10, target, None)
+                self.data.planner_to_control_packet = (self.current_mode, 10, target, None)
+
+            print(self.data.planner_to_control_packet)
 
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
@@ -222,6 +229,8 @@ class MotionPlanner(Subroutine):
 
 if __name__ == "__main__":
     import threading
+    from control import Control
+    from car_platform import CarPlatform
 
     testDT = Data()
     testDS = Source()
@@ -237,5 +246,12 @@ if __name__ == "__main__":
     mid_cam_source_thread.start()
 
     testMP = MotionPlanner(testDS, testDT)
+    test_control = Control(testDT)
     planner_thread = threading.Thread(target=testMP.main)
+    control_thread = threading.Thread(target=test_control.main)
+    car = CarPlatform('COM5', testDT)
+    car_thread = threading.Thread(target=car.main)
+    car_thread.start()
     planner_thread.start()
+    time.sleep(3)
+    control_thread.start()

@@ -28,7 +28,7 @@ class Data(object):
         self.lane_value = (0, 90)  # (intercept, theta)
 
         # planner to control
-        self.planner_to_control_packet = (self._detected_mission_number, None, None)
+        self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
 
     @property
     def read_packet(self):

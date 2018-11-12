@@ -17,7 +17,7 @@ def main():
     database = Data()
 
     # sensor data
-    data_source = Source(database)
+    data_source = Source()
     lidar_source_thread = threading.Thread(target=data_source.lidar_stream_main)
     left_cam_source_thread = threading.Thread(target=data_source.left_cam_stream_main)
     right_cam_source_thread = threading.Thread(target=data_source.right_cam_stream_main)

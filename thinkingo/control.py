@@ -46,11 +46,11 @@ class Control(Subroutine):
 
     def main(self):
         while True:
-            packet, mode_change = self.read_packet_from_planner()
+            packet= self.read_packet_from_planner()
             self.read_car_platform_status()
             self.do_mission(packet)
             self.accel(self.speed)
-            self.write()
+            self.data.set_control_value(*self.write())
             pass
 
     def read_packet_from_planner(self):
@@ -123,9 +123,6 @@ class Control(Subroutine):
         if self.speed_platform < ((3 * speed)/ 5):
             self.accel_speed = 2 * self.speed
             self.accel_brake = self.brake
-        elif self.brake == 0 and ((self.speed_platform / 2) > self.speed) and self.speed_platform > 50:
-            self.accel_speed = 0
-            self.brake = 20
         else:
             self.accel_speed = self.speed
             self.accel_brake = self.brake
@@ -190,12 +187,6 @@ class Control(Subroutine):
             speed = 0
             brake = 60
 
-        if obs_r is None or obs_theta is None:
-            print("MISSION NUMBER ERROR")
-            speed = 0
-            correction = 0.0
-            adjust = 0.0
-
         self.change_mission = 1
 
         cal_theta = math.radians(abs(obs_theta - 90))
@@ -220,9 +211,6 @@ class Control(Subroutine):
 
             if abs(theta_obs) > 15:
                 speed = 12
-            else:
-                print("OBS MODE ERROR")
-                theta_obs = 0
 
         if (90 - obs_theta) < 0:
             theta_obs = theta_obs * (-1)
