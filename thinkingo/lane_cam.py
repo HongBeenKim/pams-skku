@@ -25,7 +25,7 @@ class LaneCam(Subroutine):
 
     def lane_detection(self):
         if self.data_source.mid_frame is None: return
-        temp_frame = self.data_source.mid_frame.copy()[290:448, 0:800]
+        temp_frame = self.data_source.mid_frame[290:448, 0:800].copy()
         edged = cv2.Canny(temp_frame, 50, 150)
 
         # image, contours, hierachy = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -37,13 +37,15 @@ class LaneCam(Subroutine):
         if hough_lines is not None:
             for i in range(0, len(hough_lines)):
                 for x1, y1, x2, y2 in hough_lines[i]:
-                    if x1 == x2: continue
-                    if (abs(y1 - y2) / abs(x1 - x2)) < 0.1 or np.sqrt(
+                    if y1 == y2: continue
+                    ceiling_interception = int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2))
+                    bottom_interception = int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2))
+                    if 266 > ceiling_interception or ceiling_interception > 532 or x1 == x2 or (abs(y1 - y2) / abs(x1 - x2)) < 0.1 or np.sqrt(
                             (x1 - x2) ** 2 + (y1 - y2) ** 2) < 50: continue
-                    cv2.circle(temp_frame, (int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2)), 158), 10, 255, -1)
+                    cv2.circle(temp_frame, (int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2)), 0), 10, 255, -1)
                     cv2.line(temp_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
 
-        self.data.lane_value  # TODO: set lane values
+        #self.data.lane_value  # TODO: set lane values
 
         cv2.imshow('test', temp_frame)
         cv2.imshow('edged', edged)
@@ -60,21 +62,23 @@ if __name__ == "__main__":
     from dummy_data_source import DummySource
 
     testData = Data()
-    testDS = Source(testData)
-    testLC = LaneCam(testDS, testData)  # DummySource for test
+    testDS = Source()
+    testDDS = DummySource('2018-11-04-17-01-16')
+    testLC = LaneCam(testDDS, testData)  # DummySource for test
 
-    lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
-    left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
-    right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
-    mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
+    # lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
+    # left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
+    # right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
+    # mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
 
-    stream_thread = threading.Thread(target=testDS.main)
-    stream_thread.start()
-    time.sleep(1)
+    dummy_thread = threading.Thread(target=testDDS.main)
+    dummy_thread.start()
 
-    lidar_source_thread.start()
-    left_cam_source_thread.start()
-    right_cam_source_thread.start()
-    mid_cam_source_thread.start()
+    # lidar_source_thread.start()
+    # left_cam_source_thread.start()
+    # right_cam_source_thread.start()
+    # mid_cam_source_thread.start()
+
+    time.sleep(2)
 
     testLC.main()
