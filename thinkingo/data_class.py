@@ -28,7 +28,7 @@ class Data(object):
         self.lane_value = (0, 90)  # (intercept, theta)
 
         # planner to control
-        self.planner_to_control_packet = (self._detected_mission_number, None, None)
+        self.planner_to_control_packet = (self._detected_mission_number, None, None, None)
         self.second = None
 
     @property
@@ -69,20 +69,32 @@ class Data(object):
 
     @property
     def detected_mission_number(self):
+        """
+        :return: a integer from 1 to 5
+        """
         return self._detected_mission_number
 
     @detected_mission_number.setter
     def detected_mission_number(self, mission: str):
-        self._detected_mission_number = modes[mission]
+        try:
+            if modes[mission] != 0:
+                self._detected_mission_number = modes[mission]
+            else:
+                print("Error: detected mission number cannot be default(0)")
+        except KeyError as e:
+            print(e)
 
     def check_mission_completed(self, mission: str):
         """
         어떤 미션이 끝나면 그 미션을 수행했다고 체크한 뒤 기본 주행으로 넘어간다.
         :param mission: 미션 이름 string (modes dictionary 참조)
         """
-        mission_num = modes[mission]
-        self._mission_checklist[mission_num] = True
-        self._detected_mission_number = modes["default"]
+        try:
+            mission_num = modes[mission]
+            self._mission_checklist[mission_num] = True
+            self._detected_mission_number = modes["default"]
+        except KeyError as e:
+            print(e)
 
     def check_u_turn_complete(self):
         """
@@ -99,21 +111,27 @@ class Data(object):
         self._detected_mission_number = modes["target_tracking"]
 
     def is_next_mission(self, mission: str):
-        result = False
-        for num, okay in self._mission_checklist.items():
-            if okay:
-                continue
-            else:
-                if num == modes[mission]:
-                    result = True
-                    break
+        try:
+            if modes[mission] == modes["default"]:
+                return True
+            result = False
+            for num, okay in self._mission_checklist.items():
+                if okay:
+                    continue
                 else:
-                    result = False
-                    break
-        return result
+                    if num == modes[mission]:
+                        result = True
+                        break
+                    else:
+                        result = False
+                        break
+            return result
+        except KeyError as e:  # dictionary not has such key
+            print(e)
+            return False
 
     def is_in_mission(self):
-        if self._detected_mission_number == 0:
+        if self._detected_mission_number == 0 or self._detected_mission_number == 1:
             return False
         else:
             return True
@@ -126,8 +144,14 @@ class Data(object):
 
     @property
     def parking_lot(self):
+        """
+        :return: int 6 or 7
+        """
         return self._parking_lot
 
     @parking_lot.setter
     def parking_lot(self, parking_location: str):
-        self._parking_lot = parking_mode[parking_location]
+        try:
+            self._parking_lot = parking_mode[parking_location]
+        except KeyError as e:
+            print(e)
