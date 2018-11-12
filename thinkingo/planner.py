@@ -204,7 +204,7 @@ class MotionPlanner(Subroutine):
                 # TODO: @김홍빈 @박준혁 장애물 제어 완성하기
                 # FIXME: 정의된 대로 값 세팅하기
                 self.data.planner_to_control_packet = (self.current_mode,
-                                                       (data_transposed[1][target - AUX_RANGE], target), None, None)
+                                                       data_transposed[1][target - AUX_RANGE], target, None)
 
                 self.previous_data = data
                 self.previous_target = target
@@ -214,7 +214,7 @@ class MotionPlanner(Subroutine):
                 y_target = ACT_RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.data.motion_parameter = (self.current_mode, (10, target), None, None)
+                self.data.motion_parameter = (self.current_mode, 10, target, None)
 
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
