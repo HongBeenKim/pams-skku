@@ -95,14 +95,10 @@ class Control(Subroutine):
         :return: 리턴 값은 없습니다.
         """
         if self.mission_num == modes["default"]:
-            if mode_change is None:
                 if packet is None:
                     return
                 self.__default__(packet[1] / 100, packet[2])
-
-        elif self.mission_num == modes["default"]:
-            self.__obs__(packet[1] / 100, packet[2])
-
+                
         elif self.mission_num == modes["narrow"]:
             self.__obs__(packet[1] / 100, packet[2])
 
