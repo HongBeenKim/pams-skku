@@ -2,15 +2,13 @@ import cv2
 
 import sys
 sys.path.append(".")
-from subroutine import Subroutine
 from data_class import Data
 
 DATA_ROOT_PATH = 'c:\\pams-skku-data\\'
 
 
-class DummySource(Subroutine):
-    def __init__(self, filename: str, data: Data):
-        super().__init__(data)
+class DummySource():
+    def __init__(self, filename: str):
         self.cap_left = cv2.VideoCapture(DATA_ROOT_PATH + 'leftcam\\' + filename + '.avi')
         self.cap_right = cv2.VideoCapture(DATA_ROOT_PATH + 'rightcam\\' + filename + '.avi')
         self.cap_mid = cv2.VideoCapture(DATA_ROOT_PATH + 'signcam\\' + filename + '.avi')
@@ -19,6 +17,7 @@ class DummySource(Subroutine):
         self.left_frame = None
         self.right_frame = None
         self.mid_frame = None
+        self.lidar_data = None
 
     def main(self):
         file_cursor = 0
@@ -32,8 +31,15 @@ class DummySource(Subroutine):
             lidar_temp = self.lidar_file.read(2500)
             lidar_temp = lidar_temp.decode()
             end_index = lidar_temp.find('')
-            lidar_temp = lidar_temp[:end_index + 1]
-            self.data.lidar_data_list = lidar_temp
+            raw_data = lidar_temp[:end_index + 1]
+
+            if raw_data.__contains__('sEA'): continue
+            temp = raw_data.split(' ')[116:477]
+            try:
+                self.lidar_data = [int(item, 16) for item in temp]
+            except:
+                pass
+
             file_cursor += (end_index + 1)
             self.lidar_file.seek(file_cursor)
 
