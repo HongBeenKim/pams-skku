@@ -197,10 +197,11 @@ class MotionPlanner(Subroutine):
                 y_target = ACT_RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                # set control data
+                # make a packet and set the control data
                 # TODO: @김홍빈 @박준혁 장애물 제어 완성하기
-                self.data.motion_parameter = (self.current_mode, (data_transposed[1][target - AUX_RANGE], target), None,
-                                              None)
+                # FIXME: 정의된 대로 값 세팅하기
+                self.data.planner_to_control_packet = (self.current_mode,
+                                                       (data_transposed[1][target - AUX_RANGE], target), None, None)
 
                 self.previous_data = data
                 self.previous_target = target

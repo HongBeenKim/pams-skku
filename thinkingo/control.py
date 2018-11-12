@@ -8,6 +8,11 @@ from data_class import Data
 import time
 import math
 
+modes = {"default": 0, "narrow": 1, "u_turn": 2,
+         "crosswalk": 3, "target_tracking": 4,
+         "parking": 5,
+         }
+
 
 class Control(Subroutine):
 
@@ -39,86 +44,79 @@ class Control(Subroutine):
         self.p_sit = 0
 
     def main(self):
-        """
-        차량 제어 코드가 thinkingo/main.py 에서
-        thread 로 실행될 때 한 루프에서 해야 할
-        모든 행동을 이 메서드에 정의합니다.
-        """
         while True:
-            mission_num = self.data.detected_mission_number
-            first = self.data.lane_value
-            second = self.data.motion_parameter
-            self.read()
-            self.set_mission(mission_num)
-            self.do_mission(first, second)
+            # data_class.py 를 통해 planner 에서 온 데이터 받아오기
+            packet = self.data.planner_to_control_packet
+            # set mission number
+            self.mission_num = packet[0]
+            # TODO: @김홍빈 second 값 어떻게 줄지 약속
+            second = self.data.second
+
+            self.read_car_platform_status()
+            self.do_mission(packet, second)
             self.accel(self.speed)
             self.write()
             pass
 
-    def read(self):
+    def read_car_platform_status(self):
         """
-        data_class.py 에서 데이터 받아오기
+        data_class.py 에서 차량 플랫폼 데이터 받아오기
         """
         gear, speed, steer, brake, aorm, alive, enc = self.data.car_platform_status()
         self.speed_platform = speed
         self.enc_platform = enc
 
-    def set_mission(self, mission_num):
-        self.mission_num = mission_num
-
-    def do_mission(self, first, second):
+    def do_mission(self, packet, second):
         """
-        TODO: @박준혁 first 와 second 값 설명 주석 써 주기
-        :param first: first 값은 무엇인가요?
-        :param second: second 값은 무엇인가요?
+        :param packet:
+        공통: packet[0] = detected mission number
+        0. default
+        0-1. second is None
+            packet[1] = 차선 중앙과의 거리, 넘겨받는 단위: cm
+            packet[2] = 차선함수의 기울기
+        0-2. second is not None
+            packet[1] = 부채꼴함수에서 계산된 거리(반지름), 넘겨받는 단위: cm
+            packet[2] = 부채꼴함수에서 계산된 각도
+        1. narrow
+            TODO: ???
+        2. u_turn
+            TODO: ???
+        3. crosswalk
+            packet[1] = 정지선으로 부터 거리, 넘겨받는 단위: cm
+        4. target_tracking
+            packet[1] = target car 와의 거리, 넘겨받는 단위: cm
+        5. parking
+            TODO: ???
+
+        :param second:
+            TODO: ???
+
         :return: 리턴 값은 없습니다.
         """
-        if self.mission_num == 0 and second is None:  # default 주행
-            if first is None:
+        if self.mission_num == modes["default"] and second is None:
+            if packet is None:
                 return
-            self.__default__(first[0] / 100, first[1])
-            """
-            first[0] = 차선 중앙과의 거리, 넘겨받는 단위: cm
-            first[1] = 차선함수의 기울기
-            임의로 수정할 경우 제어 코드에서 변경하겠음
-            """
+            self.__default__(packet[1] / 100, packet[2])
 
-        elif self.mission_num == 1:  # 유턴
-            self.__turn__(first / 100)
-            """
-            11.11일 수정
-            """
+        elif self.mission_num == modes["default"] and second is not None == 90:  # FIXME: 조건문이 뭔가 이상한데?
+            self.__obs__(second[1][0] / 100, second[1][1])
 
-        elif self.mission_num == 2:  # 횡단보도
-            if first is None:
+        elif self.mission_num == modes["u_turn"]:
+            self.__turn__(packet[1] / 100)
+            # TODO: 수정
+
+        elif self.mission_num == modes["crosswalk"]:
+            if packet is None:
                 self.__cross__(100)
             else:
-                self.__cross__(first / 100)
-            """
-            first = 정지선으로 부터 거리, 넘겨받는 단위: cm
-            아마도 수정 필요 (미션 순서때문에)            
-            """
+                self.__cross__(packet[1] / 100)
 
-        elif self.mission_num == 3:  # 간격 유지 주행
-            self.__target__(first / 100)
-            """
-            first = target car 와의 거리, 넘겨받는 단위: cm
-            """
+        elif self.mission_num == modes["target_tracking"]:
+            self.__target__(packet[1] / 100)
 
-        elif self.mission_num == 4:  # 주차
+        elif self.mission_num == modes["parking"]:
             # TODO: 후에 추가로 작성하기
             return 0
-            """
-            11일에 수정
-            """
-
-        elif self.mission_num == 0 and second is not None== 90:
-            self.__obs__(second[1][0] / 100, second[1][1])
-            """
-            first[0] = 부채꼴함수에서 계산된 거리(반지름), 넘겨받는 단위: cm
-            first[1] = 부채꼴함수에서 계산된 각도
-            임의로 수정할경우 제어 코드에서 변경하겠음
-            """
 
     def accel(self, speed):  # TODO: 후에 실험값을 통해서 값 수정
         if self.speed_platform < (speed / 2):
@@ -233,7 +231,7 @@ class Control(Subroutine):
         obs_mode = 0
         car_circle = 1
 
-        speed_mission = 30  ##미션용 속도, 실험하고 변경바람
+        speed_mission = 30  # 미션용 속도, 실험하고 변경바람
 
         if self.mission_num == 2:
             speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
@@ -241,7 +239,7 @@ class Control(Subroutine):
             adjust = 0.05
             obs_mode = 0
 
-            if self.speed_platform > speed_mission:  ## 기울기가 있어서 가속받을 경우 급정지
+            if self.speed_platform > speed_mission:  # 기울기가 있어서 가속받을 경우 급정지
                 speed = 0
                 brake = 60
 
