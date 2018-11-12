@@ -8,14 +8,13 @@ from subroutine import Subroutine
 from data_class import Data
 
 
-class Source(Subroutine):
+class Source():
     HOST = '169.254.248.220'
     PORT = 2111
     BUFF = 57600
     MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
 
-    def __init__(self, data: Data):
-        super().__init__(data)
+    def __init__(self):
         # 웹캠 부분 (left : ),(right : ),(mid : )
         self.cap_left = cv2.VideoCapture(0)
         self.cap_right = cv2.VideoCapture(1)
