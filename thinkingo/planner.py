@@ -11,8 +11,8 @@ from data_class import Data
 from data_source import Source
 
 ACTUAL_RADIUS = 500  # 부채살의 실제 반경
-CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
-ARC_ANGLE = 180  # 부채살 적용 각도
+CLEAR_RADIUS = 400  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
+ARC_ANGLE = 110  # 부채살 적용 각도
 OBSTACLE_OFFSET = 50  # 부채살 적용 시 장애물의 offset (cm 단위)
 
 
@@ -37,7 +37,9 @@ class MotionPlanner(Subroutine):
             # 1. 협로 주행 상황
             elif self.current_mode == 1:
                 self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
-                if cv2.waitKey(1) & 0xff == ord(' '): break  # obs_handling 안에 imshow 들어있어서..
+                if cv2.waitKey(1) & 0xff == ord(' '):
+                    cv2.destroyWindow('obstacle avoidance')
+                    break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
 
@@ -105,6 +107,7 @@ class MotionPlanner(Subroutine):
     def obs_handling(self, angle, obs_offset):
         if self.is_forward_clear():
             self.current_mode = 0
+            cv2.destroyWindow('obstacle avoidance')
             return
 
         ACT_RAD = np.int32(ACTUAL_RADIUS)  # 실제 라이다 화면의 세로 길이 (즉 부채살의 실제 반경)
@@ -201,7 +204,7 @@ class MotionPlanner(Subroutine):
                 # TODO: @김홍빈 @박준혁 장애물 제어 완성하기
                 # FIXME: 정의된 대로 값 세팅하기
                 self.data.planner_to_control_packet = (self.current_mode,
-                                                       (data_transposed[1][target - AUX_RANGE], target), None, None)
+                                                       data_transposed[1][target - AUX_RANGE], target, None)
 
                 self.previous_data = data
                 self.previous_target = target
@@ -211,7 +214,7 @@ class MotionPlanner(Subroutine):
                 y_target = ACT_RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
 
-                self.data.motion_parameter = (self.current_mode, (10, target), None, None)
+                self.data.motion_parameter = (self.current_mode, 10, target, None)
 
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
@@ -221,7 +224,7 @@ if __name__ == "__main__":
     import threading
 
     testDT = Data()
-    testDS = Source(testDT)
+    testDS = Source()
 
     lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
     left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)

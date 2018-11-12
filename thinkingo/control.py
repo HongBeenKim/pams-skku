@@ -36,6 +36,7 @@ class Control(Subroutine):
         self.sign_list = [0, 0, 0, 0, 0]
         #######################################
         self.steer_past = 0
+        self.speed_past = 0
 
         ####################################### 미션용 변수
         self.change_mission = 0  # 미션 탈출용 변수
@@ -45,9 +46,9 @@ class Control(Subroutine):
 
     def main(self):
         while True:
-            packet, second = self.read_packet_from_planner()
+            packet, mode_change = self.read_packet_from_planner()
             self.read_car_platform_status()
-            self.do_mission(packet, second)
+            self.do_mission(packet)
             self.accel(self.speed)
             self.write()
             pass
@@ -60,8 +61,7 @@ class Control(Subroutine):
         packet = self.data.planner_to_control_packet
         self.mission_num = packet[0]  # set mission number
         # TODO: @김홍빈 second 값 어떻게 줄지 약속
-        second = self.data.second
-        return packet, second
+        return packet
 
     def read_car_platform_status(self):
         """
@@ -71,7 +71,7 @@ class Control(Subroutine):
         self.speed_platform = speed
         self.enc_platform = enc
 
-    def do_mission(self, packet, second):
+    def do_mission(self, packet):
         """
         :param packet:
         공통: packet[0] = detected mission number
@@ -92,19 +92,15 @@ class Control(Subroutine):
             packet[1] = target car 와의 거리, 넘겨받는 단위: cm
         5. parking
             TODO: ???
-
-        :param second:
-            TODO: ???
-
         :return: 리턴 값은 없습니다.
         """
-        if self.mission_num == modes["default"] and second is None:
-            if packet is None:
-                return
-            self.__default__(packet[1] / 100, packet[2])
-
-        elif self.mission_num == modes["default"] and second is not None == 90:  # FIXME: 조건문이 뭔가 이상한데?
-            self.__obs__(second[1][0] / 100, second[1][1])
+        if self.mission_num == modes["default"]:
+                if packet is None:
+                    return
+                self.__default__(packet[1] / 100, packet[2])
+                
+        elif self.mission_num == modes["narrow"]:
+            self.__obs__(packet[1] / 100, packet[2])
 
         elif self.mission_num == modes["u_turn"]:
             self.__turn__(packet[1] / 100)
@@ -124,12 +120,15 @@ class Control(Subroutine):
             return 0
 
     def accel(self, speed):  # TODO: 후에 실험값을 통해서 값 수정
-        if self.speed_platform < (speed / 2):
+        if self.speed_platform < ((3 * speed)/ 5):
             self.accel_speed = 2 * self.speed
+            self.accel_brake = self.brake
+        elif self.brake == 0 and ((self.speed_platform / 2) > self.speed) and self.speed_platform > 50:
+            self.accel_speed = 0
+            self.brake = 20
         else:
             self.accel_speed = self.speed
-
-        self.accel_brake = self.brake
+            self.accel_brake = self.brake
         self.accel_steer = self.steer
         self.accel_gear = self.gear
 
@@ -157,11 +156,79 @@ class Control(Subroutine):
         adjust = 0.3
 
         if abs(steer_now) > 15:
-            speed = 50  # TODO: 실험값 수정하기 / 60
+            speed = 60  # TODO: 실험값 수정하기 / 60
         else:
-            speed = 60  # TODO: 실험값 수정하기 / 72
+            speed = 72  # TODO: 실험값 수정하기 / 72
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
+        self.steer_past = steer_final
+
+        steer = steer_final * 71
+        if steer > 1970:
+            steer = 1970
+            self.steer_past = 27.746
+        elif steer < -1970:
+            steer = -1970
+            self.steer_past = -27.746
+
+        self.gear = gear
+        self.speed = speed
+        self.steer = steer
+        self.brake = brake
+
+    def __obs__(self, obs_r, obs_theta):
+        gear = 0
+        brake = 0
+        car_circle = 1
+
+        correction = 1.6
+        adjust = 0.05
+
+        speed_mission = 30  # TODO: 미션용 속도, 실험하고 변경바람
+        speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
+        if self.speed_platform > speed_mission:  # 기울기가 있어서 가속받을 경우 급정지
+            speed = 0
+            brake = 60
+
+        if obs_r is None or obs_theta is None:
+            print("MISSION NUMBER ERROR")
+            speed = 0
+            correction = 0.0
+            adjust = 0.0
+
+        self.change_mission = 1
+
+        cal_theta = math.radians(abs(obs_theta - 90))
+        cos_theta = math.cos(cal_theta)
+        sin_theta = math.sin(cal_theta)
+
+        if (90 - obs_theta) == 0:
+            theta_obs = 0
+        elif obs_theta == -35:
+            theta_obs = 27
+        elif obs_theta == -145:
+            theta_obs = -27
+        else:
+            car_circle = 1.387
+            cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
+            theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 2
+
+            son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
+            mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
+
+            theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
+
+            if abs(theta_obs) > 15:
+                speed = 12
+            else:
+                print("OBS MODE ERROR")
+                theta_obs = 0
+
+        if (90 - obs_theta) < 0:
+            theta_obs = theta_obs * (-1)
+
+        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction * car_circle
+
         self.steer_past = steer_final
 
         steer = steer_final * 71
@@ -187,6 +254,8 @@ class Control(Subroutine):
 
         if self.u_sit == 0:
             if turn_distance < 3.50:
+                speed = 30
+            elif turn_distance < 3.0:
                 steer = 0
                 speed = 0
                 brake = 65
@@ -221,7 +290,6 @@ class Control(Subroutine):
                 if self.speed_platform == 0:
                     steer = 0
                     speed = 15
-                    self.u_sit = 2
                     self.change_mission = 1
 
         self.gear = gear
@@ -229,83 +297,7 @@ class Control(Subroutine):
         self.steer = steer
         self.brake = brake
 
-    def __obs__(self, obs_r, obs_theta):
-        gear = 0
-        brake = 0
-
-        obs_mode = 0
-        car_circle = 1
-
-        speed_mission = 30  # TODO: 미션용 속도, 실험하고 변경바람
-
-        if self.mission_num == 2:
-            speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
-            correction = 1.6
-            adjust = 0.05
-            obs_mode = 0
-
-            if self.speed_platform > speed_mission:  # 기울기가 있어서 가속받을 경우 급정지
-                speed = 0
-                brake = 60
-
-        else:
-            print("MISSION NUMBER ERROR")
-            speed = 0
-            correction = 0.0
-            adjust = 0.0
-
-        self.change_mission = 1
-
-        cal_theta = math.radians(abs(obs_theta - 90))
-        cos_theta = math.cos(cal_theta)
-        sin_theta = math.sin(cal_theta)
-
-        if (90 - obs_theta) == 0:
-            theta_obs = 0
-
-        else:
-            if obs_mode == 0:
-                if obs_theta == -35:
-                    theta_obs = 27
-                elif obs_theta == -145:
-                    theta_obs = -27
-                else:
-                    car_circle = 1.387
-                    cul_obs = (obs_r + (2.08 * cos_theta)) / (2 * sin_theta)
-                    theta_cal = math.atan((1.04 + (obs_r * cos_theta)) / cul_obs) / 2
-
-                    son_obs = (cul_obs * math.sin(theta_cal)) - (obs_r * cos_theta)
-                    mother_obs = (cul_obs * math.cos(theta_cal)) + 0.4925
-
-                    theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
-
-                    if abs(theta_obs) > 15:
-                        speed = 12
-            else:
-                print("OBS MODE ERROR")
-                theta_obs = 0
-
-        if (90 - obs_theta) < 0:
-            theta_obs = theta_obs * (-1)
-
-        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction * car_circle
-
-        self.steer_past = steer_final
-
-        steer = steer_final * 71
-        if steer > 1970:
-            steer = 1970
-            self.steer_past = 27.746
-        elif steer < -1970:
-            steer = -1970
-            self.steer_past = -27.746
-
-        self.gear = gear
-        self.speed = speed
-        self.steer = steer
-        self.brake = brake
-
-    def __cross__(self, stop_line):
+    def __cross__(self, stop_line):  # TODO: 신호등 값 받기
         steer = 0
         speed = 60
         gear = 0
@@ -314,18 +306,8 @@ class Control(Subroutine):
         self.change_mission = 0
 
         if abs(stop_line) < 1.7:  # TODO: 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
-            if self.t1 == 0:
-                self.t1 = time.time()
-            self.t2 = time.time()
-
-            if (self.t2 - self.t1) < 4.0:
-                speed = 0
-                brake = 80
-            else:
-                speed = 60
-                brake = 0
-                self.change_mission = 1
-
+            return 0
+        
         self.gear = gear
         self.speed = speed
         self.steer = steer
@@ -342,17 +324,28 @@ class Control(Subroutine):
         time_change = 0.5  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
-            if distance < 1.5:
+            if distance < 2.0:
+                speed = 30
+
+                self.gear = gear
+                self.speed = speed
+                self.steer = steer
+                self.brake = brake
+
+            elif distance < 1.5:
                 speed = 0
                 brake = 80
-
                 self.t_sit = 1
 
-        elif self.t_sit == 1:
-            speed = 0
+                self.gear = gear
+                self.speed = speed
+                self.steer = steer
+                self.brake = brake
 
+        elif self.t_sit == 1:
+            self.speed_past = self.speed_platform
             velocity = distance - 1.5
-            speed = speed + (velocity * 3.6) / time_change
+            speed = self.speed_past + (velocity * 3.6) / time_change
 
             if velocity < 0:
                 if distance < 1:
@@ -365,10 +358,10 @@ class Control(Subroutine):
             if distance > 3:  # TODO: 실험값 수정
                 self.change_mission = 1
 
-        self.gear = gear
-        self.speed = speed
-        self.steer = steer
-        self.brake = brake
+            self.gear = gear
+            self.speed = speed
+            self.steer = steer
+            self.brake = brake
 
     def __parking__(self):
         gear = 0
