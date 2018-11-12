@@ -45,18 +45,23 @@ class Control(Subroutine):
 
     def main(self):
         while True:
-            # data_class.py 를 통해 planner 에서 온 데이터 받아오기
-            packet = self.data.planner_to_control_packet
-            # set mission number
-            self.mission_num = packet[0]
-            # TODO: @김홍빈 second 값 어떻게 줄지 약속
-            second = self.data.second
-
+            packet, second = self.read_packet_from_planner()
             self.read_car_platform_status()
             self.do_mission(packet, second)
             self.accel(self.speed)
             self.write()
             pass
+
+    def read_packet_from_planner(self):
+        """
+        data_class.py 를 통해 planner 에서 온 데이터 받아오기
+        :return: the packet and second packet from planner
+        """
+        packet = self.data.planner_to_control_packet
+        self.mission_num = packet[0]  # set mission number
+        # TODO: @김홍빈 second 값 어떻게 줄지 약속
+        second = self.data.second
+        return packet, second
 
     def read_car_platform_status(self):
         """
@@ -231,7 +236,7 @@ class Control(Subroutine):
         obs_mode = 0
         car_circle = 1
 
-        speed_mission = 30  # 미션용 속도, 실험하고 변경바람
+        speed_mission = 30  # TODO: 미션용 속도, 실험하고 변경바람
 
         if self.mission_num == 2:
             speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
