@@ -29,7 +29,6 @@ class Data(object):
 
         # planner to control
         self.planner_to_control_packet = (self._detected_mission_number, None, None)
-        self.second = None
 
     @property
     def read_packet(self):
