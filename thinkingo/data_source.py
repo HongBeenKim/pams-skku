@@ -27,9 +27,12 @@ class Source():
 
         self.lidar_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("waiting LiDAR connected. . .")
-        self.lidar_socket.connect((self.HOST, self.PORT))
-        print("LiDAR connect complete!")
-        self.lidar_socket.send(str.encode(self.MESG))
+        try:
+            self.lidar_socket.connect((self.HOST, self.PORT))
+            print("LiDAR connect complete!")
+            self.lidar_socket.send(str.encode(self.MESG))
+        except OSError as e:
+            print(e)
 
         # stop_flag 초기값
         self.stop_flag = False
