@@ -48,7 +48,8 @@ class MotionPlanner(Subroutine):
             # 3. 횡단보도 상황
 
             # 4. 차량추종 상황
-            elif self.current_mode == 4
+            elif self.current_mode == 4:
+                pass
             # 5. 주차 상황
 
         # TODO: main함수 마저 채우기
