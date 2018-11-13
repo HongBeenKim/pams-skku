@@ -31,6 +31,12 @@ class Data(object):
         # planner to control
         self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
 
+        # monitoring
+        self.sign_cam_monitoring_frame = None
+        self.lane_cam_monitoring_frame = None
+        self._planner_monitoring_frame = None
+        self.planner_monitoring_frame_size = (None, None)
+
         # stop flag
         self._all_end_and_stop_yeah = False
 
@@ -164,3 +170,12 @@ class Data(object):
             self._parking_lot = self.PARKING_MODE[parking_location]
         except KeyError as e:
             print(e)
+
+    @property
+    def planner_monitoring_frame(self):
+        return self._planner_monitoring_frame
+
+    @planner_monitoring_frame.setter
+    def planner_monitoring_frame(self, frame_and_size):
+        self._planner_monitoring_frame = frame_and_size[0]
+        self.planner_monitoring_frame_size = (frame_and_size[1], frame_and_size[2])
