@@ -49,7 +49,9 @@ class LaneCam(Subroutine):
         return merged_frame
 
     def stop_line_detection(self):
-        pass
+        merged_frame = self.make_merged_frame()
+        filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
+        cv2.imshow('filtered', filtered_frame)
 
     def lane_detection(self):
         if self.data_source.mid_frame is None: return
