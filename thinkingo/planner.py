@@ -43,7 +43,7 @@ class MotionPlanner(Subroutine):
                     break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
-            elif self.current_mode ==2:
+            elif self.current_mode == 2:
                 self.U_turn_data()
             # 3. 횡단보도 상황
 
@@ -239,17 +239,19 @@ class MotionPlanner(Subroutine):
         length = lidar_raw_data_front / 10          #mm -> cm
         
         for theta in range(3, 358):
-            if((lidar_raw_data[theta]<lidar_raw_data[theta+1] && lidar_raw_data[theta]<lidar_raw_data[theta-1])
-            ||(lidar_raw_data[theta]<lidar_raw_data[theta+2] && lidar_raw_data[theta]<lidar_raw_data[theta-2]):
+ ##           if((lidar_raw_data[theta]<lidar_raw_data[theta+1] && lidar_raw_data[theta]<lidar_raw_data[theta-1])
+   ##         ||(lidar_raw_data[theta]<lidar_raw_data[theta+2] && lidar_raw_data[theta]<lidar_raw_data[theta-2]):
                 
-                distance_frontwall = lidar_raw_data[theta]  
-                degree = theta
+##                distance_frontwall = lidar_raw_data[theta]  
+  ##              degree = theta
 
-                if(distance_frontwall<100):     # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
-                    break                       # 그래서 10m 이내에서 거리가 잡히면 계산 종료
-  
+    ##            if(distance_frontwall<100):     # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
+      ##              break                       # 그래서 10m 이내에서 거리가 잡히면 계산 종료
+            pass
 
-
+        #temp
+        distance_frontwall = 4
+        degree = 180
         self.planner_to_control_packet = (self.current_mode, distance_frontwall, degree, None)
 
 
