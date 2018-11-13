@@ -43,7 +43,8 @@ class MotionPlanner(Subroutine):
                     break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
-
+            elif self.current_mode ==2:
+                self.U_turn_data()
             # 3. 횡단보도 상황
 
             # 4. 차량추종 상황
