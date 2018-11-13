@@ -49,7 +49,8 @@ class MotionPlanner(Subroutine):
 
             # 4. 차량추종 상황
             elif self.current_mode == 4:
-                
+                self.calculate_distance_phase_target()
+
             # 5. 주차 상황
 
         # TODO: main함수 마저 채우기
@@ -263,6 +264,8 @@ class MotionPlanner(Subroutine):
         lidar_raw_data=self.data_stream.lidar_data
         for theta in range(170,190):
             minimum_distance=min(lidar_raw_data[theta])
+
+        self.planner_to_control_packet = (self.current_mode, minimum_distance, None, None)
         
 if __name__ == "__main__":
     import threading
