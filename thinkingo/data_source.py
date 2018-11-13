@@ -20,6 +20,15 @@ class Source():
         self.cap_right = cv2.VideoCapture(1)
         self.cap_mid = cv2.VideoCapture(2)
 
+        self.cap_left.set(3, 800)
+        self.cap_left.set(4, 448)
+
+        self.cap_right.set(3, 800)
+        self.cap_right.set(4, 448)
+
+        self.cap_mid.set(3, 800)
+        self.cap_mid.set(4, 448)
+
         self.left_frame = None
         self.right_frame = None
         self.mid_frame = None

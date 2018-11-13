@@ -13,7 +13,7 @@ from data_source import Source
 ACTUAL_RADIUS = 500  # 부채살의 실제 반경
 CLEAR_RADIUS = 500  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
 ARC_ANGLE = 110  # 부채살 적용 각도
-OBSTACLE_OFFSET = 60  # 부채살 적용 시 장애물의 offset (cm 단위)
+OBSTACLE_OFFSET = 65  # 부채살 적용 시 장애물의 offset (cm 단위)
 
 
 class MotionPlanner(Subroutine):

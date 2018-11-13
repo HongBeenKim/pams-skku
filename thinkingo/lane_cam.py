@@ -17,6 +17,7 @@ class LaneCam(Subroutine):
 
     pts1_L = np.float32([[0, 0], [0, 428], [780, 0], [780, 428]])
     pts2_L = np.float32([[0, 258], [403, 427], [526, 0], [523, 347]])
+
     pts1_R = np.float32([[0, 0], [0, 428], [780, 0], [780, 428]])
     pts2_R = np.float32([[0, 0], [15, 327], [459, 294], [130, 415]])
 
@@ -40,8 +41,8 @@ class LaneCam(Subroutine):
         undistorted_right = cv2.undistort(right_frame, self.camera_matrix_R,
                                           self.distortion_coefficients_R, None, None)[10:438, 10:790]
 
-        transformed_left = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (526, 427))
-        transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))
+        transformed_left = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (526, 427))[0:395, 0:524]
+        transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))[0:375, 15:460]
 
         cv2.imshow('transformed left', transformed_left)
         cv2.imshow('transformed right', transformed_right)

@@ -53,7 +53,7 @@ class Control(Subroutine):
             gear, speed, steer, brake = self.do_mission(packet, speed_platform, enc_platform)
             a_speed, a_brake = self.accel(speed, brake)
             self.data.set_control_value(gear, a_speed, steer, a_brake)
-            pass
+            time.sleep(0.01)
 
     def read_packet_from_planner(self):
         """
@@ -162,9 +162,9 @@ class Control(Subroutine):
         adjust = 0.3
 
         if abs(steer_now) > 15:
-            speed = 60  # TODO: 실험값 수정하기 / 60
+            speed = 11  # TODO: 실험값 수정하기 / 60
         else:
-            speed = 72  # TODO: 실험값 수정하기 / 72
+            speed = 11  # TODO: 실험값 수정하기 / 72
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final
@@ -187,16 +187,15 @@ class Control(Subroutine):
     def __obs__(self, obs_r, obs_theta):
         gear = 0
         brake = 0
-        car_circle = 1
 
-        correction = 1.6
-        adjust = 0.1
+        correction = 1.8
+        adjust = 0.05
 
-        speed_mission = 36  # TODO: 미션용 속도, 실험하고 변경바람
+        speed_mission = 10  # TODO: 미션용 속도, 실험하고 변경바람 / 36
         speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
 
         if obs_r < 2:
-            speed = 24
+            speed = 10  # 24
 
         if self.speed_platform > speed_mission:  # 기울기가 있어서 가속받을 경우 급정지
             speed = 0
@@ -223,12 +222,12 @@ class Control(Subroutine):
             theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
             if abs(theta_obs) > 15:
-                speed = 30
+                speed = 10 # 30
 
         if (90 - obs_theta) < 0:
             theta_obs = theta_obs * (-1)
 
-        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction * car_circle
+        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction
 
         self.steer_past = steer_final
 
