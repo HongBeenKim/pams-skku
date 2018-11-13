@@ -277,12 +277,14 @@ if __name__ == "__main__":
     import threading
     from control import Control
     from car_platform import CarPlatform
+    from monitoring import Monitoring
 
     testDT = Data()
     testDS = Source()
     car = CarPlatform('COM5', testDT)
     testMP = MotionPlanner(testDS, testDT)
     test_control = Control(testDT)
+    monitor = Monitoring(testDT)
 
     lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
     left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
@@ -291,6 +293,7 @@ if __name__ == "__main__":
     planner_thread = threading.Thread(target=testMP.main)
     control_thread = threading.Thread(target=test_control.main)
     car_thread = threading.Thread(target=car.main)
+    monitoring_thread = threading.Thread(target=monitor.main)
 
     lidar_source_thread.start()
     planner_thread.start()
@@ -301,3 +304,4 @@ if __name__ == "__main__":
     left_cam_source_thread.start()
     right_cam_source_thread.start()
     mid_cam_source_thread.start()
+    monitoring_thread.start()
