@@ -30,12 +30,12 @@ class MotionPlanner(Subroutine):
             print("PLANNER current mode: ", self.current_mode)
             if self.data_stream.lidar_data is None: continue
             # 0. 차선 추종 주행 상황
-            if self.current_mode == 0:
+            if self.current_mode == self.data.MODES["default"]:
                 self.lane_handling()
                 self.data.motion_parameter = None
 
             # 1. 협로 주행 상황
-            elif self.current_mode == 1:
+            elif self.current_mode == self.data.MODES["narrow"]:
                 self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
 
                 if cv2.waitKey(1) & 0xff == ord(' '):
@@ -44,15 +44,16 @@ class MotionPlanner(Subroutine):
                     break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
-            elif self.current_mode == 2:
+            elif self.current_mode == self.data.MODES["u_turn"]:
                 self.U_turn_data()
-            # 3. 횡단보도 상황
+
+            # TODO: 3. 횡단보도 상황
 
             # 4. 차량추종 상황
-            elif self.current_mode == 4:
+            elif self.current_mode == self.data.MODES["target_tracking"]:
                 self.calculate_distance_phase_target()
 
-            # 5. 주차 상황
+            # TODO: 5. 주차 상황
 
             if self.data.is_all_system_stop():
                 break
@@ -74,7 +75,6 @@ class MotionPlanner(Subroutine):
             if 20 <= r < 3000:
                 return False
         return True
-
 
     def init_cuda(self):
         # pycuda alloc
@@ -229,9 +229,8 @@ class MotionPlanner(Subroutine):
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
 
-
     def U_turn_data(self):
-        
+
         """
         R m 이내의 첫 극솟값 구하기
 
@@ -242,39 +241,37 @@ class MotionPlanner(Subroutine):
                     degree : 이 때의 각도 (lidar식 각도. 실제로 80도->160)
         """
 
-        lidar_raw_data=self.data_stream.lidar_data
+        lidar_raw_data = self.data_stream.lidar_data
         lidar_raw_data_front = lidar_raw_data[180]
-        length = lidar_raw_data_front / 10          #mm -> cm
-        
+        length = lidar_raw_data_front / 10  # mm -> cm
+
         for theta in range(3, 358):
-            if((lidar_raw_data[theta]<lidar_raw_data[theta+1] and lidar_raw_data[theta]<lidar_raw_data[theta-1])
-            or(lidar_raw_data[theta]<lidar_raw_data[theta+2] and lidar_raw_data[theta]<lidar_raw_data[theta-2])):
-                
-                distance_frontwall = lidar_raw_data[theta]  
+            if ((lidar_raw_data[theta] < lidar_raw_data[theta + 1] and lidar_raw_data[theta] < lidar_raw_data[
+                theta - 1])
+                    or (lidar_raw_data[theta] < lidar_raw_data[theta + 2] and lidar_raw_data[theta] < lidar_raw_data[
+                        theta - 2])):
+
+                distance_frontwall = lidar_raw_data[theta]
                 degree = theta
 
-                if(distance_frontwall<100):     # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
-                    break                       # 그래서 10m 이내에서 거리가 잡히면 계산 종료
+                if (distance_frontwall < 100):  # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
+                    break  # 그래서 10m 이내에서 거리가 잡히면 계산 종료
             pass
 
-    
-       
         self.planner_to_control_packet = (self.current_mode, length, degree, None)
 
-
     def calculate_distance_phase_target(self):
-        lidar_raw_data=self.data_stream.lidar_data
-        for theta in range(170,190):
-            minimum_distance=min(lidar_raw_data[theta])     #전방 좌우 10도의 라이다 값 중 최솟값
-            
-       
+        lidar_raw_data = self.data_stream.lidar_data
+        for theta in range(170, 190):
+            minimum_distance = min(lidar_raw_data[theta])  # 전방 좌우 10도의 라이다 값 중 최솟값
 
         self.planner_to_control_packet = (self.current_mode, minimum_distance, None, None)
 
         """
         TODO: 과연 최솟값으로 하면 문제가 없을까? 
         튀는 값을 대비하여 3번째 최소인 값을 대입해야 하는 것 아닌가?
-        """ 
+        """
+
 
 if __name__ == "__main__":
     import threading

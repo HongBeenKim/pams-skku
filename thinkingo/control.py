@@ -8,11 +8,6 @@ from data_class import Data
 import time
 import math
 
-modes = {"default": 0, "narrow": 1, "u_turn": 2,
-         "crosswalk": 3, "target_tracking": 4,
-         "parking": 5,
-         }
-
 
 class Control(Subroutine):
 
@@ -103,29 +98,29 @@ class Control(Subroutine):
         """
         self.speed_platform = speed_platform
         self.enc_platform = enc_platform
-
-        if self.mission_num == modes["default"]:
+        gear = speed = steer = brake = 0
+        if self.mission_num == self.data.MODES["default"]:
             if packet is None:
                 return 0, 0, 0, 0
             gear, speed, steer, brake = self.__default__(packet[1] / 100, packet[2])
 
-        elif self.mission_num == modes["narrow"]:
+        elif self.mission_num == self.data.MODES["narrow"]:
             gear, speed, steer, brake = self.__obs__(packet[1] / 100, packet[2])
 
-        elif self.mission_num == modes["u_turn"]:
+        elif self.mission_num == self.data.MODES["u_turn"]:
             gear, speed, steer, brake = self.__turn__(packet[1] / 100, packet[2], packet[3] / 100)
             # TODO: 수정
 
-        elif self.mission_num == modes["crosswalk"]:
+        elif self.mission_num == self.data.MODES["crosswalk"]:
             if packet is None:
                 gear, speed, steer, brake = 0, 0, 0, 0
             else:
                 gear, speed, steer, brake = self.__cross__(packet[1] / 100)
 
-        elif self.mission_num == modes["target_tracking"]:
+        elif self.mission_num == self.data.MODES["target_tracking"]:
             gear, speed, steer, brake = self.__target__(packet[1] / 100)
 
-        elif self.mission_num == modes["parking"]:
+        elif self.mission_num == self.data.MODES["parking"]:
             # TODO: 후에 추가로 작성하기
             return 0, 0, 0, 0
 
