@@ -46,8 +46,7 @@ class LaneCam(Subroutine):
 
         merged_frame = np.hstack((transformed_left, transformed_right))
 
-        cv2.imshow('merged frame', merged_frame)
-        # TODO: warpPerspective
+        return merged_frame
 
     def stop_line_detection(self):
         pass
