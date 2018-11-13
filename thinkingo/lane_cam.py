@@ -42,10 +42,11 @@ class LaneCam(Subroutine):
                                           self.distortion_coefficients_R, None, None)[10:438, 10:790]
 
         transformed_left = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (526, 427))[95:395, 224:524]
-        transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))[75:375, 160:460]
+        transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))[73:373, 15:315]
 
-        cv2.imshow('transformed left', transformed_left)
-        cv2.imshow('transformed right', transformed_right)
+        merged_frame = np.hstack((transformed_left, transformed_right))
+
+        cv2.imshow('merged frame', merged_frame)
         # TODO: warpPerspective
 
     def stop_line_detection(self):
