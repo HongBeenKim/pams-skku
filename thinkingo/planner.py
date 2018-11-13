@@ -48,6 +48,8 @@ class MotionPlanner(Subroutine):
             # 3. 횡단보도 상황
 
             # 4. 차량추종 상황
+            elif self.current_mode == 4:
+                self.calculate_distance_phase_target()
 
             # 5. 주차 상황
 
@@ -242,22 +244,29 @@ class MotionPlanner(Subroutine):
         length = lidar_raw_data_front / 10          #mm -> cm
         
         for theta in range(3, 358):
- ##           if((lidar_raw_data[theta]<lidar_raw_data[theta+1] && lidar_raw_data[theta]<lidar_raw_data[theta-1])
-   ##         ||(lidar_raw_data[theta]<lidar_raw_data[theta+2] && lidar_raw_data[theta]<lidar_raw_data[theta-2]):
+            if((lidar_raw_data[theta]<lidar_raw_data[theta+1] and lidar_raw_data[theta]<lidar_raw_data[theta-1])
+            or(lidar_raw_data[theta]<lidar_raw_data[theta+2] and lidar_raw_data[theta]<lidar_raw_data[theta-2])):
                 
-##                distance_frontwall = lidar_raw_data[theta]  
-  ##              degree = theta
+                distance_frontwall = lidar_raw_data[theta]  
+                degree = theta
 
-    ##            if(distance_frontwall<100):     # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
-      ##              break                       # 그래서 10m 이내에서 거리가 잡히면 계산 종료
+                if(distance_frontwall<100):     # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
+                    break                       # 그래서 10m 이내에서 거리가 잡히면 계산 종료
             pass
 
-        #temp
-        distance_frontwall = 4
-        degree = 180
+        print(distance_frontwall)
+        print(degree)
+       
         self.planner_to_control_packet = (self.current_mode, distance_frontwall, degree, None)
 
 
+    def calculate_distance_phase_target(self):
+        lidar_raw_data=self.data_stream.lidar_data
+        for theta in range(170,190):
+            minimum_distance=min(lidar_raw_data[theta])
+
+        self.planner_to_control_packet = (self.current_mode, minimum_distance, None, None)
+        
 if __name__ == "__main__":
     import threading
     from control import Control
