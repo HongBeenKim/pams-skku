@@ -11,9 +11,9 @@ from data_class import Data
 from data_source import Source
 
 ACTUAL_RADIUS = 500  # 부채살의 실제 반경
-CLEAR_RADIUS = 400  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
+CLEAR_RADIUS = 500  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
 ARC_ANGLE = 110  # 부채살 적용 각도
-OBSTACLE_OFFSET = 50  # 부채살 적용 시 장애물의 offset (cm 단위)
+OBSTACLE_OFFSET = 60  # 부채살 적용 시 장애물의 offset (cm 단위)
 
 
 class MotionPlanner(Subroutine):
@@ -109,6 +109,7 @@ class MotionPlanner(Subroutine):
     def obs_handling(self, angle, obs_offset):
         if self.is_forward_clear():
             self.current_mode = 0
+            self.data.planner_to_control_packet = (0, 100, 90, None)
             cv2.destroyWindow('obstacle avoidance')
             return
 
