@@ -21,7 +21,6 @@ class SignCam(Subroutine):
         self.data_decoding_init()
         self.sign = [[0 for col in range(9)] for row in range(3)]
         self.sign_init()
-        self.stop_flag = False
 
     def main(self):
         while True:
@@ -37,7 +36,7 @@ class SignCam(Subroutine):
                 self.sign_reinit()
                 print(self.data.detected_mission_number)
 
-            if self.stop_flag:
+            if self.data.is_all_system_stop():
                 break
         self.yolo_sock.close()
 

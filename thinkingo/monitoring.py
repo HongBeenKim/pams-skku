@@ -24,9 +24,9 @@ class Monitoring(Subroutine):
             # lidar
             cv2.imshow('monitor', self.canvas)
             if cv2.waitKey(1) & 0xff == ord('q'):
+                self.data.stop_thinkingo()
                 break
         cv2.destroyAllWindows()
-        return 0
 
     def put_car_platform_status(self):
         frame = np.zeros((180, 600, 3), dtype=np.uint8)

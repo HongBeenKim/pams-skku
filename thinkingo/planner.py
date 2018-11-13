@@ -40,6 +40,7 @@ class MotionPlanner(Subroutine):
 
                 if cv2.waitKey(1) & 0xff == ord(' '):
                     cv2.destroyWindow('obstacle avoidance')
+                    self.data.stop_thinkingo()
                     break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
@@ -53,6 +54,8 @@ class MotionPlanner(Subroutine):
 
             # 5. 주차 상황
 
+            if self.data.is_all_system_stop():
+                break
         # TODO: main함수 마저 채우기
 
     # TODO: 미션별로 필요한, main 속에서 loop로 돌릴 메서드 생각하기
@@ -280,7 +283,7 @@ if __name__ == "__main__":
     from monitoring import Monitoring
 
     testDT = Data()
-    testDS = Source()
+    testDS = Source(testDT)
     car = CarPlatform('COM5', testDT)
     testMP = MotionPlanner(testDS, testDT)
     test_control = Control(testDT)

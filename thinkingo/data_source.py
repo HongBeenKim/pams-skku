@@ -4,7 +4,6 @@ import socket
 import sys
 
 sys.path.append(".")
-from subroutine import Subroutine
 from data_class import Data
 
 
@@ -14,7 +13,8 @@ class Source():
     BUFF = 57600
     MESG = chr(2) + 'sEN LMDscandata 1' + chr(3)
 
-    def __init__(self):
+    def __init__(self, data: Data):
+        self.data = data
         # 웹캠 부분 (left : ),(right : ),(mid : )
         self.cap_left = cv2.VideoCapture(0)
         self.cap_right = cv2.VideoCapture(1)
@@ -49,14 +49,23 @@ class Source():
     def left_cam_stream_main(self):
         while True:
             _, self.left_frame = self.cap_left.read()
+            if self.data.is_all_system_stop():
+                break
+        self.cap_left.release()
 
     def right_cam_stream_main(self):
         while True:
             _, self.right_frame = self.cap_right.read()
+            if self.data.is_all_system_stop():
+                break
+        self.cap_right.release()
 
     def mid_cam_stream_main(self):
         while True:
             _, self.mid_frame = self.cap_mid.read()
+            if self.data.is_all_system_stop():
+                break
+        self.cap_mid.release()
 
     def lidar_stream_main(self):
         while True:
@@ -67,6 +76,9 @@ class Source():
                 self.lidar_data = [int(item, 16) for item in temp]
             except:
                 pass
+            if self.data.is_all_system_stop():
+                break
+        self.lidar_socket.close()
 
 
 if __name__ == "__main__":

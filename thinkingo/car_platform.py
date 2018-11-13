@@ -19,6 +19,9 @@ class CarPlatform(Subroutine):
         while True:
             self.receive()
             self.send()
+            if self.data.is_all_system_stop():
+                break
+        self.serial.close()
 
     def receive(self):
         try:

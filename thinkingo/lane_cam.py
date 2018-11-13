@@ -83,7 +83,9 @@ class LaneCam(Subroutine):
         while True:
             # self.lane_detection()
             self.make_merged_frame()
-            if cv2.waitKey(1) & 0xff == ord(' '): break
+            if cv2.waitKey(1) & 0xff == ord(' '):
+                self.data.stop_thinkingo()
+                break
 
 
 if __name__ == "__main__":

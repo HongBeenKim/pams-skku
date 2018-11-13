@@ -54,6 +54,8 @@ class Control(Subroutine):
             a_speed, a_brake = self.accel(speed, brake)
             self.data.set_control_value(gear, a_speed, steer, a_brake)
             time.sleep(0.01)
+            if self.data.is_all_system_stop():
+                break
 
     def read_packet_from_planner(self):
         """
@@ -103,9 +105,9 @@ class Control(Subroutine):
         self.enc_platform = enc_platform
 
         if self.mission_num == modes["default"]:
-                if packet is None:
-                    return 0, 0, 0, 0
-                gear, speed, steer, brake = self.__default__(packet[1] / 100, packet[2])
+            if packet is None:
+                return 0, 0, 0, 0
+            gear, speed, steer, brake = self.__default__(packet[1] / 100, packet[2])
 
         elif self.mission_num == modes["narrow"]:
             gear, speed, steer, brake = self.__obs__(packet[1] / 100, packet[2])
@@ -130,7 +132,7 @@ class Control(Subroutine):
         return gear, speed, steer, brake
 
     def accel(self, speed, brake):  # TODO: 후에 실험값을 통해서 값 수정
-        if self.speed_platform < ((3 * speed)/ 5):
+        if self.speed_platform < ((3 * speed) / 5):
             self.accel_speed = 2 * speed
             self.accel_brake = brake
         elif self.speed_platform > (speed / 3):
@@ -222,7 +224,7 @@ class Control(Subroutine):
             theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
             if abs(theta_obs) > 15:
-                speed = 10 # 30
+                speed = 10  # 30
 
         if (90 - obs_theta) < 0:
             theta_obs = theta_obs * (-1)
@@ -316,7 +318,6 @@ class Control(Subroutine):
 
         velocity = (self.speed_platform * 100) / 3600
         steer = math.degrees(math.atan((k * term) / velocity))
-
 
         steer_final = ((adjust * self.turn_steer_past) + ((1 - adjust) * steer))
 

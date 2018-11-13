@@ -30,6 +30,15 @@ class Data(object):
         # planner to control
         self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
 
+        # stop flag
+        self._all_end_and_stop_yeah = False
+
+    def stop_thinkingo(self):
+        self._all_end_and_stop_yeah = True
+
+    def is_all_system_stop(self):
+        return self._all_end_and_stop_yeah
+
     @property
     def read_packet(self):
         return self._read_packet
