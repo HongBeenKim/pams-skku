@@ -33,12 +33,18 @@ class Control(Subroutine):
         #######################################
         self.steer_past = 0
         self.speed_past = 0
-        self.theta = 0
+        self.front_distance = 0
+        self.theta_turn = 0
         #######################################
         self.u_sit = 0
         self.c_sit = 0
         self.t_sit = 0
         self.p_sit = 0
+        #######################################
+        self.right_distance = 0
+        self.right_distance_past = 0
+        self.turn_steer = 0
+        self.turn_steer_past = 0
 
     def main(self):
         while True:
@@ -105,12 +111,12 @@ class Control(Subroutine):
             gear, speed, steer, brake = self.__obs__(packet[1] / 100, packet[2])
 
         elif self.mission_num == modes["u_turn"]:
-            gear, speed, steer, brake = self.__turn__(packet[1] / 100)
+            gear, speed, steer, brake = self.__turn__(packet[1] / 100, packet[2], packet[3] / 100)
             # TODO: 수정
 
         elif self.mission_num == modes["crosswalk"]:
             if packet is None:
-                gear, speed, steer, brake = self.__cross__(100)
+                gear, speed, steer, brake = 0, 0, 0, 0
             else:
                 gear, speed, steer, brake = self.__cross__(packet[1] / 100)
 
@@ -127,6 +133,9 @@ class Control(Subroutine):
         if self.speed_platform < ((3 * speed)/ 5):
             self.accel_speed = 2 * speed
             self.accel_brake = brake
+        elif self.speed_platform > (speed / 3):
+            self.accel_speed = 0
+            self.accel_brake = 20
         else:
             self.accel_speed = speed
             self.accel_brake = brake
@@ -183,7 +192,7 @@ class Control(Subroutine):
         correction = 1.6
         adjust = 0.1
 
-        speed_mission = 30  # TODO: 미션용 속도, 실험하고 변경바람
+        speed_mission = 36  # TODO: 미션용 속도, 실험하고 변경바람
         speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
 
         if obs_r < 2:
@@ -214,7 +223,7 @@ class Control(Subroutine):
             theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
             if abs(theta_obs) > 15:
-                speed = 12
+                speed = 30
 
         if (90 - obs_theta) < 0:
             theta_obs = theta_obs * (-1)
@@ -244,27 +253,32 @@ class Control(Subroutine):
         steer = 0
         brake = 0
 
-        self.change_mission = 0
+        radian_theta = math.radians(abs(90 - front_theta))
+        self.front_distance = turn_distance * math.cos(radian_theta)
+        self.right_distance = right_distance
+
+        if self.right_distance_past == 0:
+            self.right_distance_past = self.right_distance
+        term = (self.right_distance - self.right_distance_past)
 
         if self.u_sit == 0:
-            if turn_distance < 3.50:
-                speed = 30
-            elif turn_distance < 3.0:
-                steer = 0
+            steer = self.turn_steer(term)
+            self.right_distance_past = self.right_distance
+
+            if 4.0 < self.front_distance < 4.5:
+                speed = 35
+            elif self.front_distance < 4.0:
                 speed = 0
-                brake = 65
+                brake = 60
 
                 if self.speed_platform == 0:
-                    self.theta = front_theta
+                    self.theta_turn = front_theta
+                    steer = 0
                     self.u_sit = 1
-            else:
-                steer = 0
-                speed = 60
-                brake = 0
-                gear = 0
+
 
         elif self.u_sit == 1:
-            correction_enc = ((90 - self.theta) / 180) * 786
+            correction_enc = ((90 - self.theta_turn) / 180) * 786
             speed = 60
             if self.ct1 == 0:
                 self.ct1 = self.enc_platform
@@ -285,6 +299,7 @@ class Control(Subroutine):
                 if self.speed_platform == 0:
                     steer = 0
                     speed = 0
+                    self.data.check_u_turn_complete()
 
         self.gear = gear
         self.speed = speed
@@ -293,21 +308,51 @@ class Control(Subroutine):
 
         return self.gear, self.speed, self.steer, self.brake
 
-    def __cross__(self, stop_line, light):  # TODO: 신호등 값 받기
+    def __turn_steer__(self, term):
+        k = 1
+        if abs(term) < 0.27:
+            k = 0.5
+
+        adjust = 0.5
+
+        velocity = (self.speed_platform * 100) / 3600
+        steer = math.degrees(math.atan((k * term) / velocity))
+
+
+        steer_final = ((adjust * self.turn_steer_past) + ((1 - adjust) * steer))
+
+        self.turn_steer_past = steer_final
+
+        self.steer = steer_final * 71
+        if steer > 1970:
+            self.steer = 1970
+            self.turn_steer_past = 27.746
+        elif steer < -1970:
+            self.steer = -1970
+            self.turn_steer_past = -27.746
+
+        return self.steer
+
+    def __cross__(self, stop_line, light_signal):  # TODO: 신호등 값 받기
         steer = 0
         speed = 60
         gear = 0
         brake = 0
 
-        self.change_mission = 0
-
         if self.c_sit == 0:
-            if abs(stop_line) < 1.7:  # TODO: 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+            if 1.5 < abs(stop_line) < 2:  # TODO: 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+                speed = 35
+            elif abs(stop_line) < 1.5:
                 speed = 0
+                brake = 60
                 self.c_sit = 1
 
         elif self.c_sit == 1:
-            return 0
+            if light_signal is True:
+                self.data.check_crosswalk_complete()
+            else:
+                speed = 0
+                brake = 0
 
         self.gear = gear
         self.speed = speed
@@ -321,8 +366,6 @@ class Control(Subroutine):
         steer = 0
         gear = 0
         brake = 0
-
-        self.change_mission = 0
 
         time_change = 0.5  # 값 갱신 속도, 수정바람
 
@@ -349,7 +392,7 @@ class Control(Subroutine):
                 speed = 60
 
             if distance > 3:  # TODO: 실험값 수정
-                self.change_mission = 1
+                self.data.check_mission_completed("target_tracking")
 
         self.gear = gear
         self.speed = speed
@@ -363,8 +406,6 @@ class Control(Subroutine):
         speed = 36
         steer = 0
         brake = 0
-
-        self.change_mission = 0
 
         self.gear = gear
         self.speed = speed
