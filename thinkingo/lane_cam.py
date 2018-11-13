@@ -7,6 +7,7 @@ sys.path.append("../test")
 from subroutine import Subroutine
 from data_source import Source
 from data_class import Data
+import random
 
 
 class LaneCam(Subroutine):
@@ -51,7 +52,42 @@ class LaneCam(Subroutine):
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
-        cv2.imshow('filtered', filtered_frame)
+
+        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 10, 10)
+
+        t1 = time.time()
+
+        stop_line = None
+
+        while True:
+            if lines is None: break
+            slope, length = 0, 0
+            rand = random.randint(0, len(lines) - 1)
+
+            for x1, y1, x2, y2 in lines[rand]:
+                slope = ((y2 - y1) / (x1 - x2)) if (x1 != x2) else 10000
+                length = np.sqrt((y2 - y1) ** 2 + (x1 - x2) ** 2)
+
+            if abs(slope) < 0.2 and length > 100:
+                stop_line = lines[rand]
+                break
+
+            if (time.time() - t1) >= 0.01:
+                stop_line = None
+                break
+
+        if stop_line is not None:
+            for x1, y1, x2, y2 in stop_line:
+                a = ((y2 - y1) / (x1 - x2))
+                b = 300 - y1 - a * x1
+                distance = abs(300 * a + b) / np.sqrt(a ** 2 + 1)
+
+                cv2.line(merged_frame, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
+                         (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
+                #TODO: DB에 merged_frame 올리기
+                return distance
+        else:
+            return None
 
     def lane_detection(self):
         if self.data_source.mid_frame is None: return
@@ -84,7 +120,7 @@ class LaneCam(Subroutine):
     def main(self):
         while True:
             # self.lane_detection()
-            self.make_merged_frame()
+            self.stop_line_detection()
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
                 break
@@ -96,7 +132,7 @@ if __name__ == "__main__":
     from dummy_data_source import DummySource
 
     testData = Data()
-    testDS = Source()
+    testDS = Source(testData)
     # testDDS = DummySource('2018-11-04-17-01-16')
     testLC = LaneCam(testDS, testData)  # DummySource for test
 
