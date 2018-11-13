@@ -83,8 +83,12 @@ class Control(Subroutine):
             packet[2] = 부채꼴함수에서 계산된 각도
         1. narrow
             TODO: ???
+        
         2. u_turn
-            TODO: ???
+            TODO: 명료화 필요.
+            packet[1] =  Lidar에서 180도 값 수치 (벽에서 차량정면에 내린 수선의 발의 길이) (Wiki 참고) 
+            packet[2] =  차량 정면의 법선벡터와 x축과의 거리
+        
         3. crosswalk
             packet[1] = 정지선으로 부터 거리, 넘겨받는 단위: cm
         4. target_tracking

@@ -12,7 +12,7 @@ import time
 HOST = '127.0.0.1'
 PORT = 10018
 BUFF = 57600
-timeLabel = "2018-11-04-16-24-41"
+timeLabel = "2018-11-04-17-01-16"
 MESG = timeLabel + ".txt"
 RAD = 500
 
