@@ -70,12 +70,6 @@ class MotionPlanner(Subroutine):
                 return False
         return True
 
-    def lane_handling(self):
-        if not self.is_forward_clear():
-            self.current_mode = 1
-            return
-
-        # TODO: 차선을 처리하는 코드 넣기
 
     def init_cuda(self):
         # pycuda alloc
@@ -105,6 +99,14 @@ class MotionPlanner(Subroutine):
         # pycuda alloc end
 
         time.sleep(2)
+
+    def lane_handling(self):
+        if not self.is_forward_clear():
+            self.current_mode = 1
+            return
+        self.data.planner_to_control_packet = (0, 0, 90, None)
+
+        # TODO: 차선을 처리하는 코드 넣기
 
     def obs_handling(self, angle, obs_offset):
         if self.is_forward_clear():

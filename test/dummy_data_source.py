@@ -50,24 +50,22 @@ if __name__ == "__main__":
 
     RAD = 600
     test_data = Data()
-    testDS = DummySource('2018-11-04-17-01-16', test_data)
+    testDS = DummySource('2018-11-04-17-01-16')
     stream_thread = threading.Thread(target=testDS.main)
     stream_thread.start()
 
     # data가 모두 들어올때까지 blocking
     while testDS.left_frame is None or testDS.right_frame is None \
-            or testDS.mid_frame is None or test_data.lidar_data_list is None:
+            or testDS.mid_frame is None or testDS.lidar_data is None:
         pass
 
     while True:
         current_frame = np.zeros((RAD, RAD * 2), np.uint8)
         points = np.full((361, 2), -1000, np.int)
-
-        lidar_data = test_data.lidar_data_list.split(' ')[116:477]
-        data_list = [int(item, 16) for item in lidar_data]
+        parsed_data = testDS.lidar_data
 
         for theta in range(0, 361):
-            r = data_list[theta] / 10  # 차에서 장애물까지의 거리, 단위는 cm
+            r = parsed_data[theta] / 10  # 차에서 장애물까지의 거리, 단위는 cm
             if 2 <= r:  # 라이다 바로 앞 1cm 의 노이즈는 무시
 
                 # r-theta 를 x-y 로 바꿔서 (실제에서의 위치, 단위는 cm)
@@ -79,7 +77,7 @@ if __name__ == "__main__":
                 points[theta][1] = RAD - round(y)
 
         for point in points:  # 장애물들에 대하여
-            cv2.circle(current_frame, tuple(point), 100, 255, -1)  # 캔버스에 점 찍기
+            cv2.circle(current_frame, tuple(point), 2, 255, -1)  # 캔버스에 점 찍기
 
         cv2.imshow("LiDAR", current_frame)
         cv2.imshow('test_left', testDS.left_frame)
