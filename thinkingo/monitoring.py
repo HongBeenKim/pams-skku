@@ -23,7 +23,7 @@ class Monitoring(Subroutine):
             # lane cam side
             # lidar
             cv2.imshow('monitor', self.canvas)
-            if cv2.waitKey(1) & 0xff == ord('q'):
+            if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
                 break
         cv2.destroyAllWindows()

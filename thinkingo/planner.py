@@ -56,11 +56,12 @@ class MotionPlanner(Subroutine):
             # TODO: 5. 주차 상황
 
             if self.data.is_all_system_stop():
+                self.pycuda_deallocation()
                 break
         # TODO: main함수 마저 채우기
 
     # TODO: 미션별로 필요한, main 속에서 loop로 돌릴 메서드 생각하기
-    def stop(self):
+    def pycuda_deallocation(self):
         # pycuda dealloc
         global context
         context.pop()
