@@ -41,8 +41,8 @@ class LaneCam(Subroutine):
         undistorted_right = cv2.undistort(right_frame, self.camera_matrix_R,
                                           self.distortion_coefficients_R, None, None)[10:438, 10:790]
 
-        transformed_left = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (526, 427))[0:395, 0:524]
-        transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))[0:375, 15:460]
+        transformed_left = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (526, 427))[95:395, 224:524]
+        transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))[75:375, 160:460]
 
         cv2.imshow('transformed left', transformed_left)
         cv2.imshow('transformed right', transformed_right)
