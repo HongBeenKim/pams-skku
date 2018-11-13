@@ -43,7 +43,8 @@ class MotionPlanner(Subroutine):
                     break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
-
+            elif self.current_mode ==2:
+                self.U_turn_data()
             # 3. 횡단보도 상황
 
             # 4. 차량추종 상황
@@ -220,6 +221,37 @@ class MotionPlanner(Subroutine):
 
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
+
+
+    def U_turn_data(self):
+        
+        """
+        R m 이내의 첫 극솟값 구하기
+
+        변수 정의:  lidar_raw_data      : 라이다 list
+                    lidar_raw_data_front: 라이다 180도 값
+                    length              : 변수 1 값 (단위 cm)
+                    distance_frontwall  : 차량과 앞벽과의 거리 (필요없음)
+                    degree : 이 때의 각도 (lidar식 각도. 실제로 80도->160)
+        """
+
+        lidar_raw_data=self.data_stream.lidar_data
+        lidar_raw_data_front = lidar_raw_data[180]
+        length = lidar_raw_data_front / 10          #mm -> cm
+        
+        for theta in range(3, 358):
+            if((lidar_raw_data[theta]<lidar_raw_data[theta+1] && lidar_raw_data[theta]<lidar_raw_data[theta-1])
+            ||(lidar_raw_data[theta]<lidar_raw_data[theta+2] && lidar_raw_data[theta]<lidar_raw_data[theta-2]):
+                
+                distance_frontwall = lidar_raw_data[theta]  
+                degree = theta
+
+                if(distance_frontwall<100):     # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
+                    break                       # 그래서 10m 이내에서 거리가 잡히면 계산 종료
+  
+
+
+        self.planner_to_control_packet = (self.current_mode, distance_frontwall, degree, None)
 
 
 if __name__ == "__main__":
