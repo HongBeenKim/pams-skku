@@ -18,7 +18,6 @@ OBSTACLE_OFFSET = 50  # 부채살 적용 시 장애물의 offset (cm 단위)
 
 class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
-        cv2.setNumThreads(0)
         super().__init__(data)
         # TODO: init 할 것 생각하기
         self.previous_data = None
@@ -107,7 +106,6 @@ class MotionPlanner(Subroutine):
         time.sleep(2)
 
     def obs_handling(self, angle, obs_offset):
-
         if self.is_forward_clear():
             self.current_mode = 0
             cv2.destroyWindow('obstacle avoidance')
@@ -122,7 +120,6 @@ class MotionPlanner(Subroutine):
 
         points = np.full((361, 2), -1000, np.int)  # 점 찍을 좌표들을 담을 어레이 (x, y), 멀리 -1000 으로 채워둠.
 
-
         for theta in range(0, 361):
             r = lidar_raw_data[theta] / 10  # 차에서 장애물까지의 거리, 단위는 cm
 
@@ -135,11 +132,10 @@ class MotionPlanner(Subroutine):
                 # 좌표 변환, 화면에서 보이는 좌표(왼쪽 위가 (0, 0))에 맞춰서 집어넣는다
                 points[theta][0] = round(x) + ACT_RAD
                 points[theta][1] = ACT_RAD - round(y)
-        t1 = time.time()
 
         for point in points:  # 장애물들에 대하여
             cv2.circle(current_frame, tuple(point), obs_offset, 255, -1)  # 캔버스에 점 찍기
-        print(time.time() - t1)
+
         # 부채살의 결과가 저장되는 변수
         data = np.zeros((angle + 1, 2), np.int)
 
@@ -221,8 +217,6 @@ class MotionPlanner(Subroutine):
 
                 self.data.planner_to_control_packet = (self.current_mode, 10, target, None)
 
-            print(self.data.planner_to_control_packet)
-
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
 
@@ -234,24 +228,24 @@ if __name__ == "__main__":
 
     testDT = Data()
     testDS = Source()
+    car = CarPlatform('COM5', testDT)
+    testMP = MotionPlanner(testDS, testDT)
+    test_control = Control(testDT)
 
     lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
     left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
     right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
     mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
+    planner_thread = threading.Thread(target=testMP.main)
+    control_thread = threading.Thread(target=test_control.main)
+    car_thread = threading.Thread(target=car.main)
 
     lidar_source_thread.start()
+    planner_thread.start()
+    time.sleep(3)
+    car_thread.start()
+    control_thread.start()
+
     left_cam_source_thread.start()
     right_cam_source_thread.start()
     mid_cam_source_thread.start()
-
-    testMP = MotionPlanner(testDS, testDT)
-    test_control = Control(testDT)
-    planner_thread = threading.Thread(target=testMP.main)
-    control_thread = threading.Thread(target=test_control.main)
-    car = CarPlatform('COM5', testDT)
-    car_thread = threading.Thread(target=car.main)
-    car_thread.start()
-    planner_thread.start()
-    time.sleep(3)
-    control_thread.start()

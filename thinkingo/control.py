@@ -51,7 +51,7 @@ class Control(Subroutine):
             self.do_mission(packet)
             self.accel(self.speed)
             self.data.set_control_value(*self.write())
-            pass
+            time.sleep(0.01)
 
     def read_packet_from_planner(self):
         """
@@ -60,7 +60,6 @@ class Control(Subroutine):
         """
         packet = self.data.planner_to_control_packet
         self.mission_num = packet[0]  # set mission number
-        # TODO: @김홍빈 second 값 어떻게 줄지 약속
         return packet
 
     def read_car_platform_status(self):
