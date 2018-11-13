@@ -10,18 +10,43 @@ from data_class import Data
 
 
 class LaneCam(Subroutine):
-    # camera_matrix_L = np.array([[474.383699, 0, 404.369647], [0, 478.128447, 212.932297], [0, 0, 1]])
-    # distortion_coefficients_L = np.array([0.164159, -0.193892, -0.002730, -0.001859])
-    # pts1_L = np.float32([[0, 0], [0, 428], [780, 0], [780, 428]])
-    # pts2_L = np.float32([[0, 312], [440, 445], [537, 0], [562, 354]])
-    # Bird_view_matrix_L = cv2.getPerspectiveTransform(pts1_L, pts2_L)
-    #
-    # lower_white = np.array([187, 180, 160], dtype=np.uint8)
-    # upper_white = np.array([255, 254, 255], dtype=np.uint8)
+    camera_matrix_L = np.array([[474.383699, 0, 404.369647], [0, 478.128447, 212.932297], [0, 0, 1]])
+    camera_matrix_R = np.array([[473.334870, 0, 386.312394], [0, 476.881433, 201.662339], [0, 0, 1]])
+    distortion_coefficients_L = np.array([0.164159, -0.193892, -0.002730, -0.001859])
+    distortion_coefficients_R = np.array([0.116554, -0.155379, -0.001045, -0.001512])
+
+    pts1_L = np.float32([[0, 0], [0, 428], [780, 0], [780, 428]])
+    pts2_L = np.float32([[0, 312], [440, 445], [537, 0], [562, 354]])
+    pts1_R = np.float32([[0, 0], [0, 428], [780, 0], [780, 428]])
+    pts2_R = np.float32([[5, 0], [-2, 384], [503, 324], [119, 471]])
+
+    Bird_view_matrix_L = cv2.getPerspectiveTransform(pts1_L, pts2_L)
+    Bird_view_matrix_R = cv2.getPerspectiveTransform(pts1_R, pts2_R)
+
+    lower_white = np.array([187, 180, 160], dtype=np.uint8)
+    upper_white = np.array([255, 254, 255], dtype=np.uint8)
 
     def __init__(self, data_source: Source, data):
         super().__init__(data)
         self.data_source = data_source
+
+    def make_merged_frame(self):
+        if self.data_source.left_frame is None or self.data_source.right_frame is None:
+            return None
+        left_frame = self.data_source.left_frame.copy()
+        right_frame = self.data_source.right_frame.copy()
+        undistorted_left = cv2.undistort(left_frame, self.camera_matrix_L,
+                                         self.distortion_coefficients_L,None, None)[10:438, 10:790]
+        undistorted_right = cv2.undistort(right_frame, self.camera_matrix_R,
+                                         self.distortion_coefficients_R, None, None)[10:438, 10:790]
+
+
+
+
+        #TODO: warpPerspective
+
+    def stop_line_detection(self):
+        pass
 
     def lane_detection(self):
         if self.data_source.mid_frame is None: return
