@@ -254,19 +254,25 @@ class MotionPlanner(Subroutine):
                     break                       # 그래서 10m 이내에서 거리가 잡히면 계산 종료
             pass
 
-        print(distance_frontwall)
-        print(degree)
+    
        
-        self.planner_to_control_packet = (self.current_mode, distance_frontwall, degree, None)
+        self.planner_to_control_packet = (self.current_mode, length, degree, None)
 
 
     def calculate_distance_phase_target(self):
         lidar_raw_data=self.data_stream.lidar_data
         for theta in range(170,190):
-            minimum_distance=min(lidar_raw_data[theta])
+            minimum_distance=min(lidar_raw_data[theta])     #전방 좌우 10도의 라이다 값 중 최솟값
+            
+       
 
         self.planner_to_control_packet = (self.current_mode, minimum_distance, None, None)
-        
+
+        """
+        TODO: 과연 최솟값으로 하면 문제가 없을까? 
+        튀는 값을 대비하여 3번째 최소인 값을 대입해야 하는 것 아닌가?
+        """ 
+
 if __name__ == "__main__":
     import threading
     from control import Control
