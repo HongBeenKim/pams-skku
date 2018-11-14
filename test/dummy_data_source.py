@@ -11,7 +11,7 @@ class DummySource():
     def __init__(self, filename: str):
         self.cap_left = cv2.VideoCapture(DATA_ROOT_PATH + 'leftcam\\' + filename + '.avi')
         self.cap_right = cv2.VideoCapture(DATA_ROOT_PATH + 'rightcam\\' + filename + '.avi')
-        self.cap_mid = cv2.VideoCapture(DATA_ROOT_PATH + 'signcam\\' + filename + '.avi')
+        self.cap_mid = cv2.VideoCapture(DATA_ROOT_PATH + 'midcam\\' + filename + '.avi')
         self.lidar_file = open(DATA_ROOT_PATH + 'lidar\\' + filename + '.txt', 'rb')
 
         self.left_frame = None
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     RAD = 600
     test_data = Data()
-    testDS = DummySource('2018-11-04-17-01-16')
+    testDS = DummySource('2018-11-14-15-56-21')
     stream_thread = threading.Thread(target=testDS.main)
     stream_thread.start()
 

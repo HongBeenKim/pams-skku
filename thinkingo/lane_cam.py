@@ -36,7 +36,7 @@ class LaneCam(Subroutine):
     def main(self):
         while True:
             # self.lane_detection()
-            self.stop_line_detection()
+            self.parking_line_detection()
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
                 break
@@ -55,19 +55,29 @@ class LaneCam(Subroutine):
         transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))[73:373, 15:315]
 
         merged_frame = np.hstack((transformed_left, transformed_right))
-
         return merged_frame
 
     def parking_line_detection(self):
         merged_frame = self.make_merged_frame()
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
 
-        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 10, 10)
+        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 100, 80)
+
+        # if lines is not None:
+        #     for i in range(0, len(lines)):
+        #         for x1, y1, x2, y2 in lines[i]:
+        #             cv2.line(merged_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
+        #
+        # cv2.imshow('test', merged_frame)
 
         t1 = time.time()
 
         while True:
             if lines is None: break
+
+            if (time.time() - t1) >= 0.01:
+                break
+
             if len(lines) == 1: break
             magnitude_a, magnitude_b, vec_a, vec_b = 0, 0, (0, 0), (0, 0)
             a, b, c, mid_x, mid_y = 0, 0, 0, 0, 0
@@ -84,19 +94,27 @@ class LaneCam(Subroutine):
                 mid_x, mid_y = (x1 + x2) / 2, 300 - (y1 + y2) / 2
 
             cos_theta = (vec_a[0] * vec_b[0] + vec_a[1] * vec_b[1]) / (magnitude_a * magnitude_b)
-            if -0.9 < cos_theta < 0.9: continue
+            if -0.8 < cos_theta < 0.8: continue
             distance = np.abs(a * mid_x + b * mid_y + c) / np.sqrt(a ** 2 + b ** 2)
             if 100 < distance < 150:
-                pass
-            if (time.time() - t1) >= 0.01:
-                break
+                cv2.line(merged_frame, (lines[rand[0]][0][0], lines[rand[0]][0][1]),
+                         (lines[rand[0]][0][2], lines[rand[0]][0][3]), (0, 0, 255), 2)
+
+                cv2.line(merged_frame, (lines[rand[1]][0][0], lines[rand[1]][0][1]),
+                         (lines[rand[1]][0][2], lines[rand[1]][0][3]), (255, 0, 0), 2)
+
+        cv2.imshow('test', merged_frame)
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
-        # filtered_frame = cv2.Canny(merged_frame, 100, 200)
+        # filtered_frame = cv2.Canny(merged_frame, 50, 100)
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
 
-        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 180, 10, 10, 300)
+        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 100, 80)
+        # if lines is not None:
+        #     for i in range(0, len(lines)):
+        #         for x1, y1, x2, y2 in lines[i]:
+        #             cv2.line(merged_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
 
         t1 = time.time()
 
@@ -111,7 +129,7 @@ class LaneCam(Subroutine):
                 slope = ((y2 - y1) / (x1 - x2)) if (x1 != x2) else 10000
                 length = np.sqrt((y2 - y1) ** 2 + (x1 - x2) ** 2)
 
-            if abs(slope) < 0.2 and length > 100:
+            if abs(slope) < 0.05 and length > 40:
                 stop_line = lines[rand]
                 break
 
@@ -129,11 +147,11 @@ class LaneCam(Subroutine):
 
                 cv2.line(merged_frame, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
-
-        self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
-        # cv2.imshow('lane', merged_frame)
-        # cv2.imshow('filterd', filtered_frame)
         print(distance)
+        self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
+        cv2.imshow('lane', merged_frame)
+        cv2.imshow('filterd', filtered_frame)
+
         return distance
 
     def lane_detection(self):
@@ -171,22 +189,24 @@ if __name__ == "__main__":
     from dummy_data_source import DummySource
 
     testData = Data()
-    #testDS = Source(testData)
-    testDDS = DummySource('2018-11-14-15-56-21')
+    # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
+    testDDS = DummySource('2018-11-14-16-22-43')
     testLC = LaneCam(testDDS, testData)  # DummySource for test
+    dummy_thread = threading.Thread(target=testDDS.main)
+    dummy_thread.start()
 
+    # ------------------- 센서 Data 사용 시 아래 코드를 활성화 ----------------------
+    # testDS = Source(testData)
     # lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
     # left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
     # right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
     # mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
 
-    dummy_thread = threading.Thread(target=testDDS.main)
-    dummy_thread.start()
-
     # lidar_source_thread.start()
-    #left_cam_source_thread.start()
-    #right_cam_source_thread.start()
+    # left_cam_source_thread.start()
+    # right_cam_source_thread.start()
     # mid_cam_source_thread.start()
+    # -------------------------------------------------------------------------------
 
     time.sleep(1)
     testLC.main()
