@@ -14,7 +14,8 @@ ACTUAL_RADIUS = 500  # 부채살의 실제 반경
 CLEAR_RADIUS = 500  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
 ARC_ANGLE = 110  # 부채살 적용 각도
 OBSTACLE_OFFSET = 65  # 부채살 적용 시 장애물의 offset (cm 단위)
-
+U_TURN_ANGLE = 30 # 유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
+                  #  i.e) U_TURN_ANGLE=30 이면 75도~105도를 읽는다
 
 class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
@@ -45,7 +46,7 @@ class MotionPlanner(Subroutine):
 
             # 2. 유턴 상황
             elif self.current_mode == self.data.MODES["u_turn"]:
-                self.U_turn_data()
+                self.U_turn_data(U_TURN_ANGLE)
 
             # TODO: 3. 횡단보도 상황
 
@@ -230,36 +231,49 @@ class MotionPlanner(Subroutine):
             cv2.imshow('obstacle avoidance', color)
             if color is None: return
 
-    def U_turn_data(self):
-
+    def U_turn_data(self,U_angle):
+        
         """
-        R m 이내의 첫 극솟값 구하기
+        특정 각도에서만 부채살을 적용시키는 프로그램.
+        필요에 따라 부채살이 필요할 경우를 대비하여 추가 코드 작업을 할 예정이다
+        (2018-11-15 오전 7시까지)
 
-        변수 정의:  lidar_raw_data      : 라이다 list
-                    lidar_raw_data_front: 라이다 180도 값
-                    length              : 변수 1 값 (단위 cm)
-                    distance_frontwall  : 차량과 앞벽과의 거리 (필요없음)
-                    degree : 이 때의 각도 (lidar식 각도. 실제로 80도->160)
+        Input       : U_angle             유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
+                                          i.e) U_TURN_ANGLE=30 이면 75도~105도를 읽는다
+    
+        Edited 2018-11-15 AM 01:15
         """
 
+        #Lidar_data의 자료를 받아온다
         lidar_raw_data = self.data_stream.lidar_data
-        lidar_raw_data_front = lidar_raw_data[180]
-        length = lidar_raw_data_front / 10  # mm -> cm
+        
+        #Lidar의 우측 (0도) 까지의 거리를 측정한다. 
+        lidar_right_distance_mm = lidar_raw_data[0]
+        lidar_right_distance_cm = lidar_right_distance_mm / 10  # mm -> cm
 
-        for theta in range(3, 358):
-            if ((lidar_raw_data[theta] < lidar_raw_data[theta + 1] and lidar_raw_data[theta] < lidar_raw_data[
-                theta - 1])
-                    or (lidar_raw_data[theta] < lidar_raw_data[theta + 2] and lidar_raw_data[theta] < lidar_raw_data[
-                        theta - 2])):
+        # 전방 시야각을 설정한다. 이 각도의 데이터만 passing할 예정.
+        angle_start = 180 - U_angle     
+        angle_end   = 180 + U_angle
 
-                distance_frontwall = lidar_raw_data[theta]
-                degree = theta
+        # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
+        # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
 
-                if (distance_frontwall < 100):  # 10m보다 거리가 길면 아마 왼쪽 벽일 것이다.
-                    break  # 그래서 10m 이내에서 거리가 잡히면 계산 종료
-            pass
+        init_list = 20001   #초기화 숫자. 필요에 따라 음수, 0 혹은 큰 숫자 대입
+        lidar_passed_data = []
 
-        self.planner_to_control_packet = (self.current_mode, length, degree, None)
+        for theta in range(0,360):
+            lidar_passed_data[theta] = init_list        #초기화
+
+        for theta in range(angle_start, angle_end):
+            lidar_passed_data[theta] = lidar_raw_data[theta]        #passing
+        
+        #거리 최솟값의 index를 주는 함수
+        distance_front_index = lidar_passed_data.index(min(lidar_passed_data))
+        
+        #실제 각도는 index의 1/2
+        degree = distance_front_index / 2 
+
+        self.planner_to_control_packet = (self.current_mode, lidar_right_distance_cm , degree, None)
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
