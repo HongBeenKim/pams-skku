@@ -3,17 +3,18 @@ import sys
 sys.path.append(".")
 from serial_packet import SerialPacket
 
-modes = {"default": 0, "narrow": 1, "u_turn": 2,
-         "crosswalk": 3, "target_tracking": 4,
-         "parking": 5,
-         }
-parking_mode = {"parking_a": 6, "parking_b": 7}
-light_mode = {"green_light": 8, "red_light": 9}
 NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
 
 
 class Data(object):
     def __init__(self):
+        self.MODES = {"default": 0, "narrow": 1, "u_turn": 2,
+                      "crosswalk": 3, "target_tracking": 4,
+                      "parking": 5,
+                      }
+        self.PARKING_MODE = {"parking_a": 6, "parking_b": 7}
+        self.LIGHT_MODE = {"green_light": 8, "red_light": 9}
+
         # from car platform
         self._read_packet = SerialPacket()
         # to car platform
@@ -29,6 +30,22 @@ class Data(object):
 
         # planner to control
         self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
+
+        # monitoring
+        self.sign_cam_monitoring_frame = None
+        self._lane_cam_monitoring_frame = None
+        self.lane_cam_monitoring_frame_size = (None, None)
+        self._planner_monitoring_frame = None
+        self.planner_monitoring_frame_size = (None, None)
+
+        # stop flag
+        self._all_end_and_stop_yeah = False
+
+    def stop_thinkingo(self):
+        self._all_end_and_stop_yeah = True
+
+    def is_all_system_stop(self):
+        return self._all_end_and_stop_yeah
 
     @property
     def read_packet(self):
@@ -76,8 +93,8 @@ class Data(object):
     @detected_mission_number.setter
     def detected_mission_number(self, mission: str):
         try:
-            if modes[mission] != 0:
-                self._detected_mission_number = modes[mission]
+            if self.MODES[mission] != 0:
+                self._detected_mission_number = self.MODES[mission]
             else:
                 print("Error: detected mission number cannot be default(0)")
         except KeyError as e:
@@ -86,12 +103,12 @@ class Data(object):
     def check_mission_completed(self, mission: str):
         """
         어떤 미션이 끝나면 그 미션을 수행했다고 체크한 뒤 기본 주행으로 넘어간다.
-        :param mission: 미션 이름 string (modes dictionary 참조)
+        :param mission: 미션 이름 string (self.modes dictionary 참조)
         """
         try:
-            mission_num = modes[mission]
+            mission_num = self.MODES[mission]
             self._mission_checklist[mission_num] = True
-            self._detected_mission_number = modes["default"]
+            self._detected_mission_number = self.MODES["default"]
         except KeyError as e:
             print(e)
 
@@ -99,26 +116,26 @@ class Data(object):
         """
         유턴을 끝내고 나면 다음 미션인 횡단보도로 넘어간다.
         """
-        self._mission_checklist[modes["u_turn"]] = True
-        self._detected_mission_number = modes["crosswalk"]
+        self._mission_checklist[self.MODES["u_turn"]] = True
+        self._detected_mission_number = self.MODES["crosswalk"]
 
     def check_crosswalk_complete(self):
         """
         횡단보도 미션을 끝내고 나면 다음 미션인 타겟차 트래킹으로 넘어간다.
         """
-        self._mission_checklist[modes["crosswalk"]] = True
-        self._detected_mission_number = modes["target_tracking"]
+        self._mission_checklist[self.MODES["crosswalk"]] = True
+        self._detected_mission_number = self.MODES["target_tracking"]
 
     def is_next_mission(self, mission: str):
         try:
-            if modes[mission] == modes["default"]:
+            if self.MODES[mission] == self.MODES["default"]:
                 return True
             result = False
             for num, okay in self._mission_checklist.items():
                 if okay:
                     continue
                 else:
-                    if num == modes[mission]:
+                    if num == self.MODES[mission]:
                         result = True
                         break
                     else:
@@ -136,7 +153,7 @@ class Data(object):
             return True
 
     def is_in_parking_mission(self):
-        if self._detected_mission_number == modes["parking"]:
+        if self._detected_mission_number == self.MODES["parking"]:
             return True
         else:
             return False
@@ -151,6 +168,30 @@ class Data(object):
     @parking_lot.setter
     def parking_lot(self, parking_location: str):
         try:
-            self._parking_lot = parking_mode[parking_location]
+            self._parking_lot = self.PARKING_MODE[parking_location]
         except KeyError as e:
             print(e)
+
+    @property
+    def lane_cam_monitoring_frame(self):
+        return self._lane_cam_monitoring_frame
+
+    @lane_cam_monitoring_frame.setter
+    def lane_cam_monitoring_frame(self, frame_and_size: tuple):
+        """
+        :param frame_and_size: ([ndarray], [x-size], [y-size])
+        """
+        self._lane_cam_monitoring_frame = frame_and_size[0]
+        self.lane_cam_monitoring_frame_size = (frame_and_size[1], frame_and_size[2])
+
+    @property
+    def planner_monitoring_frame(self):
+        return self._planner_monitoring_frame
+
+    @planner_monitoring_frame.setter
+    def planner_monitoring_frame(self, frame_and_size: tuple):
+        """
+        :param frame_and_size: ([ndarray], [x-size], [y-size])
+        """
+        self._planner_monitoring_frame = frame_and_size[0]
+        self.planner_monitoring_frame_size = (frame_and_size[1], frame_and_size[2])

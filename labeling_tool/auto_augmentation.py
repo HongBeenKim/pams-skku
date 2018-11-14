@@ -5,9 +5,9 @@ from imgaug import augmenters as iaa
 import scipy
 import shutil
 
-path = 'D:\\Users\\ilseok\\Desktop\\background'
+path = 'C:\\Users\\HEVEN\\Desktop\\background_ilseok\\background'
 
-augmentation_path = 'D:\\Users\\ilseok\\Desktop\\augmentation'
+augmentation_path = 'C:\\Users\\HEVEN\\Desktop\\background_ilseok\\augmentation'
 
 for root, dirs, files in os.walk(path):
     for file in files:

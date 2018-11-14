@@ -1,34 +1,31 @@
-import socket
-import sys
+# -*- coding: utf-8 -*-
 
-sys.path.append(".")
+from module.pytorch_yolo import yolo 
 from subroutine import Subroutine
 from data_class import Data
+from data_source import Source
 
-YOLO_HOST = '127.0.0.1'
-YOLO_PORT = 20002
 
 
 class SignCam(Subroutine):
-    def __init__(self, data: Data):
+    def __init__(self, source, data: Data):
         super().__init__(data)
-        self.yolo_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.yolo_sock.bind((YOLO_HOST, YOLO_PORT))
-        print("bind complete. Waiting YOLO server...")
-
-        self.yolo_data = b''
+        self.source = source
+        self.model = yolo.init_yolo_sign()
+        self.yolo_data = [None, None]
         self.yolo_datas = [[0 for col in range(2)] for row in range(50)]
-        self.data_decoding_init()
         self.sign = [[0 for col in range(9)] for row in range(3)]
-        self.sign_init()
-        self.stop_flag = False
+        self.sign_init() 
 
     def main(self):
         while True:
+            if self.source.left_frame is None:
+                continue
             if self.data.is_in_mission():
                 continue
 
             else:
+                self.frame = self.source.left_frame.copy()
                 self.data_decoding()
                 self.first_selection()
                 self.second_selection()
@@ -37,9 +34,11 @@ class SignCam(Subroutine):
                 self.sign_reinit()
                 print(self.data.detected_mission_number)
 
-            if self.stop_flag:
+            if self.data.is_all_system_stop():
                 break
-        self.yolo_sock.close()
+        
+        
+        
 
     def sign_init(self):
         self.sign[0][0] = 'default'
@@ -54,22 +53,28 @@ class SignCam(Subroutine):
 
     # 최근 몇개의 데이터를 가져와 저장한다!
     def data_decoding_init(self):
-        for i in range(0, 50):
-            self.yolo_data, address = self.yolo_sock.recvfrom(1024)
-            self.yolo_datas[i] = self.yolo_data.decode().split(' : ')
+        count = 0
+        while count<50:
+            self.yolo_data = yolo.run_yolo_sign(self.model, self.frame)
+
+            for data in self.yolo_data:
+                self.yolo_datas[count] = data
+                count += 1
 
     # 하나의 데이터를 가져와 업데이트한다!
     def data_decoding(self):
-        self.yolo_data, address = self.yolo_sock.recvfrom(1024)
-        self.yolo_datas.pop(0)
-        self.yolo_datas.append(self.yolo_data.decode().split(' : '))
+        self.yolo_data = yolo.run_yolo_sign(self.model, self.frame)
+
+        for data in self.yolo_data:
+            self.yolo_datas.pop(0)
+            self.yolo_datas.append(data)
 
     #  조건1 최근 몇개의 데이터에서 특정 인식률 이상 인것에 (sign[1][#]+=1)
     def first_selection(self):
         for i in range(0, 50):
             for j in range(0, 8):
                 if self.yolo_datas[i][0] == self.sign[0][j]:
-                    if float(self.yolo_datas[i][1][:-2]) > 75:  # 최소 인식률 정하는 곳
+                    if float(self.yolo_datas[i][1]) > 0.75:  # 최소 인식률 정하는 곳
                         self.sign[1][j] = self.sign[1][j] + 1
 
     #  조건2 first_selection 거친 것중에 몇회이상 나오면 (sign[2][#]=1)
@@ -125,7 +130,8 @@ if __name__ == "__main__":
 
 
     test_data = Data()
-    test_sign_cam = SignCam(data=test_data)
+    test_source = Source(data=test_data)
+    test_sign_cam = SignCam(test_source, data=test_data)
 
     """
     특정 표지판으로 시작하기 (테스트용)
@@ -134,6 +140,11 @@ if __name__ == "__main__":
     # start_from_u_turn(test_data)
 
     print(test_data._mission_checklist)
-
+    
+    data_source_thread = threading.Thread(target=test_source.left_cam_stream_main)
     sign_cam_thread = threading.Thread(target=test_sign_cam.main)
+
+    data_source_thread.start()
     sign_cam_thread.start()
+
+
