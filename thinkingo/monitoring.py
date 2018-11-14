@@ -17,12 +17,16 @@ class Monitoring(Subroutine):
 
     def main(self):
         while True:
-            self.canvas = self.put_car_platform_status()
+            dummy = np.zeros(shape=(180, 600, 3), dtype=np.uint8)
+            car_frame = self.put_car_platform_status()
             # sign cam
             # lane cam mid
             # lane cam side
+            merged_lane_cam = self.data.lane_cam_monitoring_frame
+            if merged_lane_cam is not None:
+                cv2.imshow('lane cam', merged_lane_cam)
             # lidar
-            cv2.imshow('monitor', self.canvas)
+            cv2.imshow('monitoring', self.canvas)
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
                 break
@@ -59,14 +63,24 @@ class Monitoring(Subroutine):
 
 if __name__ == "__main__":
     import threading
+    from data_source import Source
     from car_platform import CarPlatform
+    from lane_cam import LaneCam
 
     test_data = Data()
+    test_data_source = Source(test_data)
+
+    left_cam_thread = threading.Thread(target=test_data_source.left_cam_stream_main)
+    right_cam_thred = threading.Thread(target=test_data_source.right_cam_stream_main)
+    left_cam_thread.start()
+    right_cam_thred.start()
 
     car = CarPlatform('COM5', test_data)
+    lane_cam = LaneCam(test_data_source, test_data)
     monitoring = Monitoring(test_data)
 
     car_thread = threading.Thread(target=car.main)
+    lane_cam_thread = threading.Thread(target=lane_cam.main)
     monitor_thread = threading.Thread(target=monitoring.main)
 
     car_thread.start()
