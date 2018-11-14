@@ -32,6 +32,14 @@ class LaneCam(Subroutine):
         super().__init__(data)
         self.data_source = data_source
 
+    def main(self):
+        while True:
+            # self.lane_detection()
+            self.stop_line_detection()
+            if cv2.waitKey(1) & 0xff == ord(' '):
+                self.data.stop_thinkingo()
+                break
+
     def make_merged_frame(self):
         if self.data_source.left_frame is None or self.data_source.right_frame is None:
             return None
@@ -121,6 +129,7 @@ class LaneCam(Subroutine):
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
 
         self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
+        cv2.imshow('lane', merged_frame)
         return distance
 
     def lane_detection(self):
@@ -142,7 +151,7 @@ class LaneCam(Subroutine):
                     bottom_interception = int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2))
                     if 266 > ceiling_interception or ceiling_interception > 532 or x1 == x2 or (
                             abs(y1 - y2) / abs(x1 - x2)) < 0.1 or np.sqrt(
-                            (x1 - x2) ** 2 + (y1 - y2) ** 2) < 50: continue
+                        (x1 - x2) ** 2 + (y1 - y2) ** 2) < 50: continue
                     cv2.circle(temp_frame, (int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2)), 0), 10, 255, -1)
                     cv2.line(temp_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
 
@@ -150,14 +159,6 @@ class LaneCam(Subroutine):
 
         cv2.imshow('test', temp_frame)
         cv2.imshow('edged', edged)
-
-    def main(self):
-        while True:
-            # self.lane_detection()
-            self.stop_line_detection()
-            if cv2.waitKey(1) & 0xff == ord(' '):
-                self.data.stop_thinkingo()
-                break
 
 
 if __name__ == "__main__":
@@ -174,6 +175,7 @@ if __name__ == "__main__":
     left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
     right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
     # mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
+    lane_cam_thread = threading.Thread(target=testLC.main)
 
     # dummy_thread = threading.Thread(target=testDDS.main)
     # dummy_thread.start()
@@ -184,4 +186,4 @@ if __name__ == "__main__":
     # mid_cam_source_thread.start()
 
     time.sleep(2)
-    testLC.main()
+    lane_cam_thread.start()
