@@ -7,10 +7,10 @@ from imgaug import augmenters as iaa  # pip install imgaug
 vertex = []
 padding = 50  # 잘리는 거 방지 간격
 label = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-lightness = 10  # 명도 5가지
+lightness = 10  # 명도 10가지
+size = 3  # r의 크기
 back_num = 0  # 백그라운드 사진 카운트
-# 아핀변환하고 나온 데이터 점들 모임
-final_vertex = []  # 아핀변환된 데이터들의 점 집합
+final_vertex = []
 
 index = int(input("몇 번째 표지판으로 하실? (1~%d) : " % (len(label))))
 
@@ -78,104 +78,106 @@ cv2.destroyAllWindows()
 # 백그라운드 폴더에 있는 배경사진 수만큼 반복
 for root, dirs, files in os.walk(os.getcwd() + '\\background'):
     for file in files:
-        target = cv2.imread("target/" + sign + ".jpg", 1)
-        background = cv2.imread("background/background_%d.jpg" % back_num, 1)
-
-        img, area = make_area_box_and_img_box(vertex)
-        vertex = np.array(vertex)
-        vertex_num = len(vertex)
-
-        left_top = [min(vertex[:, 0]), min(vertex[:, 1])]
-        center = [np.mean(vertex[:, 0]), np.mean(vertex[:, 1])]
-        bool_table = []
-
-        final_vertex = []
-
-        for i in range(vertex_num):
-            vertex1 = vertex[i - 1]
-            vertex2 = vertex[i]
-            line = [vertex1, vertex2]
-            bool_table.append(line_and_point(line, center))
-
-        for i in range(img.shape[0]):
-            for j in range(img.shape[1]):
-                bool_table1 = []
-                for k in range(vertex_num):
-                    vertex1 = vertex[k - 1]
-                    vertex2 = vertex[k]
-                    line = [vertex1, vertex2]
-                    bool_table1.append(line_and_point(line, [left_top[0] + i, left_top[1] + j]))
-                if bool_table == bool_table1:
-                    area[padding + i][padding + j] = 1
-
-        for i in range(img.shape[0] - 2 * padding):
-            for j in range(img.shape[1] - 2 * padding):
-                img[padding + i][padding + j][0] = int(target[left_top[0] + i][left_top[1] + j][:][0].copy())
-                img[padding + i][padding + j][1] = int(target[left_top[0] + i][left_top[1] + j][:][1].copy())
-                img[padding + i][padding + j][2] = int(target[left_top[0] + i][left_top[1] + j][:][2].copy())
-
         r = 1.2
+        # r의 크기를 증가. 위의 r값이 초기값이고 밑에 r을 적절히 더해줌
+        for l in range(size):
+            target = cv2.imread("target/" + sign + ".jpg", 1)
+            background = cv2.imread("background/background_%d.jpg" % back_num, 1)
 
-        t_h_b, t_w_b = img.shape[:2]  # 이미지 사진의 높이와 폭 크기 (패딩 포함되어있음)
-        b_h, b_w = background.shape[:2]  # 백그라운드 사진의 높이와 폭 크기
+            img, area = make_area_box_and_img_box(vertex)
+            vertex = np.array(vertex)
+            vertex_num = len(vertex)
 
-        t_w_a, t_h_a = int(r * t_w_b), int(r * t_h_b)  # 이미지 사진의 높이와 폭 크기를 r배만큼 확장
+            left_top = [min(vertex[:, 0]), min(vertex[:, 1])]
+            center = [np.mean(vertex[:, 0]), np.mean(vertex[:, 1])]
+            bool_table = []
 
-        if index == 1 or 2 or 3 or 4 or 8 or 9:
-            x, y = int((random.random()) * (b_w / 2 - t_w_a) + b_w / 2), int(
-                (random.random() - 1) * (t_h_a) + b_h / 2)
-        elif index == 5 or 6 or 7:
-            x, y = int((random.random() - 1) * (t_w_a) + b_w / 2), int(
-                (random.random() - 1) * (t_h_a) + b_h / 2)
+            final_vertex = []
 
-        img = cv2.resize(img, (t_w_a, t_h_a), interpolation=cv2.INTER_CUBIC)
-        area = cv2.resize(area, (t_w_a, t_h_a), interpolation=cv2.INTER_CUBIC)
+            for i in range(vertex_num):
+                vertex1 = vertex[i - 1]
+                vertex2 = vertex[i]
+                line = [vertex1, vertex2]
+                bool_table.append(line_and_point(line, center))
 
-        for i in range(t_h_a):
-            for j in range(t_w_a):
-                if area[i][j].all() == 1:
-                    # 백그라운드 사진 범위를 넘어가는거는 안찍음
-                    if ((y + i) >= b_h or (x + j) >= b_w or (y + i) < 0 or (x + j) < 0):
-                        continue
-                    background[y + i][x + j] = img[i][j].copy()
-                    final_vertex.append([y + i, x + j])
+            for i in range(img.shape[0]):
+                for j in range(img.shape[1]):
+                    bool_table1 = []
+                    for k in range(vertex_num):
+                        vertex1 = vertex[k - 1]
+                        vertex2 = vertex[k]
+                        line = [vertex1, vertex2]
+                        bool_table1.append(line_and_point(line, [left_top[0] + i, left_top[1] + j]))
+                    if bool_table == bool_table1:
+                        area[padding + i][padding + j] = 1
 
+            for i in range(img.shape[0] - 2 * padding):
+                for j in range(img.shape[1] - 2 * padding):
+                    img[padding + i][padding + j][0] = int(target[left_top[0] + i][left_top[1] + j][:][0].copy())
+                    img[padding + i][padding + j][1] = int(target[left_top[0] + i][left_top[1] + j][:][1].copy())
+                    img[padding + i][padding + j][2] = int(target[left_top[0] + i][left_top[1] + j][:][2].copy())
 
-        final_points = np.array(final_vertex)
+            t_h_b, t_w_b = img.shape[:2]  # 이미지 사진의 높이와 폭 크기 (패딩 포함되어있음)
+            b_h, b_w = background.shape[:2]  # 백그라운드 사진의 높이와 폭 크기
 
-        final_min_x = min(final_points[:, 1])
-        final_min_y = min(final_points[:, 0])
+            t_w_a, t_h_a = int(r * t_w_b), int(r * t_h_b)  # 이미지 사진의 높이와 폭 크기를 r배만큼 확장
 
-        final_max_x = max(final_points[:, 1])
-        final_max_y = max(final_points[:, 0])
+            if index == 1 or 2 or 3 or 4 or 8 or 9:
+                x, y = int((random.random()) * (b_w / 2 - t_w_a) + b_w / 2), int(
+                    (random.random() - 1) * (t_h_a) + b_h / 2)
+            elif index == 5 or 6 or 7:
+                x, y = int((random.random() - 1) * (t_w_a) + b_w / 2), int(
+                    (random.random() - 1) * (t_h_a) + b_h / 2)
 
-        final_del_x = final_max_x - final_min_x
-        final_del_y = final_max_y - final_min_y
+            img = cv2.resize(img, (t_w_a, t_h_a), interpolation=cv2.INTER_CUBIC)
+            area = cv2.resize(area, (t_w_a, t_h_a), interpolation=cv2.INTER_CUBIC)
 
-        x_width = final_del_x / background.shape[1]
-        y_width = final_del_y / background.shape[0]
-        x_center = final_min_x / background.shape[1] + x_width / 2
-        y_center = final_min_y / background.shape[0] + y_width / 2
+            for i in range(t_h_a):
+                for j in range(t_w_a):
+                    if area[i][j].all() == 1:
+                        # 백그라운드 사진 범위를 넘어가는거는 안찍음
+                        if (y + i) >= b_h or (x + j) >= b_w or (y + i) < 0 or (x + j) < 0:
+                            continue
+                        background[y + i][x + j] = img[i][j].copy()
+                        final_vertex.append([y + i, x + j])
 
-        for m in range(lightness):
-            if m < 5:
-                seq = iaa.Sequential([
-                    iaa.Multiply(1 - 0.1 * (m))
-                ])
-            else:
-                seq = iaa.Sequential([
-                    iaa.Multiply(1 + 0.15 * (m - 4))
-                ])
-            seq_det = seq.to_deterministic()
-            background = seq_det.augment_images([background])[0]
+            final_points = np.array(final_vertex)
 
-            # 합성한 사진 merge폴더에 사진 레이블에 맞게 저장.
-            print('Saving merge\\' + sign + '\\image_%d.%d.jpg ...' % (
-                back_num, m))  # image_(배경종류).(아핀종류)(명도종류)(흐림종류)
-            cv2.imwrite('merge\\' + sign + '\\image_%d.%d.jpg' % (back_num, m), background)
-            print('Saving merge\\' + sign + '\\image_%d.%d.txt...' % (back_num, m))
+            final_min_x = min(final_points[:, 1])
+            final_min_y = min(final_points[:, 0])
 
-            f = open("merge\\" + sign + "\\image_%d.%d.txt" % (back_num, m), 'w')
-            f.write("%d %.4f %.4f %.4f %.4f" % (index, x_center, y_center, x_width, y_width))
-            f.close()
+            final_max_x = max(final_points[:, 1])
+            final_max_y = max(final_points[:, 0])
+
+            final_del_x = final_max_x - final_min_x
+            final_del_y = final_max_y - final_min_y
+
+            x_width = final_del_x / background.shape[1]
+            y_width = final_del_y / background.shape[0]
+            x_center = final_min_x / background.shape[1] + x_width / 2
+            y_center = final_min_y / background.shape[0] + y_width / 2
+            
+            # 밝기를 어둡게 5가지, 밝게 5가지 총 10가지 변형
+            for m in range(lightness):
+                if m < 5:
+                    seq = iaa.Sequential([
+                        iaa.Multiply(1 - 0.1 * (m))
+                    ])
+                else:
+                    seq = iaa.Sequential([
+                        iaa.Multiply(1 + 0.15 * (m - 4))
+                    ])
+                seq_det = seq.to_deterministic()
+                background = seq_det.augment_images([background])[0]
+
+                # 합성한 사진 merge폴더에 사진 레이블에 맞게 저장.
+                print('Saving merge\\' + sign + '\\image_%d.%d%d.jpg ...' % (
+                    back_num, l, m))
+                cv2.imwrite('merge\\' + sign + '\\image_%d.%d%d.jpg' % (back_num, l, m), background)
+                print('Saving merge\\' + sign + '\\image_%d.%d%d.txt...' % (back_num, l, m))
+
+                f = open("merge\\" + sign + "\\image_%d.%d%d.txt" % (back_num, l, m), 'w')
+                f.write("%d %.4f %.4f %.4f %.4f" % (index, x_center, y_center, x_width, y_width))
+                f.close()
+            r += 0.5
         back_num += 1
