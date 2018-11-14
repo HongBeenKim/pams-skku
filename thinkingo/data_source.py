@@ -36,6 +36,7 @@ class Source():
 
         self.lidar_init_fail_flag = False
         self.lidar_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         print("waiting LiDAR connected. . .")
         try:
             self.lidar_socket.connect((self.HOST, self.PORT))
@@ -45,9 +46,11 @@ class Source():
             print(e)
             self.lidar_init_fail_flag = True
 
+
     def left_cam_stream_main(self):
         while True:
             _, self.left_frame = self.cap_left.read()
+            
             if self.data.is_all_system_stop():
                 break
         self.cap_left.release()

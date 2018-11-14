@@ -3,26 +3,29 @@
 from module.pytorch_yolo import yolo 
 from subroutine import Subroutine
 from data_class import Data
+from data_source import Source
 
 
 
 class SignCam(Subroutine):
-    def __init__(self, data: Data):
+    def __init__(self, source, data: Data):
         super().__init__(data)
-
+        self.source = source
+        self.model = yolo.init_yolo_sign()
         self.yolo_data = [None, None]
         self.yolo_datas = [[0 for col in range(2)] for row in range(50)]
-        self.data_decoding_init()
-        self.sign = [[0 for col in range(9)] for row in range(3)]
-        self.sign_init()
-        self.model = yolo.init_yolo_sign()
+        self.sign = [[0 for col in range(9)] for row i  n range(3)]
+        self.sign_init() 
 
     def main(self):
         while True:
+            if self.source.left_frame is None:
+                continue
             if self.data.is_in_mission():
                 continue
 
             else:
+                self.frame = self.source.left_frame.copy()
                 self.data_decoding()
                 self.first_selection()
                 self.second_selection()
@@ -52,7 +55,7 @@ class SignCam(Subroutine):
     def data_decoding_init(self):
         count = 0
         while count<50:
-            self.yolo_data = yolo.run_yolo_sign(self.model)
+            self.yolo_data = yolo.run_yolo_sign(self.model, self.frame)
 
             for data in self.yolo_data:
                 self.yolo_datas[count] = data
@@ -60,7 +63,7 @@ class SignCam(Subroutine):
 
     # 하나의 데이터를 가져와 업데이트한다!
     def data_decoding(self):
-        self.yolo_data = yolo.run_yolo_sign(self.model)
+        self.yolo_data = yolo.run_yolo_sign(self.model, self.frame)
 
         for data in self.yolo_data:
             self.yolo_datas.pop(0)
@@ -127,7 +130,8 @@ if __name__ == "__main__":
 
 
     test_data = Data()
-    test_sign_cam = SignCam(data=test_data)
+    test_source = Source(data=test_data)
+    test_sign_cam = SignCam(test_source, data=test_data)
 
     """
     특정 표지판으로 시작하기 (테스트용)
@@ -136,6 +140,11 @@ if __name__ == "__main__":
     # start_from_u_turn(test_data)
 
     print(test_data._mission_checklist)
-
+    
+    data_source_thread = threading.Thread(target=test_source.left_cam_stream_main)
     sign_cam_thread = threading.Thread(target=test_sign_cam.main)
+
+    data_source_thread.start()
     sign_cam_thread.start()
+
+

@@ -2,7 +2,7 @@ from __future__ import division
 
 import torch
 import numpy as np
-from bbox import bbox_iou
+from module.pytorch_yolo.bbox import bbox_iou
 
 
 def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA = True):

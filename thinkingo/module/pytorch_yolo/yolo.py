@@ -3,9 +3,9 @@ import torch
 from torch.autograd import Variable
 import cv2
 import numpy as np
-from util import *
-from darknet import Darknet
-from preprocess import prep_image
+from module.pytorch_yolo.util import *
+from module.pytorch_yolo.darknet import Darknet
+from module.pytorch_yolo.preprocess import prep_image
 import random 
 
 
@@ -37,9 +37,9 @@ def write(x, img):
     return img
 
 #path to models
-cfgfile = "cfg/yolo-sign.cfg"
-weightsfile = "yolo-sign_12900.weights"
-classes = load_classes('data/sign.names')
+cfgfile = "module/data/yolo-sign.cfg"
+weightsfile = "module/data/yolo-sign_12900.weights"
+classes = load_classes('module/data/sign.names')
 
 #parameters
 confidence = float(0.25)
@@ -69,7 +69,7 @@ def init_yolo_sign():
     model.eval()
     return model
 
-def run_yolo_sign(model):
+def run_yolo_sign(model, frame):
 
     Data = []
     #Get input size

@@ -6,8 +6,8 @@ import torch.nn.functional as F
 import numpy as np
 import cv2
 
-from util import convert2cpu as cpu
-from util import predict_transform
+from module.pytorch_yolo.util import convert2cpu as cpu
+from module.pytorch_yolo.util import predict_transform
 
 class test_net(nn.Module):
     def __init__(self, num_layers, input_size):
@@ -249,7 +249,7 @@ def create_modules(blocks):
             
             
             anchors = x["anchors"].split(",")
-            anchors = [int(a) for a in anchors]
+            anchors = [int(float(a)) for a in anchors]
             anchors = [(anchors[i], anchors[i+1]) for i in range(0, len(anchors),2)]
             anchors = [anchors[i] for i in mask]
             
