@@ -17,11 +17,14 @@ class Monitoring(Subroutine):
 
     def main(self):
         while True:
-            self.canvas = self.put_car_platform_status()
+            dummy = np.zeros(shape=(180, 600, 3), dtype=np.uint8)
+            car_frame = self.put_car_platform_status()
             # sign cam
             # lane cam mid
             # lane cam side
             # lidar
+            # concatenate
+            self.canvas = np.concatenate((dummy, car_frame), axis=0)
             cv2.imshow('monitor', self.canvas)
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
