@@ -34,6 +34,7 @@ class Source():
         self.mid_frame = None
         self.lidar_data = None
 
+        self.lidar_init_fail_flag = False
         self.lidar_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("waiting LiDAR connected. . .")
         try:
@@ -42,9 +43,7 @@ class Source():
             self.lidar_socket.send(str.encode(self.MESG))
         except OSError as e:
             print(e)
-
-        # stop_flag 초기값
-        self.stop_flag = False
+            self.lidar_init_fail_flag = True
 
     def left_cam_stream_main(self):
         while True:
@@ -68,6 +67,8 @@ class Source():
         self.cap_mid.release()
 
     def lidar_stream_main(self):
+        if self.lidar_init_fail_flag:
+            return 1
         while True:
             raw_data = str(self.lidar_socket.recv(self.BUFF))
             if raw_data.__contains__('sEA'): continue
@@ -79,6 +80,7 @@ class Source():
             if self.data.is_all_system_stop():
                 break
         self.lidar_socket.close()
+        return 0
 
 
 if __name__ == "__main__":

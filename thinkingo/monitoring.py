@@ -17,15 +17,17 @@ class Monitoring(Subroutine):
 
     def main(self):
         while True:
-            dummy = np.zeros(shape=(180, 600, 3), dtype=np.uint8)
+            # TODO: 각 프레임이 어느 미션일 때 어떤 사이즈로 들어오는지 확인
+            # TODO: 사이즈 고려해서 concatenate 하고 imshow
             car_frame = self.put_car_platform_status()
             # sign cam
             # lane cam mid
             # lane cam side
             merged_lane_cam = self.data.lane_cam_monitoring_frame
             if merged_lane_cam is not None:
-                cv2.imshow('lane cam', merged_lane_cam)
+                self.canvas = np.vstack((car_frame, merged_lane_cam))
             # lidar
+
             cv2.imshow('monitoring', self.canvas)
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
