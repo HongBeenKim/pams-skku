@@ -8,6 +8,7 @@ from subroutine import Subroutine
 from data_source import Source
 from data_class import Data
 import random
+import time
 
 
 class LaneCam(Subroutine):
@@ -92,9 +93,10 @@ class LaneCam(Subroutine):
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
+        # filtered_frame = cv2.Canny(merged_frame, 100, 200)
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
 
-        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 10, 10)
+        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 180, 10, 10, 300)
 
         t1 = time.time()
 
@@ -129,7 +131,9 @@ class LaneCam(Subroutine):
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
 
         self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
-        cv2.imshow('lane', merged_frame)
+        # cv2.imshow('lane', merged_frame)
+        # cv2.imshow('filterd', filtered_frame)
+        print(distance)
         return distance
 
     def lane_detection(self):
