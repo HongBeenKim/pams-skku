@@ -8,6 +8,7 @@ from subroutine import Subroutine
 from data_source import Source
 from data_class import Data
 import random
+import time
 
 
 class LaneCam(Subroutine):
@@ -130,8 +131,8 @@ class LaneCam(Subroutine):
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
 
         self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
-        cv2.imshow('lane', merged_frame)
-        cv2.imshow('filterd', filtered_frame)
+        # cv2.imshow('lane', merged_frame)
+        # cv2.imshow('filterd', filtered_frame)
         print(distance)
         return distance
 
