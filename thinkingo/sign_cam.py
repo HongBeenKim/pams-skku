@@ -14,7 +14,7 @@ class SignCam(Subroutine):
         self.model = yolo.init_yolo_sign()
         self.yolo_data = [None, None]
         self.yolo_datas = [[0 for col in range(2)] for row in range(50)]
-        self.sign = [[0 for col in range(9)] for row i  n range(3)]
+        self.sign = [[0 for col in range(9)] for row in range(3)]
         self.sign_init() 
 
     def main(self):
