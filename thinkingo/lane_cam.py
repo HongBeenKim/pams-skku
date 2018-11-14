@@ -49,6 +49,40 @@ class LaneCam(Subroutine):
 
         return merged_frame
 
+    def parking_line_detection(self):
+        merged_frame = self.make_merged_frame()
+        filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
+
+        lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 10, 10)
+
+        t1 = time.time()
+
+        while True:
+            if lines is None: break
+            if len(lines) == 1: break
+            magnitude_a, magnitude_b, vec_a, vec_b = 0, 0, (0, 0), (0, 0)
+            a, b, c, mid_x, mid_y = 0, 0, 0, 0, 0
+            rand = random.sample(list(range(0, len(lines))), 2)
+
+            for x1, y1, x2, y2 in lines[rand[0]]:
+                vec_a = (x2 - x1, y1 - y2)
+                magnitude_a = np.sqrt(vec_a[0] ** 2 + vec_a[1] ** 2)
+                a, b, c = y1 - y2, x1 - x2, (300 - y1) * (x2 - x1) - x1 * (y1 - y2)
+
+            for x1, y1, x2, y2 in lines[rand[1]]:
+                vec_b = (x2 - x1, y1 - y2)
+                magnitude_b = np.sqrt(vec_b[0] ** 2 + vec_b[1] ** 2)
+                mid_x, mid_y = (x1 + x2) / 2, 300 - (y1 + y2) / 2
+
+            cos_theta = (vec_a[0] * vec_b[0] + vec_a[1] * vec_b[1]) / (magnitude_a * magnitude_b)
+            if -0.9 < cos_theta < 0.9: continue
+            distance = np.abs(a * mid_x + b * mid_y + c) / np.sqrt(a ** 2 + b ** 2)
+            if 100 < distance < 150:
+                pass
+            if (time.time() - t1) >= 0.01:
+                stop_line = None
+                break
+
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
