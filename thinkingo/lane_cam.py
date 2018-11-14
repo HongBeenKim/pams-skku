@@ -80,7 +80,6 @@ class LaneCam(Subroutine):
             if 100 < distance < 150:
                 pass
             if (time.time() - t1) >= 0.01:
-                stop_line = None
                 break
 
     def stop_line_detection(self):
@@ -110,6 +109,8 @@ class LaneCam(Subroutine):
                 stop_line = None
                 break
 
+        distance = None
+
         if stop_line is not None:
             for x1, y1, x2, y2 in stop_line:
                 a = ((y2 - y1) / (x1 - x2))
@@ -118,10 +119,9 @@ class LaneCam(Subroutine):
 
                 cv2.line(merged_frame, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
-                #TODO: DB에 merged_frame 올리기
-                return distance
-        else:
-            return None
+
+        self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
+        return distance
 
     def lane_detection(self):
         if self.data_source.mid_frame is None: return
