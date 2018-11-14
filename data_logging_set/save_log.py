@@ -27,9 +27,9 @@ left_cam_num = 0
 right_cam_num = 1
 sign_cam_num = 2
 
-COMPORT = 'COM4'
+COMPORT = 'COM5'
 
-DATA_ROOT_PATH = "C:"
+DATA_ROOT_PATH = "C:\\pams-skku-11-14\\"
 
 
 # -----------------------------------------------------------------------------------
@@ -54,12 +54,16 @@ def main():
     specific_time = time.localtime()
     today = datetime.datetime.now()
     timeLabel = today.strftime("%Y-%m-%d-%H-%M-%S")
-    writerL = cv2.VideoWriter(DATA_ROOT_PATH + "leftcam\\" + timeLabel + ".avi", fourcc, 60, left_cam_size)
-    writerR = cv2.VideoWriter(DATA_ROOT_PATH + "rightcam\\" + timeLabel + ".avi", fourcc, 60, right_cam_size)
-    writerS = cv2.VideoWriter(DATA_ROOT_PATH + "signcam\\" + timeLabel + ".avi", fourcc, 60, sign_cam_size)
-    lidar_fd = open(DATA_ROOT_PATH + "lidar\\" + timeLabel + ".txt", 'w')
+    try:
+        writerL = cv2.VideoWriter(DATA_ROOT_PATH + "leftcam\\" + timeLabel + ".avi", fourcc, 60, left_cam_size)
+        writerR = cv2.VideoWriter(DATA_ROOT_PATH + "rightcam\\" + timeLabel + ".avi", fourcc, 60, right_cam_size)
+        writerS = cv2.VideoWriter(DATA_ROOT_PATH + "midcam\\" + timeLabel + ".avi", fourcc, 60, sign_cam_size)
+        lidar_fd = open(DATA_ROOT_PATH + "lidar\\" + timeLabel + ".txt", 'w')
 
-    car_platform_fd = open(DATA_ROOT_PATH + "car_platform\\" + timeLabel + ".txt", 'wb')
+        car_platform_fd = open(DATA_ROOT_PATH + "car_platform\\" + timeLabel + ".txt", 'wb')
+    except FileNotFoundError as e:
+        print(e)
+        return 1
 
     while True:
         try:
@@ -67,7 +71,7 @@ def main():
             if data[0] is not None and data[1] is not None and data[2] is not None:
                 cv2.imshow("left", data[0])
                 cv2.imshow("right", data[1])
-                cv2.imshow("sign", data[2])
+                cv2.imshow("mid", data[2])
                 writerL.write(data[0])
                 writerR.write(data[1])
                 writerS.write(data[2])
@@ -85,6 +89,7 @@ def main():
     writerS.release()
     lidar_fd.close()
     car_platform_fd.close()
+    return 0
 
 
 def lidar(data_set: list):
