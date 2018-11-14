@@ -10,18 +10,22 @@ from data_class import Data
 class CarPlatform(Subroutine):
     def __init__(self, port: str, data: Data):
         super().__init__(data)
+        self.init_error_flag = False
         try:
             self.serial = serial.Serial(port, 115200)
         except Exception as e:
             print("car_platform INIT ERROR: ", e)
+            self.init_error_flag = True
 
     def main(self):
+        if self.init_error_flag: return 1
         while True:
             self.receive()
             self.send()
             if self.data.is_all_system_stop():
                 break
         self.serial.close()
+        return 0
 
     def receive(self):
         try:
