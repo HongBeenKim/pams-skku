@@ -166,22 +166,22 @@ if __name__ == "__main__":
     from dummy_data_source import DummySource
 
     testData = Data()
-    testDS = Source(testData)
-    # testDDS = DummySource('2018-11-04-17-01-16')
-    testLC = LaneCam(testDS, testData)  # DummySource for test
+    #testDS = Source(testData)
+    testDDS = DummySource('2018-11-14-15-56-21')
+    testLC = LaneCam(testDDS, testData)  # DummySource for test
 
     # lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
-    left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
-    right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
+    # left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)
+    # right_cam_source_thread = threading.Thread(target=testDS.right_cam_stream_main)
     # mid_cam_source_thread = threading.Thread(target=testDS.mid_cam_stream_main)
 
-    # dummy_thread = threading.Thread(target=testDDS.main)
-    # dummy_thread.start()
+    dummy_thread = threading.Thread(target=testDDS.main)
+    dummy_thread.start()
 
     # lidar_source_thread.start()
-    left_cam_source_thread.start()
-    right_cam_source_thread.start()
+    #left_cam_source_thread.start()
+    #right_cam_source_thread.start()
     # mid_cam_source_thread.start()
 
-    time.sleep(2)
+    time.sleep(1)
     testLC.main()

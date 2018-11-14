@@ -4,7 +4,7 @@ import sys
 sys.path.append(".")
 from data_class import Data
 
-DATA_ROOT_PATH = 'c:\\pams-skku-data\\'
+DATA_ROOT_PATH = 'c:\\pams-skku-data-11-14\\'
 
 
 class DummySource():
