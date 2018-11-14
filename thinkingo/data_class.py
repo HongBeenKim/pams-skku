@@ -33,7 +33,8 @@ class Data(object):
 
         # monitoring
         self.sign_cam_monitoring_frame = None
-        self.lane_cam_monitoring_frame = None
+        self._lane_cam_monitoring_frame = None
+        self.lane_cam_monitoring_frame_size = (None, None)
         self._planner_monitoring_frame = None
         self.planner_monitoring_frame_size = (None, None)
 
@@ -172,10 +173,25 @@ class Data(object):
             print(e)
 
     @property
+    def lane_cam_monitoring_frame(self):
+        return self._lane_cam_monitoring_frame
+
+    @lane_cam_monitoring_frame.setter
+    def lane_cam_monitoring_frame(self, frame_and_size: tuple):
+        """
+        :param frame_and_size: ([ndarray], [x-size], [y-size])
+        """
+        self._lane_cam_monitoring_frame = frame_and_size[0]
+        self.lane_cam_monitoring_frame_size = (frame_and_size[1], frame_and_size[2])
+
+    @property
     def planner_monitoring_frame(self):
         return self._planner_monitoring_frame
 
     @planner_monitoring_frame.setter
-    def planner_monitoring_frame(self, frame_and_size):
+    def planner_monitoring_frame(self, frame_and_size: tuple):
+        """
+        :param frame_and_size: ([ndarray], [x-size], [y-size])
+        """
         self._planner_monitoring_frame = frame_and_size[0]
         self.planner_monitoring_frame_size = (frame_and_size[1], frame_and_size[2])
