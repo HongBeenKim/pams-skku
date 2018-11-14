@@ -4,8 +4,9 @@ from module.pytorch_yolo import yolo
 from subroutine import Subroutine
 from data_class import Data
 from data_source import Source
+import time
 
-
+DEBUG_YOLO = True
 
 class SignCam(Subroutine):
     def __init__(self, source, data: Data):
@@ -19,20 +20,21 @@ class SignCam(Subroutine):
 
     def main(self):
         while True:
-            if self.source.left_frame is None:
+            if self.source.mid_frame is None:
                 continue
             if self.data.is_in_mission():
                 continue
 
             else:
-                self.frame = self.source.left_frame.copy()
+                start = time.time()
+                self.frame = self.source.mid_frame.copy()
                 self.data_decoding()
                 self.first_selection()
                 self.second_selection()
                 self.third_selection()
                 self.parking_lot_selection()
                 self.sign_reinit()
-                print(self.data.detected_mission_number)
+                print(time.time() - start)
 
             if self.data.is_all_system_stop():
                 break
@@ -55,7 +57,7 @@ class SignCam(Subroutine):
     def data_decoding_init(self):
         count = 0
         while count<50:
-            self.yolo_data = yolo.run_yolo_sign(self.model, self.frame)
+            self.yolo_data = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
 
             for data in self.yolo_data:
                 self.yolo_datas[count] = data
@@ -63,8 +65,8 @@ class SignCam(Subroutine):
 
     # 하나의 데이터를 가져와 업데이트한다!
     def data_decoding(self):
-        self.yolo_data = yolo.run_yolo_sign(self.model, self.frame)
-
+        self.yolo_data = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
+        print(self.yolo_data)
         for data in self.yolo_data:
             self.yolo_datas.pop(0)
             self.yolo_datas.append(data)
@@ -141,7 +143,7 @@ if __name__ == "__main__":
 
     print(test_data._mission_checklist)
     
-    data_source_thread = threading.Thread(target=test_source.left_cam_stream_main)
+    data_source_thread = threading.Thread(target=test_source.mid_cam_stream_main)
     sign_cam_thread = threading.Thread(target=test_sign_cam.main)
 
     data_source_thread.start()
