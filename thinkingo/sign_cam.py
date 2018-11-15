@@ -4,6 +4,7 @@ from module.pytorch_yolo import yolo
 from subroutine import Subroutine
 from data_class import Data
 from data_source import Source
+import time
 import numpy as np
 
 DEBUG_YOLO = True
@@ -20,9 +21,9 @@ class SignCam(Subroutine):
         self.traffic_data = [[0 for col in range(1)] for row in range(BUFFER_SIZE)]
         self.sign_data = [[0 for col in range(1)] for row in range(BUFFER_SIZE)]
         self.counter = [0 for col in range(12)]
-        self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE  # 0 : Sign None, 10 : Traffic None, 11 : Parking None
+        self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
         self.ModeList = ['default', 'narrow', 'u_turn', 'crosswalk', 'target_tracking', 'parking',
-                         'parking_a', 'parking_b', 'green_light', 'red_light', 'Traffic_None', 'Parking_None']
+                         'parking_a', 'parking_b', 'green_light', 'red_light']
 
     def main(self):
         while True:
@@ -35,9 +36,11 @@ class SignCam(Subroutine):
             else:
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
+
                 self.sign_selection()
-                self.traffic_selection()
+                self.light_selection()
                 self.parking_lot_selection()
+                print(self.counter)
 
             if self.data.is_all_system_stop():
                 break
@@ -62,17 +65,37 @@ class SignCam(Subroutine):
     # 어떤 표지판인지 확인하고 Data 에 넘겨주기
     def sign_selection(self):
         checkers = [0, 1, 2, 3, 4, 5]
+        sign_values = []
         for i in checkers:
-            np_
-            self.data.detected_mission_number =
+            sign_values.append(self.counter[checkers])
+
+        max_index = np.argmax(sign_values)
+        if checkers[max_index] != 0:
+            self.data.detected_mission_number = self.ModeList[checkers[max_index]]
 
     # 어떤 주차장에서 주차할 것 인지 알려주기
     def parking_lot_selection(self):
         checkers = [6, 7, 10]
-        for i in range(6, 8):
-            if self.sign[2][i] == 1:
-                if self.data.is_in_parking_mission():
-                    self.data.parking_location = self.sign[0][i]
+        parking_values = []
+        for i in checkers:
+            parking_values.append(self.counter[checkers])
+
+        max_index = np.argmax(parking_values)
+
+        if checkers[max_index] != 10:
+            self.data.parking_location = self.ModeList[checkers[max_index]]
+            
+    # 어떤 신호등인지 알려주기
+    def light_selection(self):
+        checkers = [8, 9, 11]
+        light_values = []
+        for i in checkers:
+            light_values.append(self.counter[checkers])
+
+        max_index = np.argmax(light_values)
+        print()
+        if checkers[max_index] != 11:
+            self.data.light_signal = self.ModeList[checkers[max_index]]
 
 
 if __name__ == "__main__":
