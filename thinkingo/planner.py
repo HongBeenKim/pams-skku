@@ -75,7 +75,7 @@ class MotionPlanner(Subroutine):
                 # 주차 미션번호, A or B, 편차, 각도
                 # TODO: 라이다로 잰 배리어까지의 거리는 언제 주지?
                 # TODO: 패킷 사이즈를 늘린다 vs control 에서 신호를 받아서 주는 패킷 종류를 바꾼다
-                frame = self.lane_handler.parking_line_detection()
+                dist, frame, interception, angle = self.lane_handler.parking_line_detection()
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             if self.data.is_all_system_stop():
