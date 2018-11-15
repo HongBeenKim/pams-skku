@@ -43,14 +43,14 @@ def prep_image(img, inp_dim):
 
 # path to models
 cfgfile = "module/data/yolo-sign.cfg"
-weightsfile = "module/data/yolo-sign_12900.weights"
+weightsfile = "module/data/yolo-sign_15400.weights"
 classes = load_classes('module/data/sign.names')
 
 # parameters
 confidence = float(0.25)
 nms_thesh = float(0.4)
 CUDA = torch.cuda.is_available()
-num_classes = 8
+num_classes = 9
 
 
 def init_yolo_sign():
