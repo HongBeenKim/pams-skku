@@ -52,6 +52,14 @@ def main():
     planner_thread.start()
     control_thread.start()
 
+    """
+    test from keyboard input
+    """
+    import keyboard
+    from key_cam import KeyCam
+    key = KeyCam(database)
+    keyboard.hook(key.key_look)
+
 
 if __name__ == "__main__":
     main()
