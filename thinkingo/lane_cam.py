@@ -89,7 +89,7 @@ class LaneCam(Subroutine):
                 mid_x, mid_y = (x1 + x2) / 2, 300 - (y1 + y2) / 2
 
             cos_theta = (vec_a[0] * vec_b[0] + vec_a[1] * vec_b[1]) / (magnitude_a * magnitude_b)
-            if -0.8 < cos_theta < 0.8: continue
+            if -0.9 < cos_theta < 0.9: continue
             distance = np.abs(a * mid_x + b * mid_y + c) / np.sqrt(a ** 2 + b ** 2)
             if 150 < distance < 250:
                 cv2.line(merged_frame, (lines[rand[0]][0][0] + 10 * vec_a[0], lines[rand[0]][0][1] - 10 * vec_a[1]),
@@ -98,7 +98,8 @@ class LaneCam(Subroutine):
                 cv2.line(merged_frame, (lines[rand[1]][0][0] + 10 * vec_b[0], lines[rand[1]][0][1] - 10 * vec_b[1]),
                          (lines[rand[1]][0][0] - 10 * vec_b[0], lines[rand[1]][0][1] + 10 * vec_b[1]), (0, 0, 255), 2)
 
-                #TODO: 두 평행선의 중심선 찾기 
+                #TODO: 두 평행선의 중심선 찾기
+                #vertical_to_vec_b = (vec_b[1], -vec_b[0])
                 # 두 직선에 모두 직교하는 직선 찾기를 시도하고 있으면 그리기
                 horizontal_line = None
                 t2 = time.time()
@@ -223,6 +224,7 @@ class LaneCam(Subroutine):
 
         # self.data.lane_value  # TODO: set lane values
 
+        #cv2.imshow('test', temp_frame)
         self.data.planner_monitoring_frame = (temp_frame, 158, 800)
 
 
