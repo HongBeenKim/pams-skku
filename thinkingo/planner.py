@@ -17,6 +17,10 @@ CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를
 ARC_ANGLE = 110  # 부채살 적용 각도
 OBSTACLE_OFFSET = 65  # 부채살 적용 시 장애물의 offset (cm 단위)
 U_TURN_ANGLE = 30  # 유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
+U_TURN_LIDAR_CIRCLE_SIZE = 6
+U_TURN_LIDAR_LINE_SIZE = 6
+RED = (0, 0, 255)
+BLUE = (255, 0, 0)
 
 
 #  i.e) U_TURN_ANGLE=30 이면 75도~105도를 읽는다
@@ -269,7 +273,7 @@ class MotionPlanner(Subroutine):
         lidar_right_distance_mm = lidar_raw_data[0]
         lidar_right_distance_cm = int(lidar_right_distance_mm / 10)  # mm -> cm
         cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)),
-                 (int(x_pixel_size / 2) + lidar_right_distance_cm, int(y_pixel_size)), (0, 0, 255), 1)
+                 (int(x_pixel_size / 2) + lidar_right_distance_cm, int(y_pixel_size)), RED, U_TURN_LIDAR_LINE_SIZE)
 
         # 전방 최소점에 선긋기
         distance_front_index = np.argmin(np.array(lidar_raw_data)[angle_start:angle_end])
@@ -277,10 +281,10 @@ class MotionPlanner(Subroutine):
         front_degree = distance_front_index / 2  # 실제 각도는 index의 1/2
         front_x = int(x_pixel_size / 2) + int(front_min_dist * math.cos(front_degree))
         front_y = int(y_pixel_size) - int(front_min_dist * math.sin(front_degree))
-        cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), (front_x, front_y), (0, 0, 255), 1)
+        cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), (front_x, front_y), RED, U_TURN_LIDAR_LINE_SIZE)
 
         # 라이다 위치에 파란점
-        cv2.circle(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), 1, (255, 0, 0), 3)
+        cv2.circle(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), 1, BLUE, U_TURN_LIDAR_CIRCLE_SIZE)
 
         #  이미지 띄우는 곳
         resized = cv2.resize(lidar_mat, (1000, 500))
