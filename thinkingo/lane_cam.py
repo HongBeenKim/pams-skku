@@ -64,24 +64,25 @@ class LaneCam():
 
             if len(lines) == 1: break
             magnitude_a, magnitude_b, vec_a, vec_b = 0, 0, (0, 0), (0, 0)
-            a, b, c, mid_x, mid_y = 0, 0, 0, 0, 0
+            a, b, c, mid_x_b, mid_y_b = 0, 0, 0, 0, 0
             rand = random.sample(list(range(0, len(lines))), 2)
 
             for x1, y1, x2, y2 in lines[rand[0]]:
                 vec_a = (x2 - x1, y1 - y2)
                 magnitude_a = np.sqrt(vec_a[0] ** 2 + vec_a[1] ** 2)
                 a, b, c = y1 - y2, x1 - x2, (300 - y1) * (x2 - x1) - x1 * (y1 - y2)
+                mid_x_a, mid_y_a = (x1 + x2) / 2, 300 - (y1 + y2) / 2
 
             if np.abs(vec_a[1] / vec_a[0]) < 1: continue
 
             for x1, y1, x2, y2 in lines[rand[1]]:
                 vec_b = (x2 - x1, y1 - y2)
                 magnitude_b = np.sqrt(vec_b[0] ** 2 + vec_b[1] ** 2)
-                mid_x, mid_y = (x1 + x2) / 2, 300 - (y1 + y2) / 2
+                mid_x_b, mid_y_b = (x1 + x2) / 2, 300 - (y1 + y2) / 2
 
             cos_theta = (vec_a[0] * vec_b[0] + vec_a[1] * vec_b[1]) / (magnitude_a * magnitude_b)
             if -0.9 < cos_theta < 0.9: continue
-            distance = np.abs(a * mid_x + b * mid_y + c) / np.sqrt(a ** 2 + b ** 2)
+            distance = np.abs(a * mid_x_b + b * mid_y_b + c) / np.sqrt(a ** 2 + b ** 2)
             if 150 < distance < 250:
                 cv2.line(merged_frame, (lines[rand[0]][0][0] + 10 * vec_a[0], lines[rand[0]][0][1] - 10 * vec_a[1]),
                          (lines[rand[0]][0][0] - 10 * vec_a[0], lines[rand[0]][0][1] + 10 * vec_a[1]), (0, 0, 255), 2)
@@ -89,8 +90,12 @@ class LaneCam():
                 cv2.line(merged_frame, (lines[rand[1]][0][0] + 10 * vec_b[0], lines[rand[1]][0][1] - 10 * vec_b[1]),
                          (lines[rand[1]][0][0] - 10 * vec_b[0], lines[rand[1]][0][1] + 10 * vec_b[1]), (0, 0, 255), 2)
 
-                # TODO: 두 평행선의 중심선 찾기
-                # vertical_to_vec_b = (vec_b[1], -vec_b[0])
+                #TODO: 두 평행선의 중심선 찾기
+                vertical_to_vec_b = (vec_b[1], -vec_b[0])
+                mid_a_to_mid_b = (mid_x_a - mid_x_b, mid_y_b - mid_y_a)
+                if (np.dot(vertical_to_vec_b, mid_a_to_mid_b)) < 0: vertical_to_vec_b = (-vec_b[1], vec_b[0])
+
+
                 # 두 직선에 모두 직교하는 직선 찾기를 시도하고 있으면 그리기
                 horizontal_line = None
                 t2 = time.time()
