@@ -115,7 +115,6 @@ def run_yolo_sign(model, frame, SHOW):
             output[:, [2, 4]] *= frame.shape[0]
             list(map(lambda x: write(x, orig_im), output))
 
-            # TODO: database 의 sign_cam_monitoring_frame 실시간으로 올려주기 (사이즈 필요)
             cv2.imshow("frame", orig_im)
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
