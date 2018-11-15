@@ -47,7 +47,20 @@ class Monitoring(Subroutine):
             self.canvas = np.concatenate((car_frame, mid_cam_monitor), axis=1)
             self.canvas = np.concatenate((self.canvas, planner_monitor), axis=0)
             cv2.imshow('ThinKingo monitoring', self.canvas)
-            if cv2.waitKey(1) & 0xff == ord(' '):
+            c = cv2.waitKey(1) & 0xff
+            if c == ord('0'):
+                self.data.current_mode = 0
+            if c == ord('1'):
+                self.data.current_mode = 1
+            if c == ord('2'):
+                self.data.current_mode = 2
+            if c == ord('3'):
+                self.data.current_mode = 3
+            if c == ord('4'):
+                self.data.current_mode = 4
+            if c == ord('5'):
+                self.data.current_mode = 5
+            if c == ord(' '):
                 self.data.stop_thinkingo()
                 break
         cv2.destroyAllWindows()

@@ -40,13 +40,27 @@ class Control(Subroutine):
         self.right_distance_past = 0
         self.turn_steer = 0
         self.turn_steer_past = 0
+        self.ct1 = 0
+        self.ct2 = 0
+        #######################################
+        self.park_front_distance = 0
+        self.park_line_distance = 0
+        self.park_line_theta = 0
+        self.park_steer = 0
+        self.park_steer_past = 0
+        self.pt1 = 0
+        self.pt2 = 0
+        self.pt3 = 0
+        self.pt4 = 0
+        #######################################
+        self.check = [0, 0]
 
     def main(self):
         while True:
             packet = self.read_packet_from_planner()
             speed_platform, enc_platform = self.read_car_platform_status()
             gear, speed, steer, brake = self.do_mission(packet, speed_platform, enc_platform)
-            a_speed, a_brake = self.accel(speed, brake)
+            a_speed, a_brake = self.__accel__(speed, brake)
             self.data.set_control_value(gear, a_speed, steer, a_brake)
             time.sleep(0.01)
             if self.data.is_all_system_stop():
@@ -59,7 +73,6 @@ class Control(Subroutine):
         """
         packet = self.data.planner_to_control_packet
         self.mission_num = packet[0]  # set mission number
-        # TODO: @김홍빈 second 값 어떻게 줄지 약속
         return packet
 
     def read_car_platform_status(self):
@@ -96,8 +109,16 @@ class Control(Subroutine):
             TODO: ???
         :return: 리턴 값은 없습니다.
         """
-        self.speed_platform = speed_platform
-        self.enc_platform = enc_platform
+
+        if speed_platform is None:
+            self.speed_platform = 0
+        else:
+            self.speed_platform = speed_platform
+        if enc_platform is None:
+            self.enc_platform = 0
+        else:
+            self.enc_platform = enc_platform
+
         gear = speed = steer = brake = 0
         if self.mission_num == self.data.MODES["default"]:
             if packet is None:
@@ -118,18 +139,21 @@ class Control(Subroutine):
                 gear, speed, steer, brake = self.__cross__(packet[1] / 100)
 
         elif self.mission_num == self.data.MODES["target_tracking"]:
-            gear, speed, steer, brake = self.__target__(packet[1] / 100)
+            gear, speed, steer, brake = self.__target__(packet[1] / 100, packet[2], packet[3] / 100)
 
         elif self.mission_num == self.data.MODES["parking"]:
-            # TODO: 후에 추가로 작성하기
-            return 0, 0, 0, 0
+            gear, speed, steer, brake = self.__parking__(packet[1] / 100, packet[2] / 100, packet[3], packet[4] / 100)
 
         return gear, speed, steer, brake
 
-    def accel(self, speed, brake):  # TODO: 후에 실험값을 통해서 값 수정
+    def __accel__(self, speed, brake):  # TODO: 후에 실험값을 통해서 값 수정
         if self.speed_platform < ((3 * speed) / 5):
-            self.accel_speed = 2 * speed
-            self.accel_brake = brake
+            if speed <= 10:
+                self.accel_speed = 30  # TODO: 후에 실험값을 통해서 값 수정
+                self.accel_brake = brake
+            else:
+                self.accel_speed = 2 * speed
+                self.accel_brake = brake
         elif self.speed_platform > (speed / 3):
             self.accel_speed = 0
             self.accel_brake = 20
@@ -139,6 +163,10 @@ class Control(Subroutine):
         return self.accel_speed, self.accel_brake
 
     def __default__(self, cross_track_error, theta):
+        if self.check[0] != 0:
+            self.check[1] = 1
+            self.data.check_mission_completed("narrow")
+
         gear = 0
         brake = 0
 
@@ -159,9 +187,9 @@ class Control(Subroutine):
         adjust = 0.3
 
         if abs(steer_now) > 15:
-            speed = 11  # TODO: 실험값 수정하기 / 60
+            speed = 60  # TODO: 실험값 수정하기 / 60
         else:
-            speed = 11  # TODO: 실험값 수정하기 / 72
+            speed = 72  # TODO: 실험값 수정하기 / 72
 
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final
@@ -182,17 +210,21 @@ class Control(Subroutine):
         return self.gear, self.speed, self.steer, self.brake
 
     def __obs__(self, obs_r, obs_theta):
+        if self.check[1] == 0:
+            self.check[0] = 1
+
         gear = 0
         brake = 0
 
-        correction = 1.8
+        correction = 1.5  # 1.8
         adjust = 0.05
+        car_circle = 1
 
-        speed_mission = 10  # TODO: 미션용 속도, 실험하고 변경바람 / 36
+        speed_mission = 36  # TODO: 미션용 속도, 실험하고 변경바람
         speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
 
         if obs_r < 2:
-            speed = 10  # 24
+            speed = 24
 
         if self.speed_platform > speed_mission:  # 기울기가 있어서 가속받을 경우 급정지
             speed = 0
@@ -219,12 +251,12 @@ class Control(Subroutine):
             theta_obs = math.degrees(math.atan(abs(son_obs / mother_obs)))
 
             if abs(theta_obs) > 15:
-                speed = 10  # 30
+                speed = 30
 
         if (90 - obs_theta) < 0:
             theta_obs = theta_obs * (-1)
 
-        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction
+        steer_final = (adjust * self.steer_past) + (1 - adjust) * theta_obs * correction * car_circle
 
         self.steer_past = steer_final
 
@@ -255,6 +287,10 @@ class Control(Subroutine):
 
         if self.right_distance_past == 0:
             self.right_distance_past = self.right_distance
+
+        if abs(self.right_distance - self.right_distance_past) > 1:
+            self.right_distance = self.right_distance_past
+
         term = (self.right_distance - self.right_distance_past)
 
         if self.u_sit == 0:
@@ -271,7 +307,6 @@ class Control(Subroutine):
                     self.theta_turn = front_theta
                     steer = 0
                     self.u_sit = 1
-
 
         elif self.u_sit == 1:
             correction_enc = ((90 - self.theta_turn) / 180) * 786
@@ -295,7 +330,7 @@ class Control(Subroutine):
                 if self.speed_platform == 0:
                     steer = 0
                     speed = 0
-                    self.data.check_u_turn_complete()
+                    self.data.check_mission_completed("u_turn")
 
         self.gear = gear
         self.speed = speed
@@ -344,7 +379,7 @@ class Control(Subroutine):
 
         elif self.c_sit == 1:
             if light_signal is True:
-                self.data.check_crosswalk_complete()
+                self.data.check_mission_completed("crosswalk")
             else:
                 speed = 0
                 brake = 0
@@ -362,7 +397,7 @@ class Control(Subroutine):
         gear = 0
         brake = 0
 
-        time_change = 0.5  # 값 갱신 속도, 수정바람
+        time_change = 0.05  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
             if 1.5 < distance < 2.0:
@@ -396,11 +431,127 @@ class Control(Subroutine):
 
         return self.gear, self.speed, self.steer, self.brake
 
-    def __parking__(self):
+    def __parking__(self, front_distance, line_distance, line_theta, stop_distance):
         gear = 0
-        speed = 36
+        speed = 60
         steer = 0
         brake = 0
+
+        if self.p_sit == 0:
+            if 2 < front_distance < 3:
+                speed = 40
+            elif front_distance < 2:
+                speed = 0
+                brake = 60
+
+                if self.speed_platform == 0:
+                    brake = 0
+                    self.park_front_distance = front_distance / 2 + 0.90
+                    self.park_line_distance = line_distance / 2
+                    self.park_line_theta = (90 - line_theta)
+                    self.p_sit = 1
+
+        elif self.p_sit == 1:
+            if self.pt1 == 0:
+                self.pt1 = self.enc_platform
+            self.pt2 = self.enc_platform
+
+            term_1 = self.pt1 - self.pt2
+
+            if term_1 > -80:
+                gear = 2
+                speed = 50
+
+            elif term_1 <= -80:
+                speed = 0
+                brake = 60
+                gear = 0
+
+                if self.speed_platform == 0:
+                    self.p_sit = 2
+
+        elif self.p_sit == 2:
+            if self.pt3 == 0:
+                self.pt3 = self.enc_platform
+            self.pt4 =  self.enc_platform
+
+            term_2 = self.p4 - self.pt3
+
+            if self.park_line_theta <= 0:
+                self.park_line_theta = abs(self.park_line_theta)
+
+                theta = math.atan(self.park_front_distance / abs(self.park_line_distance))
+                theta_1 = math.radians(theta)
+                theta_2 = (90 - theta)
+                theta_handle = math.radians(theta_2)
+
+                radius = self.front_distance / math.cos(theta_1)
+
+                enc_park = radius * theta_handle / 1.697
+
+                steer_handle = (1970 / 19.387) * theta_handle * -1
+
+                if term_2 < enc_park - 15:
+                    steer = steer_handle
+                    speed = 40
+
+                elif term_2 >= enc_park - 15:
+                    steer = steer_handle
+                    speed = 0
+                    brake = 60
+
+                    if self.speed_platform == 0:
+                        steer = 0
+                        self.p_sit = 3
+            else:
+                self.park_line_theta = abs(self.park_line_theta)
+
+                theta = math.atan(self.park_front_distance / abs(self.park_line_distance))
+                theta_1 = math.radians(theta)
+                theta_2 = (90 - theta)
+                theta_handle = math.radians(theta_2)
+
+                radius = self.front_distance / math.cos(theta_1)
+
+                enc_park = (radius * theta_handle / 1.697) * 1.173
+
+                steer_handle = (1970 / 19.387) * theta_handle
+
+                if term_2 < enc_park - 15:
+                    steer = steer_handle
+                    speed = 40
+
+                elif term_2 >= enc_park - 15:
+                    steer = steer_handle
+                    speed = 0
+                    brake = 60
+
+                    if self.speed_platform == 0:
+                        steer = 0
+                        self.p_sit = 3
+
+        elif self.p_sit == 3:
+            gear = 0
+            steer = self.__turn_steer__(line_distance, line_theta)
+
+            if stop_distance > 1.5:
+                speed = 40
+            elif 1 < stop_distance < 1.5:
+                speed = 20
+            elif line_distance < 1:
+                speed = 0
+                brake = 60
+
+                if self.speed_platform == 0:
+                    steer = 0
+                    speed = 0
+                    brake = 0
+                    self.p_sit = 4
+
+        elif self.p_sit == 4:
+            steer = 0
+            speed = 0
+            brake = 0
 
         self.gear = gear
         self.speed = speed
@@ -408,6 +559,37 @@ class Control(Subroutine):
         self.brake = brake
 
         return self.gear, self.speed, self.steer, self.brake
+
+    def __parking_steer__(self, cross_track_error, theta):
+        theta_1 = (90 - theta)
+
+        k = 1
+        if abs(theta_1) < 15 and abs(cross_track_error) < 0.27:
+            k = 0.5
+
+        if self.speed_platform == 0:
+            theta_2 = 0
+        else:
+            velocity = (self.speed_platform * 100) / 3600
+            theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
+
+        steer_now = (theta_1 + theta_2)
+
+        adjust = 0.3
+
+        steer_final = ((adjust * self.park_steer_past) + ((1 - adjust) * steer_now))
+        self.park_steer_past = steer_final
+
+        steer = steer_final * 71
+        if steer > 1970:
+            steer = 1970
+            self.park_steer_past = 27.746
+        elif steer < -1970:
+            steer = -1970
+            self.park_steer_past = -27.746
+
+        self.park_steer = steer
+        return self.park_steer
 
 
 # 테스트용 코드, 아래에 원하는 대로 바꿔서 테스트해볼 수 있습니다.
