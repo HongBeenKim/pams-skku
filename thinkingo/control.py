@@ -36,6 +36,9 @@ class Control(Subroutine):
         self.t_sit = 0
         self.p_sit = 0
         #######################################
+        self.target_steer = 0
+        self.target_steer_past = 0
+        #######################################
         self.right_distance = 0
         self.right_distance_past = 0
         self.turn_steer = 0
@@ -275,7 +278,7 @@ class Control(Subroutine):
 
         return self.gear, self.speed, self.steer, self.brake
 
-    def __turn__(self, turn_distance, front_theta, right_distance):
+    def __turn__(self, turn_distance, front_theta, right_distance):  # (전방 장애물 거리, 전방 각도, 오른쪽 직각 거리)
         gear = 0
         speed = 60
         steer = 0
@@ -363,7 +366,7 @@ class Control(Subroutine):
 
         return self.steer
 
-    def __cross__(self, stop_line, light_signal):  # TODO: 신호등 값 받기
+    def __cross__(self, stop_line, light_signal):  # (정지선 거리, 신호등 신호)
         steer = 0
         speed = 60
         gear = 0
@@ -391,11 +394,12 @@ class Control(Subroutine):
 
         return self.gear, self.speed, self.steer, self.brake
 
-    def __target__(self, distance):
+    def __target__(self, distance, cross_track_error, theta):  # (차량과의 거리, cross_track_error, 차선 기울기 각도)
         speed = 50
-        steer = 0
         gear = 0
         brake = 0
+
+        steer = self.__target_steer__(cross_track_error, theta)
 
         time_change = 0.05  # 값 갱신 속도, 수정바람
 
@@ -431,7 +435,39 @@ class Control(Subroutine):
 
         return self.gear, self.speed, self.steer, self.brake
 
-    def __parking__(self, front_distance, line_distance, line_theta, stop_distance):
+    def __target_steer__(self, cross_track_error, theta):
+        theta_1 = (90 - theta)
+
+        k = 1
+        if abs(theta_1) < 15 and abs(cross_track_error) < 0.27:
+            k = 0.5
+
+        if self.speed_platform == 0:
+            theta_2 = 0
+        else:
+            velocity = (self.speed_platform * 100) / 3600
+            theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
+
+        steer_now = (theta_1 + theta_2)
+
+        adjust = 0.3
+
+        steer_final = ((adjust * self.target_steer_past) + ((1 - adjust) * steer_now))
+        self.target_steer_past = steer_final
+
+        steer = steer_final * 71
+        if steer > 1970:
+            steer = 1970
+            self.target_steer_past = 27.746
+        elif steer < -1970:
+            steer = -1970
+            self.target_steer_past = -27.746
+
+        self.target_steer = steer
+        return self.target_steer
+
+    def __parking__(self, front_distance, line_distance, line_theta, stop_distance):  # (전방 장애물 거리,
+        # 주차 공간 선 절편 거리, 주차 공간 양 선의 중심의 기울기 각도, 정지선 거리)
         gear = 0
         speed = 60
         steer = 0
