@@ -26,19 +26,20 @@ class MotionPlanner(Subroutine):
         # TODO: init 할 것 생각하기
         self.previous_data = None
         self.data_stream = data_stream
-        self.lane_handler = LaneCam(data_stream, data)
+        self.lane_handler = LaneCam(data_stream)
 
     def main(self):
         self.init_cuda()  # thread 안에서 initialization 을 해야 합니다.
         while True:
-            print("PLANNER current mode: ", self.data.current_mode)
             if self.data_stream.lidar_data is None: continue
 
             # TODO: sign cam 이랑 미션 들어가있는 여부 공유하는 방법 어떻게 할지 정하기
-
+            time.sleep(0.01)  # for threading schedule
             # 0. default는 표지판과 차선만 본다
             if self.data.current_mode == self.data.MODES["default"]:
                 # TODO: lane_handler에서 값 받아서 패킷에 넘겨주기
+                frame = self.lane_handler.lane_detection()
+                self.data.planner_monitoring_frame = (frame, 800, 158)
                 self.data.current_mode = self.data.detected_mission_number
 
             # 1. 부채살
@@ -49,14 +50,15 @@ class MotionPlanner(Subroutine):
 
             # 2. 유턴 상황
             elif self.data.current_mode == self.data.MODES["u_turn"]:
-                dist, angle = self.U_turn_data(U_TURN_ANGLE)
-                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], dist, angle, None)
+                front_dist, angle, right_dist = self.U_turn_data(U_TURN_ANGLE)
+                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, right_dist)
 
             # 3. 횡단보도 상황
             elif self.data.current_mode == self.data.MODES["crosswalk"]:
-                dist = self.lane_handler.stop_line_detection()
+                frame, dist = self.lane_handler.stop_line_detection()
                 signal = self.data.light_signal
                 self.data.planner_to_control_packet = (self.data.MODES["crosswalk"], dist, signal, None)
+                self.data.planner_monitoring_frame = (frame, 600, 300)
 
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
@@ -68,7 +70,8 @@ class MotionPlanner(Subroutine):
                 # 주차 미션번호, A or B, 편차, 각도
                 # TODO: 라이다로 잰 배리어까지의 거리는 언제 주지?
                 # TODO: 패킷 사이즈를 늘린다 vs control 에서 신호를 받아서 주는 패킷 종류를 바꾼다
-                pass
+                frame = self.lane_handler.parking_line_detection()
+                self.data.planner_monitoring_frame = (frame, 600, 300)
 
             if self.data.is_all_system_stop():
                 self.pycuda_deallocation()
@@ -253,22 +256,13 @@ class MotionPlanner(Subroutine):
         # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
         # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
 
-        init_list = 20001  # 초기화 숫자. 필요에 따라 음수, 0 혹은 큰 숫자 대입
-        lidar_passed_data = []
-
-        for theta in range(0, 360):
-            lidar_passed_data[theta] = init_list  # 초기화
-
-        for theta in range(angle_start, angle_end):
-            lidar_passed_data[theta] = lidar_raw_data[theta]  # passing
-
-        # 거리 최솟값의 index를 주는 함수
-        distance_front_index = lidar_passed_data.index(min(lidar_passed_data))
+        distance_front_index = np.argmin(np.array(lidar_raw_data)[angle_start:angle_end])
+        front_min_dist = lidar_raw_data[distance_front_index] / 10
 
         # 실제 각도는 index의 1/2
         degree = distance_front_index / 2
 
-        return lidar_right_distance_cm, degree
+        return front_min_dist, degree, lidar_right_distance_cm
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data

@@ -11,7 +11,7 @@ import random
 import time
 
 
-class LaneCam(Subroutine):
+class LaneCam():
     camera_matrix_L = np.array([[474.383699, 0, 404.369647], [0, 478.128447, 212.932297], [0, 0, 1]])
     camera_matrix_R = np.array([[473.334870, 0, 386.312394], [0, 476.881433, 201.662339], [0, 0, 1]])
     distortion_coefficients_L = np.array([0.164159, -0.193892, -0.002730, -0.001859])
@@ -29,17 +29,8 @@ class LaneCam(Subroutine):
     lower_white = np.array([187, 180, 160], dtype=np.uint8)
     upper_white = np.array([255, 254, 255], dtype=np.uint8)
 
-    def __init__(self, data_source: Source, data):
-        super().__init__(data)
+    def __init__(self, data_source: Source):
         self.data_source = data_source
-
-    def main(self):
-        while True:
-            # self.lane_detection()
-            self.parking_line_detection()
-            if cv2.waitKey(1) & 0xff == ord(' '):
-                self.data.stop_thinkingo()
-                break
 
     def make_merged_frame(self):
         if self.data_source.left_frame is None or self.data_source.right_frame is None:
@@ -89,7 +80,7 @@ class LaneCam(Subroutine):
                 mid_x, mid_y = (x1 + x2) / 2, 300 - (y1 + y2) / 2
 
             cos_theta = (vec_a[0] * vec_b[0] + vec_a[1] * vec_b[1]) / (magnitude_a * magnitude_b)
-            if -0.8 < cos_theta < 0.8: continue
+            if -0.9 < cos_theta < 0.9: continue
             distance = np.abs(a * mid_x + b * mid_y + c) / np.sqrt(a ** 2 + b ** 2)
             if 150 < distance < 250:
                 cv2.line(merged_frame, (lines[rand[0]][0][0] + 10 * vec_a[0], lines[rand[0]][0][1] - 10 * vec_a[1]),
@@ -98,7 +89,8 @@ class LaneCam(Subroutine):
                 cv2.line(merged_frame, (lines[rand[1]][0][0] + 10 * vec_b[0], lines[rand[1]][0][1] - 10 * vec_b[1]),
                          (lines[rand[1]][0][0] - 10 * vec_b[0], lines[rand[1]][0][1] + 10 * vec_b[1]), (0, 0, 255), 2)
 
-                #TODO: 두 평행선의 중심선 찾기 
+                # TODO: 두 평행선의 중심선 찾기
+                # vertical_to_vec_b = (vec_b[1], -vec_b[0])
                 # 두 직선에 모두 직교하는 직선 찾기를 시도하고 있으면 그리기
                 horizontal_line = None
                 t2 = time.time()
@@ -109,7 +101,7 @@ class LaneCam(Subroutine):
                         vec_h = (x2 - x1, y1 - y2)
                         magnitude_h = np.sqrt(vec_h[0] ** 2 + vec_h[1] ** 2)
                     if (np.abs(np.dot(vec_h, vec_a)) / (magnitude_a * magnitude_h)) < 0.2 and \
-                        (np.abs(np.dot(vec_h, vec_b)) / (magnitude_b * magnitude_h)) < 0.2:
+                            (np.abs(np.dot(vec_h, vec_b)) / (magnitude_b * magnitude_h)) < 0.2:
                         horizontal_line = lines[rand2][0]
                         vec_h = (horizontal_line[0] - horizontal_line[2], horizontal_line[3] - horizontal_line[1])
                         break
@@ -123,13 +115,16 @@ class LaneCam(Subroutine):
                         temp1, temp2 = vec_b[0] * -1, vec_b[1] * -1
                         vec_b = (temp1, temp2)
 
-                    horizontal_mid = ((horizontal_line[0] + horizontal_line[2]) / 2, (horizontal_line[1] + horizontal_line[3]) / 2)
-                    vertical_mid = ((lines[rand[0]][0][0] + lines[rand[0]][0][2]) / 2, (lines[rand[0]][0][1] + lines[rand[0]][0][3]) / 2)
+                    horizontal_mid = (
+                    (horizontal_line[0] + horizontal_line[2]) / 2, (horizontal_line[1] + horizontal_line[3]) / 2)
+                    vertical_mid = ((lines[rand[0]][0][0] + lines[rand[0]][0][2]) / 2,
+                                    (lines[rand[0]][0][1] + lines[rand[0]][0][3]) / 2)
                     vec_VtoH = (horizontal_mid[0] - vertical_mid[0], vertical_mid[1] - horizontal_mid[1])
 
                     if (np.dot(vec_a, vec_VtoH) > 0 and np.dot(vec_b, vec_VtoH) > 0):
                         cv2.line(merged_frame, (horizontal_line[0] + 10 * vec_h[0], horizontal_line[1] - 10 * vec_h[1]),
-                                 (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0), 2)
+                                 (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
+                                 2)
                 break
             # 여기까지 왔으면 평행하고 거리가 150-250 사이인 두 직선을 찾아낸 것임.
             # t2 = time.time()
@@ -151,8 +146,9 @@ class LaneCam(Subroutine):
             # cv2.line(merged_frame, (lines[rand2][0][0], lines[rand2][0][1]),
             #          (lines[rand2][0][2], lines[rand2][0][3]), (0, 0, 255), 2)
 
-
-        cv2.imshow('test', merged_frame)
+        # self.data.planner_monitoring_frame = (merged_frame, 600, 300)
+        # cv2.imshow('test', merged_frame)
+        return merged_frame
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
@@ -192,15 +188,13 @@ class LaneCam(Subroutine):
 
                 cv2.line(merged_frame, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
-        print(distance)
-        self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
-        cv2.imshow('lane', merged_frame)
-        cv2.imshow('filterd', filtered_frame)
 
-        return distance
+        # self.data.planner_monitoring_frame = (merged_frame, 600, 300)
+
+        return merged_frame, distance
 
     def lane_detection(self):
-        if self.data_source.mid_frame is None: return
+        if self.data_source.mid_frame is None: return None
         temp_frame = self.data_source.mid_frame[290:448, 0:800].copy()
         edged = cv2.Canny(temp_frame, 50, 150)
 
@@ -222,10 +216,11 @@ class LaneCam(Subroutine):
                     cv2.circle(temp_frame, (int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2)), 0), 10, 255, -1)
                     cv2.line(temp_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
 
-        # self.data.lane_value  # TODO: set lane values
+        # TODO: return lane values
 
-        cv2.imshow('test', temp_frame)
-        cv2.imshow('edged', edged)
+        # cv2.imshow('test', temp_frame)
+        # self.data.planner_monitoring_frame = (temp_frame, 158, 800)
+        return temp_frame
 
 
 if __name__ == "__main__":
