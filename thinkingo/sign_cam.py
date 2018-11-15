@@ -17,9 +17,9 @@ class SignCam(Subroutine):
         self.source = source
         self.frame = None
         self.model = yolo.init_yolo_sign()
-        self.parking_data = [[0 for col in range(1)] for row in range(BUFFER_SIZE)]
-        self.traffic_data = [[0 for col in range(1)] for row in range(BUFFER_SIZE)]
-        self.sign_data = [[0 for col in range(1)] for row in range(BUFFER_SIZE)]
+        self.parking_data = [0 for row in range(BUFFER_SIZE)]
+        self.traffic_data = [0 for row in range(BUFFER_SIZE)]
+        self.sign_data = [0 for row in range(BUFFER_SIZE)]
         self.counter = [0 for col in range(12)]
         self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
         self.ModeList = ['default', 'narrow', 'u_turn', 'crosswalk', 'target_tracking', 'parking',
@@ -40,7 +40,6 @@ class SignCam(Subroutine):
                 self.sign_selection()
                 self.light_selection()
                 self.parking_lot_selection()
-                print(self.counter)
 
             if self.data.is_all_system_stop():
                 break
@@ -67,7 +66,7 @@ class SignCam(Subroutine):
         checkers = [0, 1, 2, 3, 4, 5]
         sign_values = []
         for i in checkers:
-            sign_values.append(self.counter[checkers])
+            sign_values.append(self.counter[i])
 
         max_index = np.argmax(sign_values)
         if checkers[max_index] != 0:
@@ -78,7 +77,7 @@ class SignCam(Subroutine):
         checkers = [6, 7, 10]
         parking_values = []
         for i in checkers:
-            parking_values.append(self.counter[checkers])
+            parking_values.append(self.counter[i])
 
         max_index = np.argmax(parking_values)
 
@@ -90,7 +89,7 @@ class SignCam(Subroutine):
         checkers = [8, 9, 11]
         light_values = []
         for i in checkers:
-            light_values.append(self.counter[checkers])
+            light_values.append(self.counter[i])
 
         max_index = np.argmax(light_values)
         print()

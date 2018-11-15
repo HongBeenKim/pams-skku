@@ -155,4 +155,4 @@ def run_yolo_sign(model, frame, SHOW):
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 pass
-    return Parking[0], Traffic[0], Sign[0]
+    return int(Parking[0]), int(Traffic[0]), int(Sign[0])
