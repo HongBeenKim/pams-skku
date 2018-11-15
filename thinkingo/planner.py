@@ -253,22 +253,13 @@ class MotionPlanner(Subroutine):
         # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
         # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
 
-        init_list = 20001  # 초기화 숫자. 필요에 따라 음수, 0 혹은 큰 숫자 대입
-        lidar_passed_data = []
-
-        for theta in range(0, 360):
-            lidar_passed_data[theta] = init_list  # 초기화
-
-        for theta in range(angle_start, angle_end):
-            lidar_passed_data[theta] = lidar_raw_data[theta]  # passing
-
-        # 거리 최솟값의 index를 주는 함수
-        distance_front_index = lidar_passed_data.index(min(lidar_passed_data))
+        distance_front_index = np.argmin(np.array(lidar_raw_data)[angle_start:angle_end])
+        front_min_dist = lidar_raw_data[distance_front_index] / 10
 
         # 실제 각도는 index의 1/2
         degree = distance_front_index / 2
 
-        return lidar_right_distance_cm, degree
+        return front_min_dist, degree, lidar_right_distance_cm
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
