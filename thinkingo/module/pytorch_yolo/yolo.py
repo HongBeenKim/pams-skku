@@ -8,6 +8,7 @@ from module.pytorch_yolo.darknet import Darknet
 from module.pytorch_yolo.preprocess import prep_image
 import random
 import pickle as pkl
+import numpy as np
 
 colors = pkl.load(open("module/pytorch_yolo/pallete", "rb"))
 color = random.choice(colors)
@@ -47,7 +48,7 @@ weightsfile = "module/data/yolo-sign_15400.weights"
 classes = load_classes('module/data/sign.names')
 
 # parameters
-confidence = float(0.25)
+confidence = float(0.95)
 nms_thesh = float(0.4)
 CUDA = torch.cuda.is_available()
 num_classes = 9
@@ -94,21 +95,56 @@ def run_yolo_sign(model, frame, SHOW):
 
     # If Result is None.
     if type(output) == int:
-        Datas = [[None, None]]
+        Sign = [0, 1]
+        Traffic = [10, 1]
+        Parking = [11, 1]
         if SHOW:
             cv2.imshow("frame", orig_im)
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 pass
-        return Datas
+        return Parking[0], Traffic[0], Sign[0]
     # Else Result is Names and percentages.
     else:
         output2 = output.cpu().numpy()
         Datas = []
+        Signs = []
+        Traffics = []
+        Parkings = []
 
         for i in range(len(output2[:, 7])):
-            Data = [classes[int(output2[:, 7][i])], output2[:, 5][i]]
+            Data = [int(output2[:, 7][i]), output2[:, 5][i]]
             Datas.append(Data)
+
+        for Data in Datas:
+            if Data[0] == 8 or Data[0] == 9:
+                Signs.append(Data)
+            if Data[0] == 6 or Data[0] == 7:
+                Parkings.append(Data)
+            else:
+                Traffics.append(Data)
+
+        if len(Signs) == 0:
+            Sign = [0, 1]
+        else:
+            Signs = np.array(Signs)
+            min_index_s = np.argmin(Signs[:, 0])
+            Sign = Signs[min_index_s]
+
+        if len(Traffics) == 0:
+            Traffic = [10, 1]
+        else:
+            Traffics = np.array(Traffics)
+            min_index_t = np.argmin(Traffics[:, 0])
+            Traffic = Traffics[min_index_t]
+
+        if len(Parkings) == 0:
+            Parking = [11, 1]
+        else:
+            Parkings = np.array(Parkings)
+            min_index_p = np.argmin(Parkings[:, 0])
+            Parking = Parkings[min_index_p]
+
         if SHOW:
             output[:, 1:5] = torch.clamp(output[:, 1:5], 0.0, float(inp_dim)) / inp_dim
             output[:, [1, 3]] *= frame.shape[1]
@@ -119,4 +155,4 @@ def run_yolo_sign(model, frame, SHOW):
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 pass
-    return Datas
+    return int(Parking[0]), int(Traffic[0]), int(Sign[0])

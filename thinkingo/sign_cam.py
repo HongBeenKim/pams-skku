@@ -5,122 +5,105 @@ from subroutine import Subroutine
 from data_class import Data
 from data_source import Source
 import time
+import numpy as np
 
 DEBUG_YOLO = True
-MINIMUM_RECOGNITION_RATE = 0.75  # 모델의 최소 인식률 정하는 곳
-BUFFER_SIZE = 50  # 과거에 봤던 프레임을 남겨두고 한 프레임씩 밀면서 업데이트한다
-THRESHOLD_OF_BUFFER_FRAME = 25  # 어떤 표지판이 버퍼에서 특정 프레임 개수 이상이면 인식
+BUFFER_SIZE = 10  # 과거에 봤던 프레임을 남겨두고 한 프레임씩 밀면서 업데이트한다
 
 
 class SignCam(Subroutine):
     def __init__(self, source, data: Data):
         super().__init__(data)
         self.source = source
-        self.model = yolo.init_yolo_sign()
         self.frame = None
-        self.yolo_datum = [None, None]
-        self.yolo_data = [[0 for col in range(2)] for row in range(BUFFER_SIZE)]
-        self.sign = [[0 for col in range(9)] for row in range(3)]
-        self.sign_init()
-
+        self.model = yolo.init_yolo_sign()
+        self.ModeList = ['default', 'narrow', 'u_turn', 'crosswalk', 'target_tracking', 'parking',
+                         'parking_a', 'parking_b', 'green_light', 'red_light']
+        self.parking_data = [10 for row in range(BUFFER_SIZE)]
+        self.traffic_data = [11 for row in range(BUFFER_SIZE)]
+        self.sign_data = [0 for row in range(BUFFER_SIZE)]
+        self.counter = [0 for col in range(12)]
+        self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
+        
     def main(self):
         while True:
-            time.sleep(0.01)  # for threading schedule
+            time.sleep(0.03)  # for threading schedule
             if self.source.mid_frame is None:
                 continue
             if self.data.is_in_mission():
                 continue
 
             else:
-                start = time.time()
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
-                self.first_selection_by_recognition_rate()
-                self.second_selection_by_num_frame()
-                self.third_selection_by_checklist()  # TODO: 보험 코드 사용 여부 결정하기
+
+                self.sign_selection()
+                self.light_selection()
                 self.parking_lot_selection()
-                self.sign_reinit()
-                print("SIGN CAM one frame: ", time.time() - start)
 
             if self.data.is_all_system_stop():
                 break
 
-    def sign_init(self):
-        self.sign[0][self.data.MODES["default"]] = 'default'
-        self.sign[0][self.data.MODES["narrow"]] = 'narrow'
-        self.sign[0][self.data.MODES["u_turn"]] = 'u_turn'
-        self.sign[0][self.data.MODES["crosswalk"]] = 'crosswalk'
-        self.sign[0][self.data.MODES["target_tracking"]] = 'target_tracking'
-        self.sign[0][self.data.MODES["parking"]] = 'parking'
-        self.sign[0][self.data.PARKING_MODE["parking_a"]] = 'parking_a'
-        self.sign[0][self.data.PARKING_MODE["parking_b"]] = 'parking_b'
-        self.sign[0][self.data.LIGHT_MODE["green_light"]] = 'green_light'
-        # TODO: @유지찬 @한일석 red light 가 아직 없어요!
-
-    # 최근 몇개의 데이터를 가져와 저장한다!
-    # TODO: 현재는 사용 안 되는 메서드. 사용 여부 정하기
-    def get_data_from_yolo_model(self):
-        count = 0
-        while count < BUFFER_SIZE:
-            self.yolo_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
-
-            for datum in self.yolo_datum:
-                self.yolo_data[count] = datum
-                count += 1
-
     # 하나의 데이터를 가져와 업데이트한다!
     def data_update(self):
-        self.yolo_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
-        print(self.yolo_datum)
-        for data in self.yolo_datum:
-            self.yolo_data.pop(0)
-            self.yolo_data.append(data)
+        parking_datum, traffic_datum, sign_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
 
-    # 조건1 최근 몇개의 데이터에서 특정 인식률 이상인 것에 (sign[1][#] += 1)
-    def first_selection_by_recognition_rate(self):
-        for i in range(0, 50):
-            for j in range(0, 8):
-                if self.yolo_data[i][0] == self.sign[0][j]:
-                    if float(self.yolo_data[i][1]) > MINIMUM_RECOGNITION_RATE:
-                        self.sign[1][j] = self.sign[1][j] + 1
+        self.counter[self.parking_data.pop(0)] -= 1
+        self.parking_data.append(parking_datum)
+        self.counter[parking_datum] += 1
 
-    # 조건2 first_selection 거친 것 중에 몇 회 이상 나오면 (sign[2][#] = 1)
-    def second_selection_by_num_frame(self):
-        for i in range(0, 8):
-            if self.sign[1][i] >= THRESHOLD_OF_BUFFER_FRAME:
-                self.sign[2][i] = 1
+        self.counter[self.traffic_data.pop(0)] -= 1
+        self.traffic_data.append(traffic_datum)
+        self.counter[traffic_datum] += 1
 
-    # 조건3  이미 진행한 미션이거나 아직 수행하면 안 되는 미션인지 확인
-    def third_selection_by_checklist(self):
-        for i in range(1, 6):
-            if self.sign[2][i] == 1:
-                if self.data.is_next_mission(self.sign[0][i]):
-                    self.data.detected_mission_number = self.sign[0][i]
+        self.counter[self.sign_data.pop(0)] -= 1
+        self.sign_data.append(sign_datum)
+        self.counter[sign_datum] += 1
 
-    # parking_lot 위치 정하기
+    # 어떤 표지판인지 확인하고 Data 에 넘겨주기
+    def sign_selection(self):
+        checkers = [0, 1, 2, 3, 4, 5]
+        sign_values = []
+        for i in checkers:
+            sign_values.append(self.counter[i])
+
+        max_index = np.argmax(sign_values)
+        if checkers[max_index] != 0:
+            self.reset_buffers()
+            self.data.detected_mission_number = self.ModeList[checkers[max_index]]
+
+    # 어떤 주차장에서 주차할 것 인지 알려주기
     def parking_lot_selection(self):
-        for i in range(6, 8):
-            if self.sign[2][i] == 1:
-                if self.data.is_in_parking_mission():
-                    self.data.parking_location = self.sign[0][i]
+        checkers = [6, 7, 10]
+        parking_values = []
+        for i in checkers:
+            parking_values.append(self.counter[i])
 
-    def sign_reinit(self):
-        self.sign[1][0] = 0
-        self.sign[1][1] = 0
-        self.sign[1][2] = 0
-        self.sign[1][3] = 0
-        self.sign[1][4] = 0
-        self.sign[1][5] = 0
-        self.sign[1][6] = 0
-        self.sign[1][7] = 0
-        self.sign[2][0] = 0
-        self.sign[2][1] = 0
-        self.sign[2][2] = 0
-        self.sign[2][3] = 0
-        self.sign[2][4] = 0
-        self.sign[2][5] = 0
-        self.sign[2][6] = 0
-        self.sign[2][7] = 0
+        max_index = np.argmax(parking_values)
+
+        if checkers[max_index] != 10:
+            self.reset_buffers()
+            self.data.parking_location = self.ModeList[checkers[max_index]]
+            
+    # 어떤 신호등인지 알려주기
+    def light_selection(self):
+        checkers = [8, 9, 11]
+        light_values = []
+        for i in checkers:
+            light_values.append(self.counter[i])
+
+        max_index = np.argmax(light_values)
+        print()
+        if checkers[max_index] != 11:
+            self.reset_buffers()
+            self.data.light_signal = self.ModeList[checkers[max_index]]
+
+    def reset_buffers(self):
+        self.parking_data = [10 for row in range(BUFFER_SIZE)]
+        self.traffic_data = [11 for row in range(BUFFER_SIZE)]
+        self.sign_data = [0 for row in range(BUFFER_SIZE)]
+        self.counter = [0 for col in range(12)]
+        self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
 
 
 if __name__ == "__main__":
