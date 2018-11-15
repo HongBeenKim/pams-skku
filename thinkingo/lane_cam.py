@@ -49,8 +49,16 @@ class LaneCam():
         return merged_frame
 
     def parking_line_detection(self):
-        lidar_mat = self.data_source.lidar_data
-        lidar_mat = np.array(lidar_mat)
+        lidar_raw_data = self.data_source.lidar_data
+        front_first = 75 * 2
+        front_second = 105 * 2
+
+        # TODO: need to test
+        min_dist = 1000
+        for i in range(front_first, front_second):
+            if lidar_raw_data[i] < min_dist:
+                min_dist = lidar_raw_data[i]
+
         merged_frame = self.make_merged_frame()
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
 
@@ -155,7 +163,7 @@ class LaneCam():
                                  2)
                 break
 
-        return merged_frame, interception, angle
+        return min_dist, merged_frame, interception, angle
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
