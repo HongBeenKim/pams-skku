@@ -26,7 +26,6 @@ class MotionPlanner(Subroutine):
         # TODO: init 할 것 생각하기
         self.previous_data = None
         self.data_stream = data_stream
-        self.data.current_mode = 0  # 모드 번호를 저장하는 변수
         self.lane_handler = LaneCam(data_stream, data)
 
     def main(self):
@@ -47,11 +46,6 @@ class MotionPlanner(Subroutine):
                 # TODO: 직진 매크로를 어디서 구현할지 결정하기
                 dist, angle = self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
                 self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None)
-                # TODO: 모니터링 시스템 만들면서 빼기
-                if cv2.waitKey(1) & 0xff == ord(' '):
-                    cv2.destroyWindow('obstacle avoidance')
-                    self.data.stop_thinkingo()
-                    break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
             elif self.data.current_mode == self.data.MODES["u_turn"]:
@@ -228,7 +222,7 @@ class MotionPlanner(Subroutine):
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
                 max_dist = 10
 
-            cv2.imshow('obstacle avoidance', color)
+            self.data.planner_monitoring_frame = (color, ACT_RAD * 2, ACT_RAD)
 
             return max_dist, target
 
@@ -297,11 +291,17 @@ if __name__ == "__main__":
     from monitoring import Monitoring
 
     testDT = Data()
+    """
+    test code
+    특정 미션 번호에서 시작하도록 함
+    """
+    testDT.current_mode = 1
+
     testDS = Source(testDT)
     car = CarPlatform('COM5', testDT)
     testMP = MotionPlanner(testDS, testDT)
     test_control = Control(testDT)
-    monitor = Monitoring(testDT)
+    monitor = Monitoring(testDS, testDT)
 
     lidar_source_thread = threading.Thread(target=testDS.lidar_stream_main)
     left_cam_source_thread = threading.Thread(target=testDS.left_cam_stream_main)

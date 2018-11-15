@@ -111,7 +111,7 @@ class Data(object):
 
     @current_mode.setter
     def current_mode(self, mode: int):
-        self.current_mode = mode
+        self._current_mode = mode
 
     def reset_to_default(self):
         """
@@ -205,18 +205,6 @@ class Data(object):
             self._light_signal = self.LIGHT_MODE[light]
         except KeyError as e:
             print(e)
-
-    @property
-    def lane_cam_monitoring_frame(self):
-        return self._lane_cam_monitoring_frame
-
-    @lane_cam_monitoring_frame.setter
-    def lane_cam_monitoring_frame(self, frame_and_size: tuple):
-        """
-        :param frame_and_size: ([ndarray], [x-size], [y-size])
-        """
-        self._lane_cam_monitoring_frame = frame_and_size[0]
-        self.lane_cam_monitoring_frame_size = (frame_and_size[1], frame_and_size[2])
 
     @property
     def planner_monitoring_frame(self):

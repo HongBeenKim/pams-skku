@@ -22,8 +22,8 @@ class Monitoring(Subroutine):
         while True:
             # TODO: 사이즈 고려해서 concatenate 하고 imshow
             car_frame = self.put_car_status_and_mode()  # 240 600
-            mid_cam_monitor = np.zeros(shape=(224, 400, 3), dtype=np.uint8)  # x, y
-            mid_cam_padding = np.zeros(shape=(16, 400, 3), dtype=np.uint8)  # x, y
+            mid_cam_monitor = np.zeros(shape=(224, 400, 3), dtype=np.uint8)  # y, x
+            mid_cam_padding = np.zeros(shape=(16, 400, 3), dtype=np.uint8)  # y, x
             mid_cam_monitor = np.concatenate((mid_cam_monitor, mid_cam_padding), axis=0)  # 240 400
             if self.source.mid_frame is not None:
                 mid_cam_monitor = self.source.mid_frame
@@ -32,21 +32,21 @@ class Monitoring(Subroutine):
 
             planner_monitor = np.zeros(shape=(500, 1000, 3), dtype=np.uint8)
             if self.data.planner_monitoring_frame is not None:
-                planner_monitor = self.data.planner_monitoring_frame  # 500 1000
+                planner_monitor = self.data.planner_monitoring_frame
 
                 padding1_y = 500 - self.data.planner_monitoring_frame_size[1]
                 padding1_x = self.data.planner_monitoring_frame_size[0]
-                under_padding = np.zeros(shape=(padding1_x, padding1_y), dtype=np.uint8)
+                under_padding = np.zeros(shape=(padding1_y, padding1_x, 3), dtype=np.uint8)
                 planner_monitor = np.concatenate((planner_monitor, under_padding), axis=0)
 
                 padding2_x = 1000 - self.data.planner_monitoring_frame_size[0]
                 padding2_y = 500
-                right_padding = np.zeros(shape=(padding2_x, padding2_y), dtype=np.uint8)
-                planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)
+                right_padding = np.zeros(shape=(padding2_y, padding2_x, 3), dtype=np.uint8)
+                planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)  # 500 1000
 
             self.canvas = np.concatenate((car_frame, mid_cam_monitor), axis=1)
             self.canvas = np.concatenate((self.canvas, planner_monitor), axis=0)
-            cv2.imshow('monitoring', self.canvas)
+            cv2.imshow('ThinKingo monitoring', self.canvas)
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
                 break
