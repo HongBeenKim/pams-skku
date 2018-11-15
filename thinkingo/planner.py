@@ -9,13 +9,16 @@ sys.path.append(".")
 from subroutine import Subroutine
 from data_class import Data
 from data_source import Source
+from lane_cam import LaneCam
 
 ACTUAL_RADIUS = 500  # 부채살의 실제 반경
-CLEAR_RADIUS = 500  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
+CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
 ARC_ANGLE = 110  # 부채살 적용 각도
 OBSTACLE_OFFSET = 65  # 부채살 적용 시 장애물의 offset (cm 단위)
-U_TURN_ANGLE = 30 # 유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
-                  #  i.e) U_TURN_ANGLE=30 이면 75도~105도를 읽는다
+U_TURN_ANGLE = 30  # 유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
+
+
+#  i.e) U_TURN_ANGLE=30 이면 75도~105도를 읽는다
 
 class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
@@ -23,42 +26,60 @@ class MotionPlanner(Subroutine):
         # TODO: init 할 것 생각하기
         self.previous_data = None
         self.data_stream = data_stream
-        self.current_mode = 0  # 모드 번호를 저장하는 변수
+        self.data.current_mode = 0  # 모드 번호를 저장하는 변수
+        self.lane_handler = LaneCam(data_stream, data)
 
     def main(self):
         self.init_cuda()  # thread 안에서 initialization 을 해야 합니다.
         while True:
-            print("PLANNER current mode: ", self.current_mode)
+            print("PLANNER current mode: ", self.data.current_mode)
             if self.data_stream.lidar_data is None: continue
-            # 0. 차선 추종 주행 상황
-            if self.current_mode == self.data.MODES["default"]:
-                self.lane_handling()
-                self.data.motion_parameter = None
 
-            # 1. 협로 주행 상황
-            elif self.current_mode == self.data.MODES["narrow"]:
-                self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
+            # TODO: sign cam 이랑 미션 들어가있는 여부 공유하는 방법 어떻게 할지 정하기
 
+            # 0. default는 표지판과 차선만 본다
+            if self.data.current_mode == self.data.MODES["default"]:
+                # TODO: lane_handler에서 값 받아서 패킷에 넘겨주기
+                self.data.current_mode = self.data.detected_mission_number
+
+            # 1. 부채살
+            elif self.data.current_mode == self.data.MODES["narrow"]:
+                # TODO: 직진 매크로를 어디서 구현할지 결정하기
+                dist, angle = self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
+                self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None)
+                # TODO: 모니터링 시스템 만들면서 빼기
                 if cv2.waitKey(1) & 0xff == ord(' '):
                     cv2.destroyWindow('obstacle avoidance')
                     self.data.stop_thinkingo()
                     break  # obs_handling 안에 imshow 들어있어서..
 
             # 2. 유턴 상황
-            elif self.current_mode == self.data.MODES["u_turn"]:
-                self.U_turn_data(U_TURN_ANGLE)
+            elif self.data.current_mode == self.data.MODES["u_turn"]:
+                dist, angle = self.U_turn_data(U_TURN_ANGLE)
+                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], dist, angle, None)
 
-            # TODO: 3. 횡단보도 상황
+            # 3. 횡단보도 상황
+            elif self.data.current_mode == self.data.MODES["crosswalk"]:
+                dist = self.lane_handler.stop_line_detection()
+                signal = self.data.light_signal
+                self.data.planner_to_control_packet = (self.data.MODES["crosswalk"], dist, signal, None)
 
             # 4. 차량추종 상황
-            elif self.current_mode == self.data.MODES["target_tracking"]:
-                self.calculate_distance_phase_target()
+            elif self.data.current_mode == self.data.MODES["target_tracking"]:
+                min_dist = self.calculate_distance_phase_target()
+                self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, None, None)
 
             # TODO: 5. 주차 상황
+            elif self.data.current_mode == self.data.MODES["parking"]:
+                # 주차 미션번호, A or B, 편차, 각도
+                # TODO: 라이다로 잰 배리어까지의 거리는 언제 주지?
+                # TODO: 패킷 사이즈를 늘린다 vs control 에서 신호를 받아서 주는 패킷 종류를 바꾼다
+                pass
 
             if self.data.is_all_system_stop():
                 self.pycuda_deallocation()
                 break
+
         # TODO: main함수 마저 채우기
 
     # TODO: 미션별로 필요한, main 속에서 loop로 돌릴 메서드 생각하기
@@ -107,21 +128,7 @@ class MotionPlanner(Subroutine):
 
         time.sleep(2)
 
-    def lane_handling(self):
-        if not self.is_forward_clear():
-            self.current_mode = 1
-            return
-        self.data.planner_to_control_packet = (0, 0, 90, None)
-
-        # TODO: 차선을 처리하는 코드 넣기
-
     def obs_handling(self, angle, obs_offset):
-        if self.is_forward_clear():
-            self.current_mode = 0
-            self.data.planner_to_control_packet = (0, 100, 90, None)
-            cv2.destroyWindow('obstacle avoidance')
-            return
-
         ACT_RAD = np.int32(ACTUAL_RADIUS)  # 실제 라이다 화면의 세로 길이 (즉 부채살의 실제 반경)
 
         AUX_RANGE = np.int32((180 - angle) / 2)  # 좌우대칭 부채살의 사잇각이 angle, AUX_RANGE 는 +x축 기준 첫 부채살의 각도
@@ -150,7 +157,6 @@ class MotionPlanner(Subroutine):
         # 부채살의 결과가 저장되는 변수
         data = np.zeros((angle + 1, 2), np.int)
 
-        color = None
         target = None
 
         if current_frame is not None:
@@ -211,12 +217,7 @@ class MotionPlanner(Subroutine):
                 x_target = ACT_RAD + int(data_transposed[1][int(target) - AUX_RANGE] * np.cos(np.radians(int(target))))
                 y_target = ACT_RAD - int(data_transposed[1][int(target) - AUX_RANGE] * np.sin(np.radians(int(target))))
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
-
-                # make a packet and set the control data
-                # TODO: @김홍빈 @박준혁 장애물 제어 완성하기
-                # FIXME: 정의된 대로 값 세팅하기
-                self.data.planner_to_control_packet = (self.current_mode,
-                                                       data_transposed[1][target - AUX_RANGE], target, None)
+                max_dist = data_transposed[1][target - AUX_RANGE]
 
                 self.previous_data = data
                 self.previous_target = target
@@ -225,14 +226,14 @@ class MotionPlanner(Subroutine):
                 x_target = ACT_RAD + int(100 * np.cos(np.radians(int(-target)))) - 1
                 y_target = ACT_RAD - int(100 * np.sin(np.radians(int(-target)))) - 1
                 cv2.line(color, (ACT_RAD, ACT_RAD), (x_target, y_target), (0, 0, 255), 2)
-
-                self.data.planner_to_control_packet = (self.current_mode, 10, target, None)
+                max_dist = 10
 
             cv2.imshow('obstacle avoidance', color)
-            if color is None: return
 
-    def U_turn_data(self,U_angle):
-        
+            return max_dist, target
+
+    def U_turn_data(self, U_angle):
+
         """
         특정 각도에서만 부채살을 적용시키는 프로그램.
         필요에 따라 부채살이 필요할 경우를 대비하여 추가 코드 작업을 할 예정이다
@@ -244,48 +245,49 @@ class MotionPlanner(Subroutine):
         Edited 2018-11-15 AM 01:15
         """
 
-        #Lidar_data의 자료를 받아온다
+        # Lidar_data의 자료를 받아온다
         lidar_raw_data = self.data_stream.lidar_data
-        
-        #Lidar의 우측 (0도) 까지의 거리를 측정한다. 
+
+        # Lidar의 우측 (0도) 까지의 거리를 측정한다.
         lidar_right_distance_mm = lidar_raw_data[0]
         lidar_right_distance_cm = lidar_right_distance_mm / 10  # mm -> cm
 
         # 전방 시야각을 설정한다. 이 각도의 데이터만 passing할 예정.
-        angle_start = 180 - U_angle     
-        angle_end   = 180 + U_angle
+        angle_start = 180 - U_angle
+        angle_end = 180 + U_angle
 
         # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
         # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
 
-        init_list = 20001   #초기화 숫자. 필요에 따라 음수, 0 혹은 큰 숫자 대입
+        init_list = 20001  # 초기화 숫자. 필요에 따라 음수, 0 혹은 큰 숫자 대입
         lidar_passed_data = []
 
-        for theta in range(0,360):
-            lidar_passed_data[theta] = init_list        #초기화
+        for theta in range(0, 360):
+            lidar_passed_data[theta] = init_list  # 초기화
 
         for theta in range(angle_start, angle_end):
-            lidar_passed_data[theta] = lidar_raw_data[theta]        #passing
-        
-        #거리 최솟값의 index를 주는 함수
-        distance_front_index = lidar_passed_data.index(min(lidar_passed_data))
-        
-        #실제 각도는 index의 1/2
-        degree = distance_front_index / 2 
+            lidar_passed_data[theta] = lidar_raw_data[theta]  # passing
 
-        self.planner_to_control_packet = (self.current_mode, lidar_right_distance_cm , degree, None)
+        # 거리 최솟값의 index를 주는 함수
+        distance_front_index = lidar_passed_data.index(min(lidar_passed_data))
+
+        # 실제 각도는 index의 1/2
+        degree = distance_front_index / 2
+
+        return lidar_right_distance_cm, degree
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
+        minimum_distance = 10000
         for theta in range(170, 190):
-            minimum_distance = min(lidar_raw_data[theta])  # 전방 좌우 10도의 라이다 값 중 최솟값
-
-        self.planner_to_control_packet = (self.current_mode, minimum_distance, None, None)
+            minimum_distance = min(lidar_raw_data[theta]) / 10  # 전방 좌우 10도의 라이다 값 중 최솟값
 
         """
         TODO: 과연 최솟값으로 하면 문제가 없을까? 
         튀는 값을 대비하여 3번째 최소인 값을 대입해야 하는 것 아닌가?
         """
+
+        return minimum_distance
 
 
 if __name__ == "__main__":

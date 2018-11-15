@@ -63,13 +63,6 @@ class LaneCam(Subroutine):
 
         lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 100, 80)
 
-        # if lines is not None:
-        #     for i in range(0, len(lines)):
-        #         for x1, y1, x2, y2 in lines[i]:
-        #             cv2.line(merged_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
-        #
-        # cv2.imshow('test', merged_frame)
-
         t1 = time.time()
 
         while True:
@@ -94,14 +87,35 @@ class LaneCam(Subroutine):
                 mid_x, mid_y = (x1 + x2) / 2, 300 - (y1 + y2) / 2
 
             cos_theta = (vec_a[0] * vec_b[0] + vec_a[1] * vec_b[1]) / (magnitude_a * magnitude_b)
-            if -0.8 < cos_theta < 0.8: continue
+            if -0.9 < cos_theta < 0.9: continue
             distance = np.abs(a * mid_x + b * mid_y + c) / np.sqrt(a ** 2 + b ** 2)
-            if 100 < distance < 150:
+            if 150 < distance < 250:
                 cv2.line(merged_frame, (lines[rand[0]][0][0], lines[rand[0]][0][1]),
                          (lines[rand[0]][0][2], lines[rand[0]][0][3]), (0, 0, 255), 2)
 
                 cv2.line(merged_frame, (lines[rand[1]][0][0], lines[rand[1]][0][1]),
-                         (lines[rand[1]][0][2], lines[rand[1]][0][3]), (255, 0, 0), 2)
+                         (lines[rand[1]][0][2], lines[rand[1]][0][3]), (0, 0, 255), 2)
+                break
+            # 여기까지 왔으면 평행하고 거리가 150-250 사이인 두 직선을 찾아낸 것임.
+            # t2 = time.time()
+            # while True:
+            #     if (time.time() - t2) > 0.01: break
+            #     rand2 = random.randint(0, len(lines) - 1)
+            #     for x1, y1, x2, y2 in lines[rand2]:
+            #         vec_c = (x2 - x1, y1 - y2)
+            #         magnitude_c = np.sqrt(vec_c[0] ** 2 + vec_c[1] ** 2)
+            #     if np.abs((np.dot(vec_a, vec_c) / (magnitude_a * magnitude_c))) < 0.01 and np.abs(
+            #             (np.dot(vec_b, vec_c) / (magnitude_b * magnitude_c))) < 0.01: break
+            #
+            # cv2.line(merged_frame, (lines[rand[0]][0][0], lines[rand[0]][0][1]),
+            #          (lines[rand[0]][0][2], lines[rand[0]][0][3]), (0, 0, 255), 2)
+            #
+            # cv2.line(merged_frame, (lines[rand[1]][0][0], lines[rand[1]][0][1]),
+            #          (lines[rand[1]][0][2], lines[rand[1]][0][3]), (0, 0, 255), 2)
+            #
+            # cv2.line(merged_frame, (lines[rand2][0][0], lines[rand2][0][1]),
+            #          (lines[rand2][0][2], lines[rand2][0][3]), (0, 0, 255), 2)
+
 
         cv2.imshow('test', merged_frame)
 
@@ -190,7 +204,7 @@ if __name__ == "__main__":
 
     testData = Data()
     # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
-    testDDS = DummySource('2018-11-14-16-22-43')
+    testDDS = DummySource('2018-11-14-16-25-05')
     testLC = LaneCam(testDDS, testData)  # DummySource for test
     dummy_thread = threading.Thread(target=testDDS.main)
     dummy_thread.start()

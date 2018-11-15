@@ -21,12 +21,17 @@ class Data(object):
         self._write_packet = SerialPacket()
 
         # from sign cam
-        self._detected_mission_number = 0
-        self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}
-        self._parking_lot = None  # None or 6 or 7, parking_mode dict 참조
+        # TODO: 표지판 안 될때의 보험 쓸지 말지 결정하기
+        self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}  # 보험용
+        self._detected_mission_number = self.MODES["default"]
+        self._parking_lot = None  # None or 6 or 7, PARKING_MODE dict 참조
+        self._light_signal = None  # None or 8 or 9, LIGHT_MODE dict 참조
 
         # lane cam to planner
         self.lane_value = (0, 90)  # (intercept, theta)
+
+        # from planner
+        self._current_mode = self.MODES["default"]
 
         # planner to control
         self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
@@ -100,15 +105,25 @@ class Data(object):
         except KeyError as e:
             print(e)
 
+    @property
+    def current_mode(self):
+        return self._current_mode
+
+    @current_mode.setter
+    def current_mode(self, mode: int):
+        self.current_mode = mode
+
     def check_mission_completed(self, mission: str):
         """
         어떤 미션이 끝나면 그 미션을 수행했다고 체크한 뒤 기본 주행으로 넘어간다.
+        # control.py 가 사용하는 메서드 TODO: @박준혁 컨트롤에서 미션을 끝내면 이 메서드로 체크하도록 수정하기
         :param mission: 미션 이름 string (self.modes dictionary 참조)
         """
         try:
             mission_num = self.MODES[mission]
             self._mission_checklist[mission_num] = True
             self._detected_mission_number = self.MODES["default"]
+            self._current_mode = self.MODES["default"]
         except KeyError as e:
             print(e)
 
@@ -169,6 +184,17 @@ class Data(object):
     def parking_lot(self, parking_location: str):
         try:
             self._parking_lot = self.PARKING_MODE[parking_location]
+        except KeyError as e:
+            print(e)
+
+    @property
+    def light_signal(self):
+        return self._light_signal
+
+    @light_signal.setter
+    def light_signal(self, light: str):
+        try:
+            self._light_signal = self.LIGHT_MODE[light]
         except KeyError as e:
             print(e)
 
