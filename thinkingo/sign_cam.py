@@ -24,7 +24,7 @@ class SignCam(Subroutine):
         self.sign_data = [0 for row in range(BUFFER_SIZE)]
         self.counter = [0 for col in range(12)]
         self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
-
+        
     def main(self):
         while True:
             time.sleep(0.03)  # for threading schedule
