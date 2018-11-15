@@ -207,7 +207,7 @@ class LaneCam():
         # cv2.drawContours(temp_frame, contours, -1, (0, 255, 0), 10)
 
         hough_lines = cv2.HoughLinesP(edged, rho=1, theta=np.pi / 180, threshold=20, minLineLength=20,
-                                      maxLineGap=300)
+                                      maxLineGap=500)
 
         if hough_lines is not None:
             for i in range(0, len(hough_lines)):
@@ -215,16 +215,15 @@ class LaneCam():
                     if y1 == y2: continue
                     ceiling_interception = int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2))
                     bottom_interception = int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2))
-                    if 266 > ceiling_interception or ceiling_interception > 532 or x1 == x2 or (
+                    if 300 > ceiling_interception or ceiling_interception > 500 or x1 == x2 or (
                             abs(y1 - y2) / abs(x1 - x2)) < 0.1 or np.sqrt(
-                        (x1 - x2) ** 2 + (y1 - y2) ** 2) < 50: continue
+                        (x1 - x2) ** 2 + (y1 - y2) ** 2) < 200: continue
                     cv2.circle(temp_frame, (int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2)), 0), 10, 255, -1)
                     cv2.line(temp_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
 
         # TODO: return lane values
 
-        # cv2.imshow('test', temp_frame)
-        # self.data.planner_monitoring_frame = (temp_frame, 158, 800)
+        cv2.imshow('test', temp_frame)
         return temp_frame
 
 
@@ -235,7 +234,7 @@ if __name__ == "__main__":
 
     testData = Data()
     # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
-    testDDS = DummySource('2018-11-14-16-22-43')
+    testDDS = DummySource('2018-11-04-16-07-08')
     testLC = LaneCam(testDDS)  # DummySource for test
     dummy_thread = threading.Thread(target=testDDS.main)
     dummy_thread.start()
@@ -255,5 +254,5 @@ if __name__ == "__main__":
 
     time.sleep(1)
     while True:
-        testLC.parking_line_detection()
+        testLC.lane_detection()
         if cv2.waitKey(1) & 0xff == ord('q'): break
