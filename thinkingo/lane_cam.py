@@ -49,6 +49,8 @@ class LaneCam():
         return merged_frame
 
     def parking_line_detection(self):
+        lidar_mat = self.data_source.lidar_data
+        lidar_mat = np.array(lidar_mat)
         merged_frame = self.make_merged_frame()
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
 

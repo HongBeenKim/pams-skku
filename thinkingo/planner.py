@@ -247,9 +247,6 @@ class MotionPlanner(Subroutine):
         Edited 2018-11-15 AM 01:15
         """
 
-        # Lidar_data의 자료를 받아온다
-        lidar_raw_data = self.data_stream.lidar_data
-
         # 전방 시야각을 설정한다. 이 각도의 데이터만 passing할 예정.
         angle_start = 180 - U_angle
         angle_end = 180 + U_angle
@@ -259,15 +256,9 @@ class MotionPlanner(Subroutine):
 
         y_pixel_size = 1000
         x_pixel_size = 2000
-        #  모든 거리 값을 좌표로 변환해 점찍기 (왼쪽 상단 0,0으로!)
-        lidar_mat = np.zeros((y_pixel_size + 1, x_pixel_size + 1, 3), dtype=np.uint8)
-
-        for i in range(len(lidar_raw_data)):
-            radian_degree = math.radians(i / 2)  # 라디안으로 바꾼 각도
-
-            x_coordinate = int(x_pixel_size / 2) + int((lidar_raw_data[i] / 10) * math.cos(radian_degree))
-            y_coordinate = int(y_pixel_size) - int((lidar_raw_data[i] / 10) * math.sin(radian_degree))
-            cv2.circle(lidar_mat, (x_coordinate, y_coordinate), 1, (255, 255, 255), 1)
+        # Lidar_data의 자료를 받아온다
+        lidar_raw_data = self.data_stream.lidar_data
+        lidar_mat = self.data_stream.get_lidar_ndarray_data(y_pixel_size, x_pixel_size)
 
         # Lidar의 우측에 선긋기
         lidar_right_distance_mm = lidar_raw_data[0]
