@@ -25,7 +25,7 @@ class SignCam(Subroutine):
 
     def main(self):
         while True:
-            time.sleep(0.01)  # for threading schedule
+            time.sleep(0.03)  # for threading schedule
             if self.source.mid_frame is None:
                 continue
             if self.data.is_in_mission():
