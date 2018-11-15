@@ -75,7 +75,7 @@ class MotionPlanner(Subroutine):
                 # 주차 미션번호, A or B, 편차, 각도
                 # TODO: 라이다로 잰 배리어까지의 거리는 언제 주지?
                 # TODO: 패킷 사이즈를 늘린다 vs control 에서 신호를 받아서 주는 패킷 종류를 바꾼다
-                frame = self.lane_handler.parking_line_detection()
+                dist, frame, interception, angle = self.lane_handler.parking_line_detection()
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             if self.data.is_all_system_stop():
@@ -247,27 +247,17 @@ class MotionPlanner(Subroutine):
         Edited 2018-11-15 AM 01:15
         """
 
-        # Lidar_data의 자료를 받아온다
-        lidar_raw_data = self.data_stream.lidar_data
-
         # 전방 시야각을 설정한다. 이 각도의 데이터만 passing할 예정.
         angle_start = 180 - U_angle
         angle_end = 180 + U_angle
 
-        # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
-        # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
-
+        #픽셀 사이즈를 설정한다.
         y_pixel_size = 1000
         x_pixel_size = 2000
-        #  모든 거리 값을 좌표로 변환해 점찍기 (왼쪽 상단 0,0으로!)
-        lidar_mat = np.zeros((y_pixel_size + 1, x_pixel_size + 1, 3), dtype=np.uint8)
 
-        for i in range(len(lidar_raw_data)):
-            radian_degree = math.radians(i / 2)  # 라디안으로 바꾼 각도
-
-            x_coordinate = int(x_pixel_size / 2) + int((lidar_raw_data[i] / 10) * math.cos(radian_degree))
-            y_coordinate = int(y_pixel_size) - int((lidar_raw_data[i] / 10) * math.sin(radian_degree))
-            cv2.circle(lidar_mat, (x_coordinate, y_coordinate), 1, (255, 255, 255), 1)
+        # Lidar_data의 자료를 받아온다
+        lidar_raw_data = self.data_stream.lidar_data
+        lidar_mat = self.data_stream.get_lidar_ndarray_data(y_pixel_size, x_pixel_size)
 
         # Lidar의 우측에 선긋기
         lidar_right_distance_mm = lidar_raw_data[0]
@@ -294,16 +284,49 @@ class MotionPlanner(Subroutine):
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
-        minimum_distance = 10000
-        for theta in range(170, 190):
-            minimum_distance = min(lidar_raw_data[theta]) / 10  # 전방 좌우 10도의 라이다 값 중 최솟값
+        minimum_distance = lidar_raw_data[180] / 10
+        min_theta = 0
+        car_width = 160 #cm
+        
+        for theta in range(360):
+            if(minimum_distance > lidar_raw_data[theta] / 10) and \
+                    ((lidar_raw_data[theta] / 10) * math.abs(math.cos(theta * 90 / math.pi)) < (car_width / 2)): #2 Conditions
+                minimum_distance = lidar_raw_data[theta] / 10
+                min_theta = theta
+
+        distance = minimum_distance * math.sin(min_theta * 90 / math.pi)
 
         """
-        TODO: 과연 최솟값으로 하면 문제가 없을까? 
-        튀는 값을 대비하여 3번째 최소인 값을 대입해야 하는 것 아닌가?
+            [INFO]
+            Horizontal line:  A, B     Diagonal line: C     Vertical line : D
+            
+            A: C * cos(theta)
+            B: Car Width / 2
+            C: Raw Data
+            D: C * sin(theta)
+            
+            [Condition 1]
+            A should be smaller than B
+            
+            [Condition 2]
+            C is minimum distance of lidar raw data which is satis
+            
+                     A - - > X
+                            /|
+                           / |
+                     C    /  | D
+                         /   |
+                        /    |
+                     B - - - - - >
+           ------------------------
+           |                      |
+           |       OUR CAR        |
+           |                      |
+           
         """
-
-        return minimum_distance
+        if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
+            return
+        return distance
 
 
 if __name__ == "__main__":
