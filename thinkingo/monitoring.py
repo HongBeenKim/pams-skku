@@ -40,8 +40,7 @@ class Monitoring(Subroutine):
             cv2.imshow('ThinKingo monitoring', self.canvas)
             c = cv2.waitKey(1) & 0xff
             if c == ord('0'):
-                self.data.current_mode = 0
-                self.data.detected_mission_number = 0
+                self.data.reset_to_default()
             if c == ord('1'):
                 self.data.current_mode = 1
             if c == ord('2'):

@@ -4,6 +4,7 @@ import time
 import cv2
 import numpy as np
 import sys
+import math
 
 sys.path.append(".")
 from subroutine import Subroutine
@@ -16,6 +17,10 @@ CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를
 ARC_ANGLE = 110  # 부채살 적용 각도
 OBSTACLE_OFFSET = 65  # 부채살 적용 시 장애물의 offset (cm 단위)
 U_TURN_ANGLE = 30  # 유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
+U_TURN_LIDAR_CIRCLE_SIZE = 6
+U_TURN_LIDAR_LINE_SIZE = 6
+RED = (0, 0, 255)
+BLUE = (255, 0, 0)
 
 
 #  i.e) U_TURN_ANGLE=30 이면 75도~105도를 읽는다
@@ -245,10 +250,6 @@ class MotionPlanner(Subroutine):
         # Lidar_data의 자료를 받아온다
         lidar_raw_data = self.data_stream.lidar_data
 
-        # Lidar의 우측 (0도) 까지의 거리를 측정한다.
-        lidar_right_distance_mm = lidar_raw_data[0]
-        lidar_right_distance_cm = lidar_right_distance_mm / 10  # mm -> cm
-
         # 전방 시야각을 설정한다. 이 각도의 데이터만 passing할 예정.
         angle_start = 180 - U_angle
         angle_end = 180 + U_angle
@@ -256,13 +257,40 @@ class MotionPlanner(Subroutine):
         # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
         # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
 
+        y_pixel_size = 1000
+        x_pixel_size = 2000
+        #  모든 거리 값을 좌표로 변환해 점찍기 (왼쪽 상단 0,0으로!)
+        lidar_mat = np.zeros((y_pixel_size + 1, x_pixel_size + 1, 3), dtype=np.uint8)
+
+        for i in range(len(lidar_raw_data)):
+            radian_degree = math.radians(i / 2)  # 라디안으로 바꾼 각도
+
+            x_coordinate = int(x_pixel_size / 2) + int((lidar_raw_data[i] / 10) * math.cos(radian_degree))
+            y_coordinate = int(y_pixel_size) - int((lidar_raw_data[i] / 10) * math.sin(radian_degree))
+            cv2.circle(lidar_mat, (x_coordinate, y_coordinate), 1, (255, 255, 255), 1)
+
+        # Lidar의 우측에 선긋기
+        lidar_right_distance_mm = lidar_raw_data[0]
+        lidar_right_distance_cm = int(lidar_right_distance_mm / 10)  # mm -> cm
+        cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)),
+                 (int(x_pixel_size / 2) + lidar_right_distance_cm, int(y_pixel_size)), RED, U_TURN_LIDAR_LINE_SIZE)
+
+        # 전방 최소점에 선긋기
         distance_front_index = np.argmin(np.array(lidar_raw_data)[angle_start:angle_end])
         front_min_dist = lidar_raw_data[distance_front_index] / 10
+        front_degree = distance_front_index / 2  # 실제 각도는 index의 1/2
+        front_x = int(x_pixel_size / 2) + int(front_min_dist * math.cos(front_degree))
+        front_y = int(y_pixel_size) - int(front_min_dist * math.sin(front_degree))
+        cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), (front_x, front_y), RED, U_TURN_LIDAR_LINE_SIZE)
 
-        # 실제 각도는 index의 1/2
-        degree = distance_front_index / 2
+        # 라이다 위치에 파란점
+        cv2.circle(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), 1, BLUE, U_TURN_LIDAR_CIRCLE_SIZE)
 
-        return front_min_dist, degree, lidar_right_distance_cm
+        #  이미지 띄우는 곳
+        resized = cv2.resize(lidar_mat, (1000, 500))
+        self.data.planner_monitoring_frame = (resized, 1000, 500)
+
+        return front_min_dist, front_degree, lidar_right_distance_cm
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
