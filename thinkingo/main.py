@@ -53,10 +53,6 @@ def main():
     test from keyboard input
     """
     database.start_from_main_flag = False
-    import keyboard
-    from key_cam import KeyCam
-    key = KeyCam(database)
-    keyboard.hook(key.key_look)
 
 
 if __name__ == "__main__":

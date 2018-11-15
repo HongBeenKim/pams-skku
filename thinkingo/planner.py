@@ -34,7 +34,7 @@ class MotionPlanner(Subroutine):
             if self.data_stream.lidar_data is None: continue
 
             # TODO: sign cam 이랑 미션 들어가있는 여부 공유하는 방법 어떻게 할지 정하기
-
+            time.sleep(0.01)
             # 0. default는 표지판과 차선만 본다
             if self.data.current_mode == self.data.MODES["default"]:
                 # TODO: lane_handler에서 값 받아서 패킷에 넘겨주기

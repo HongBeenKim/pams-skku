@@ -89,8 +89,8 @@ class LaneCam():
                 cv2.line(merged_frame, (lines[rand[1]][0][0] + 10 * vec_b[0], lines[rand[1]][0][1] - 10 * vec_b[1]),
                          (lines[rand[1]][0][0] - 10 * vec_b[0], lines[rand[1]][0][1] + 10 * vec_b[1]), (0, 0, 255), 2)
 
-                #TODO: 두 평행선의 중심선 찾기
-                #vertical_to_vec_b = (vec_b[1], -vec_b[0])
+                # TODO: 두 평행선의 중심선 찾기
+                # vertical_to_vec_b = (vec_b[1], -vec_b[0])
                 # 두 직선에 모두 직교하는 직선 찾기를 시도하고 있으면 그리기
                 horizontal_line = None
                 t2 = time.time()
@@ -101,7 +101,7 @@ class LaneCam():
                         vec_h = (x2 - x1, y1 - y2)
                         magnitude_h = np.sqrt(vec_h[0] ** 2 + vec_h[1] ** 2)
                     if (np.abs(np.dot(vec_h, vec_a)) / (magnitude_a * magnitude_h)) < 0.2 and \
-                        (np.abs(np.dot(vec_h, vec_b)) / (magnitude_b * magnitude_h)) < 0.2:
+                            (np.abs(np.dot(vec_h, vec_b)) / (magnitude_b * magnitude_h)) < 0.2:
                         horizontal_line = lines[rand2][0]
                         vec_h = (horizontal_line[0] - horizontal_line[2], horizontal_line[3] - horizontal_line[1])
                         break
@@ -115,13 +115,16 @@ class LaneCam():
                         temp1, temp2 = vec_b[0] * -1, vec_b[1] * -1
                         vec_b = (temp1, temp2)
 
-                    horizontal_mid = ((horizontal_line[0] + horizontal_line[2]) / 2, (horizontal_line[1] + horizontal_line[3]) / 2)
-                    vertical_mid = ((lines[rand[0]][0][0] + lines[rand[0]][0][2]) / 2, (lines[rand[0]][0][1] + lines[rand[0]][0][3]) / 2)
+                    horizontal_mid = (
+                    (horizontal_line[0] + horizontal_line[2]) / 2, (horizontal_line[1] + horizontal_line[3]) / 2)
+                    vertical_mid = ((lines[rand[0]][0][0] + lines[rand[0]][0][2]) / 2,
+                                    (lines[rand[0]][0][1] + lines[rand[0]][0][3]) / 2)
                     vec_VtoH = (horizontal_mid[0] - vertical_mid[0], vertical_mid[1] - horizontal_mid[1])
 
                     if (np.dot(vec_a, vec_VtoH) > 0 and np.dot(vec_b, vec_VtoH) > 0):
                         cv2.line(merged_frame, (horizontal_line[0] + 10 * vec_h[0], horizontal_line[1] - 10 * vec_h[1]),
-                                 (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0), 2)
+                                 (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
+                                 2)
                 break
             # 여기까지 왔으면 평행하고 거리가 150-250 사이인 두 직선을 찾아낸 것임.
             # t2 = time.time()
@@ -144,7 +147,7 @@ class LaneCam():
             #          (lines[rand2][0][2], lines[rand2][0][3]), (0, 0, 255), 2)
 
         # self.data.planner_monitoring_frame = (merged_frame, 600, 300)
-        #cv2.imshow('test', merged_frame)
+        # cv2.imshow('test', merged_frame)
         return merged_frame
 
     def stop_line_detection(self):
@@ -186,12 +189,12 @@ class LaneCam():
                 cv2.line(merged_frame, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
 
-        #self.data.planner_monitoring_frame = (merged_frame, 600, 300)
+        # self.data.planner_monitoring_frame = (merged_frame, 600, 300)
 
         return merged_frame, distance
 
     def lane_detection(self):
-        if self.data_source.mid_frame is None: return
+        if self.data_source.mid_frame is None: return None
         temp_frame = self.data_source.mid_frame[290:448, 0:800].copy()
         edged = cv2.Canny(temp_frame, 50, 150)
 
@@ -215,8 +218,8 @@ class LaneCam():
 
         # TODO: return lane values
 
-        #cv2.imshow('test', temp_frame)
-        #self.data.planner_monitoring_frame = (temp_frame, 158, 800)
+        # cv2.imshow('test', temp_frame)
+        # self.data.planner_monitoring_frame = (temp_frame, 158, 800)
         return temp_frame
 
 
