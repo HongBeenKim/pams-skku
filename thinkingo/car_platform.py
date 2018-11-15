@@ -10,11 +10,11 @@ from data_class import Data
 class CarPlatform(Subroutine):
     def __init__(self, port: str, data: Data):
         super().__init__(data)
-        self.init_error_flag = False
+        self.init_error_flag = False  # False meaning start from test code
         try:
             self.serial = serial.Serial(port, 115200)
-        except Exception as e:
-            print("car_platform INIT ERROR: ", e)
+        except serial.serialutil.SerialException as e:
+            print("ERROR!!! make sure your COMPORT: ", e)
             self.init_error_flag = True
 
     def main(self):
@@ -22,6 +22,11 @@ class CarPlatform(Subroutine):
         while True:
             self.receive()
             self.send()
+
+            # TODO: need to test
+            if self.data.start_from_main_flag and self.data.read_packet.aorm == SerialPacket.AORM_MANUAL:
+                self.data.reset_to_default()
+
             if self.data.is_all_system_stop():
                 break
         self.serial.close()
@@ -69,6 +74,9 @@ if __name__ == "__main__":
     platform_thread.start()
 
     if test_data.read_packet.aorm == SerialPacket.AORM_AUTO:
+        test_data.detected_mission_number = 1
+        test_data.current_mode = 1
+        print("mission num: ", test_data.detected_mission_number, test_data.current_mode)
         t = time.time()
         i = 1
         while True:

@@ -15,6 +15,8 @@ class Data(object):
         self.PARKING_MODE = {"parking_a": 6, "parking_b": 7}
         self.LIGHT_MODE = {"green_light": 8, "red_light": 9}
 
+        self.start_from_main_flag = False
+
         # from car platform
         self._read_packet = SerialPacket()
         # to car platform
@@ -112,6 +114,14 @@ class Data(object):
     @current_mode.setter
     def current_mode(self, mode: int):
         self.current_mode = mode
+
+    def reset_to_default(self):
+        """
+        차량 플랫폼이 manual mode 일 때 사용.
+        thinkingo 시스템 전체가 표지판 대기 모드로 들어가도록 변경한다
+        """
+        self._detected_mission_number = self.MODES["default"]
+        self._current_mode = self.MODES["default"]
 
     def check_mission_completed(self, mission: str):
         """

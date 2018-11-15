@@ -15,6 +15,7 @@ from control import Control
 def main():
     # global data
     database = Data()
+    database.start_from_main_flag = True
 
     # sensor data
     data_source = Source(database)
