@@ -16,6 +16,7 @@ class Monitoring(Subroutine):
         super().__init__(data)
         self.source = source
         self.canvas = np.zeros(shape=(740, 1000, 3), dtype=np.uint8)
+        self.mode_string = {y: x for x, y in self.data.MODES.items()}
 
     def main(self):
         while True:
@@ -78,9 +79,13 @@ class Monitoring(Subroutine):
                             color=(255, 255, 255), thickness=FONT_THICKNESS)
         frame = cv2.putText(img=frame, text=brake_string, org=(0, 170), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                             color=(255, 255, 255), thickness=FONT_THICKNESS)
-        frame = cv2.putText(img=frame, text='current', org=(0, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+
+        current = self.mode_string[self.data.current_mode]
+        detected = self.mode_string[self.data.detected_mission_number]
+
+        frame = cv2.putText(img=frame, text=current, org=(0, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                             color=(255, 200, 0), thickness=FONT_THICKNESS)
-        frame = cv2.putText(img=frame, text='detected', org=(300, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+        frame = cv2.putText(img=frame, text=detected, org=(300, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                             color=(0, 255, 255), thickness=FONT_THICKNESS)
         return frame
 
