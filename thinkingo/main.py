@@ -7,7 +7,6 @@ from data_class import Data
 
 from monitoring import Monitoring
 from car_platform import CarPlatform
-from lane_cam import LaneCam
 from sign_cam import SignCam
 from planner import MotionPlanner
 from control import Control
@@ -17,6 +16,11 @@ def main():
     # global data
     database = Data()
     database.start_from_main_flag = True
+    
+    """
+    test from keyboard input
+    """
+    database.start_from_main_flag = False
 
     # sensor data
     data_source = Source(database)
@@ -48,11 +52,6 @@ def main():
     sign_cam_thread.start()
     planner_thread.start()
     control_thread.start()
-
-    """
-    test from keyboard input
-    """
-    database.start_from_main_flag = False
 
 
 if __name__ == "__main__":
