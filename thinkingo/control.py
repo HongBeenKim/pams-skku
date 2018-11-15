@@ -299,7 +299,7 @@ class Control(Subroutine):
         term = (self.right_distance - self.right_distance_past)
 
         if self.u_sit == 0:
-            steer = self.__turn_steer__(term)
+            steer = self.__turn_steer__(term * 1)
             self.right_distance_past = self.right_distance
 
             if 4.0 < self.front_distance < 4.5:
@@ -401,7 +401,7 @@ class Control(Subroutine):
         gear = 0
         brake = 0
 
-        steer = self.__target_steer__(cross_track_error, theta)
+        steer = self.__target_steer__(cross_track_error * 1, theta * 1)
 
         time_change = 0.05  # 값 갱신 속도, 수정바람
 
@@ -570,7 +570,7 @@ class Control(Subroutine):
 
         elif self.p_sit == 3:
             gear = 0
-            steer = self.__parking_steer__(line_distance, line_theta)
+            steer = self.__parking_steer__(line_distance * 1, line_theta * 1)
 
             if stop_distance > 1.5:
                 speed = 40
