@@ -5,29 +5,34 @@ import sys
 sys.path.append(".")
 from subroutine import Subroutine
 from data_class import Data
+from data_source import Source
 from serial_packet import SerialPacket
 
 FONT_THICKNESS = 3
 
 
 class Monitoring(Subroutine):
-    def __init__(self, data: Data):
+    def __init__(self, source: Source, data: Data):
         super().__init__(data)
-        self.canvas = np.zeros(shape=(600, 1200, 3), dtype=np.uint8)
+        self.source = source
+        self.canvas = np.zeros(shape=(740, 1000, 3), dtype=np.uint8)
 
     def main(self):
         while True:
-            # TODO: 각 프레임이 어느 미션일 때 어떤 사이즈로 들어오는지 확인
             # TODO: 사이즈 고려해서 concatenate 하고 imshow
             car_frame = self.put_car_status_and_mode()  # 240 600
-            merged_lane_cam = self.data.lane_cam_monitoring_frame
+            mid_cam_monitor = np.zeros(shape=(224, 400, 3), dtype=np.uint8)  # x, y
+            mid_cam_padding = np.zeros(shape=(16, 400, 3), dtype=np.uint8)  # x, y
+            mid_cam_monitor = np.concatenate((mid_cam_monitor, mid_cam_padding), axis=0)  # 240 400
+            if self.source.mid_frame is not None:
+                mid_cam_monitor = self.source.mid_frame
+                mid_cam_monitor = cv2.resize(mid_cam_monitor, (400, 224))  # y, x
+                mid_cam_monitor = np.concatenate((mid_cam_monitor, mid_cam_padding), axis=0)  # 240 400
 
+            planner_monitor = self.data.planner_monitoring_frame  # 500 1000
 
-
-            if merged_lane_cam is not None:
-                self.canvas = np.vstack((car_frame, merged_lane_cam))
-
-            cv2.imshow('monitoring', car_frame)
+            self.canvas = np.concatenate((car_frame, mid_cam_monitor), axis=1)
+            cv2.imshow('monitoring', self.canvas)
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
                 break
@@ -74,16 +79,18 @@ if __name__ == "__main__":
     from lane_cam import LaneCam
 
     test_data = Data()
-    # test_data_source = Source(test_data)
-    #
+    test_data_source = Source(test_data)
+
     # left_cam_thread = threading.Thread(target=test_data_source.left_cam_stream_main)
     # right_cam_thred = threading.Thread(target=test_data_source.right_cam_stream_main)
+    mid_cam_thread = threading.Thread(target=test_data_source.mid_cam_stream_main)
     # left_cam_thread.start()
     # right_cam_thred.start()
+    mid_cam_thread.start()
 
     car = CarPlatform('COM5', test_data)
     # lane_cam = LaneCam(test_data_source, test_data)
-    monitoring = Monitoring(test_data)
+    monitoring = Monitoring(test_data_source, test_data)
 
     car_thread = threading.Thread(target=car.main)
     # lane_cam_thread = threading.Thread(target=lane_cam.main)

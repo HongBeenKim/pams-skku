@@ -40,8 +40,6 @@ class Data(object):
 
         # monitoring
         self.sign_cam_monitoring_frame = None
-        self._lane_cam_monitoring_frame = None
-        self.lane_cam_monitoring_frame_size = (None, None)
         self._planner_monitoring_frame = None
         self.planner_monitoring_frame_size = (None, None)
 
