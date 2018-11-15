@@ -34,9 +34,9 @@ class SignCam(Subroutine):
                 start = time.time()
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
-                self.first_selection()
-                self.second_selection()
-                self.third_selection()
+                self.first_selection_by_recognition_rate()
+                self.second_selection_by_num_frame()
+                self.third_selection_by_checklist()  # TODO: 보험 코드 사용 여부 결정하기
                 self.parking_lot_selection()
                 self.sign_reinit()
                 print("SIGN CAM one frame: ", time.time() - start)
@@ -75,28 +75,28 @@ class SignCam(Subroutine):
             self.yolo_data.pop(0)
             self.yolo_data.append(data)
 
-    #  조건1 최근 몇개의 데이터에서 특정 인식률 이상인 것에 (sign[1][#] += 1)
-    def first_selection(self):
+    # 조건1 최근 몇개의 데이터에서 특정 인식률 이상인 것에 (sign[1][#] += 1)
+    def first_selection_by_recognition_rate(self):
         for i in range(0, 50):
             for j in range(0, 8):
                 if self.yolo_data[i][0] == self.sign[0][j]:
                     if float(self.yolo_data[i][1]) > MINIMUM_RECOGNITION_RATE:
                         self.sign[1][j] = self.sign[1][j] + 1
 
-    #  조건2 first_selection 거친 것 중에 몇 회 이상 나오면 (sign[2][#] = 1)
-    def second_selection(self):
+    # 조건2 first_selection 거친 것 중에 몇 회 이상 나오면 (sign[2][#] = 1)
+    def second_selection_by_num_frame(self):
         for i in range(0, 8):
             if self.sign[1][i] >= THRESHOLD_OF_BUFFER_FRAME:
                 self.sign[2][i] = 1
 
-    #  조건3  이미 진행한 미션이거나 아직 수행하면 안 되는 미션인지 확인
-    def third_selection(self):
+    # 조건3  이미 진행한 미션이거나 아직 수행하면 안 되는 미션인지 확인
+    def third_selection_by_checklist(self):
         for i in range(1, 6):
             if self.sign[2][i] == 1:
                 if self.data.is_next_mission(self.sign[0][i]):
                     self.data.detected_mission_number = self.sign[0][i]
 
-    #  parking_lot 위치 정하기
+    # parking_lot 위치 정하기
     def parking_lot_selection(self):
         for i in range(6, 8):
             if self.sign[2][i] == 1:
