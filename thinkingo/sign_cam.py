@@ -41,7 +41,7 @@ class SignCam(Subroutine):
                 self.sign_selection()
                 self.light_selection()
                 self.parking_lot_selection()
-                print(self.counter)
+
                 if self.reset:
                     self.reset_buffers()
                     self.reset = False
@@ -52,8 +52,6 @@ class SignCam(Subroutine):
     # 하나의 데이터를 가져와 업데이트한다!
     def data_update(self):
         parking_datum, traffic_datum, sign_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
-
-        print(parking_datum, traffic_datum, sign_datum)
 
         self.counter[self.parking_data.pop(0)] -= 1
         self.parking_data.append(parking_datum)
@@ -135,7 +133,6 @@ if __name__ == "__main__":
     # start_from_crosswalk(test_data)
     # start_from_u_turn(test_data)
 
-    print(test_data._mission_checklist)
 
     data_source_thread = threading.Thread(target=test_source.mid_cam_stream_main)
     sign_cam_thread = threading.Thread(target=test_sign_cam.main)
