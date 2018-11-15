@@ -284,19 +284,49 @@ class MotionPlanner(Subroutine):
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
-        minimum_distance = lidar_raw_data[170]
+        minimum_distance = lidar_raw_data[180] / 10
+        min_theta = 0
+        car_width = 160 #cm
         
-        for theta in range(170, 190):
-            if(minimum_distance > lidar_raw_data[theta]):
-                minimum_distance = lidar_raw_data[theta]
+        for theta in range(360):
+            if(minimum_distance > lidar_raw_data[theta] / 10) and \
+                    ((lidar_raw_data[theta] / 10) * math.abs(math.cos(theta * 90 / math.pi)) < (car_width / 2)): #2 Conditions
+                minimum_distance = lidar_raw_data[theta] / 10
+                min_theta = theta
 
+        distance = minimum_distance * math.sin(min_theta * 90 / math.pi)
 
         """
-        TODO: 과연 최솟값으로 하면 문제가 없을까? 
-        튀는 값을 대비하여 3번째 최소인 값을 대입해야 하는 것 아닌가?
+            [INFO]
+            Horizontal line:  A, B     Diagonal line: C     Vertical line : D
+            
+            A: C * cos(theta)
+            B: Car Width / 2
+            C: Raw Data
+            D: C * sin(theta)
+            
+            [Condition 1]
+            A should be smaller than B
+            
+            [Condition 2]
+            C is minimum distance of lidar raw data which is satis
+            
+                     A - - > X
+                            /|
+                           / |
+                     C    /  | D
+                         /   |
+                        /    |
+                     B - - - - - >
+           ------------------------
+           |                      |
+           |       OUR CAR        |
+           |                      |
+           
         """
-
-        return minimum_distance
+        if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
+            return
+        return distance
 
 
 if __name__ == "__main__":
