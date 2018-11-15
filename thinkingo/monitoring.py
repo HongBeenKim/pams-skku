@@ -29,9 +29,22 @@ class Monitoring(Subroutine):
                 mid_cam_monitor = cv2.resize(mid_cam_monitor, (400, 224))  # y, x
                 mid_cam_monitor = np.concatenate((mid_cam_monitor, mid_cam_padding), axis=0)  # 240 400
 
-            planner_monitor = self.data.planner_monitoring_frame  # 500 1000
+            planner_monitor = np.zeros(shape=(500, 1000, 3), dtype=np.uint8)
+            if self.data.planner_monitoring_frame is not None:
+                planner_monitor = self.data.planner_monitoring_frame  # 500 1000
+
+                padding1_y = 500 - self.data.planner_monitoring_frame_size[1]
+                padding1_x = self.data.planner_monitoring_frame_size[0]
+                under_padding = np.zeros(shape=(padding1_x, padding1_y), dtype=np.uint8)
+                planner_monitor = np.concatenate((planner_monitor, under_padding), axis=0)
+
+                padding2_x = 1000 - self.data.planner_monitoring_frame_size[0]
+                padding2_y = 500
+                right_padding = np.zeros(shape=(padding2_x, padding2_y), dtype=np.uint8)
+                planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)
 
             self.canvas = np.concatenate((car_frame, mid_cam_monitor), axis=1)
+            self.canvas = np.concatenate((self.canvas, planner_monitor), axis=0)
             cv2.imshow('monitoring', self.canvas)
             if cv2.waitKey(1) & 0xff == ord(' '):
                 self.data.stop_thinkingo()
@@ -44,13 +57,13 @@ class Monitoring(Subroutine):
         gear, speed, steer, brake, aorm, alive, enc = self.data.car_platform_status()
         gear_string = ''
         if gear == SerialPacket.GEAR_FORWARD:
-            gear_string = 'Drive'
+            gear_string = 'Drive    '
         elif gear == SerialPacket.GEAR_NEUTRAL:
-            gear_string = 'Neutral'
+            gear_string = 'Neutral  '
         elif gear == SerialPacket.GEAR_BACKWARD:
-            gear_string = 'Rear'
+            gear_string = 'Rear    '
 
-        gear_speed_string = gear_string + '{:8.2f}'.format(speed) + 'kph'
+        gear_speed_string = gear_string + '{:4.2f}'.format(speed) + 'kph'
         steer_direction_string = 'Left    ' if steer > 0 else 'Right   '
         if steer == 0:
             steer_direction_string = 'Straight'
