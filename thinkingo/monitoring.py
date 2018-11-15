@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import datetime
 import sys
 
 sys.path.append(".")
@@ -16,13 +17,22 @@ PLANNER_FRAME_Y = 500
 MID_FRAME_X = 400
 MID_FRAME_Y = 240
 
+DATA_ROOT_PATH = "C:\\pams-skku-monitoring-log\\2018-11-16\\"
+
 
 class Monitoring(Subroutine):
     def __init__(self, source: Source, data: Data):
         super().__init__(data)
         self.source = source
-        self.canvas = np.zeros(shape=(740, 1000, 3), dtype=np.uint8)
+        monitoring_size = (740, 1000)
+        self.canvas = np.zeros(shape=(*monitoring_size, 3), dtype=np.uint8)
         self.mode_string = {y: x for x, y in self.data.MODES.items()}
+
+        # TODO: test
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        today = datetime.datetime.now()
+        time_label = today.strftime("%Y-%m-%d-%H-%M-%S")
+        self.monitor_writer = cv2.VideoWriter(DATA_ROOT_PATH + time_label + ".avi", fourcc, 60, monitoring_size)
 
     def main(self):
         while True:
@@ -38,6 +48,7 @@ class Monitoring(Subroutine):
                 self.init_canvas()
 
             cv2.imshow('ThinKingo monitoring', self.canvas)
+            self.monitor_writer.write(self.canvas)
             c = cv2.waitKey(1) & 0xff
             if c == ord('0'):
                 self.data.reset_to_default()
@@ -54,6 +65,7 @@ class Monitoring(Subroutine):
             if c == ord(' '):
                 self.data.stop_thinkingo()
                 break
+        self.monitor_writer.release()
         cv2.destroyAllWindows()
 
     def init_canvas(self):
