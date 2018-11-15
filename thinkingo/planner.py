@@ -42,7 +42,8 @@ class MotionPlanner(Subroutine):
             # 0. default는 표지판과 차선만 본다
             if self.data.current_mode == self.data.MODES["default"]:
                 # TODO: lane_handler에서 값 받아서 패킷에 넘겨주기
-                frame = self.lane_handler.lane_detection()
+                frame, intercept, angle = self.lane_handler.lane_detection()
+                self.data.planner_to_control_packet = (self.data.MODES["default"], intercept, angle, None, None)
                 self.data.planner_monitoring_frame = (frame, 800, 158)
                 self.data.current_mode = self.data.detected_mission_number
 
@@ -51,32 +52,33 @@ class MotionPlanner(Subroutine):
                 # TODO: 직진 매크로를 어디서 구현할지 결정하기
                 if self.is_forward_clear():
                     self.data.current_mode = 0
+                    continue
                 dist, angle = self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
-                self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None)
+                self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None, None)
 
             # 2. 유턴 상황
             elif self.data.current_mode == self.data.MODES["u_turn"]:
                 front_dist, angle, right_dist = self.U_turn_data(U_TURN_ANGLE)
-                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, right_dist)
+                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, right_dist, None)
 
             # 3. 횡단보도 상황
             elif self.data.current_mode == self.data.MODES["crosswalk"]:
                 frame, dist = self.lane_handler.stop_line_detection()
                 signal = self.data.light_signal
-                self.data.planner_to_control_packet = (self.data.MODES["crosswalk"], dist, signal, None)
+                self.data.planner_to_control_packet = (self.data.MODES["crosswalk"], dist, signal, None, None)
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
                 min_dist = self.calculate_distance_phase_target()
-                self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, None, None)
+                frame, intercept, angle = self.lane_handler.lane_detection()
+                self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)
+                self.data.planner_monitoring_frame = (frame, 600, 300)
 
             # TODO: 5. 주차 상황
             elif self.data.current_mode == self.data.MODES["parking"]:
-                # 주차 미션번호, A or B, 편차, 각도
-                # TODO: 라이다로 잰 배리어까지의 거리는 언제 주지?
-                # TODO: 패킷 사이즈를 늘린다 vs control 에서 신호를 받아서 주는 패킷 종류를 바꾼다
-                dist, frame, interception, angle = self.lane_handler.parking_line_detection()
+                frame, dist_to_barrier, interception, angle, stop_dist = self.lane_handler.parking_line_detection()
+                self.data.planner_to_control_packet = (self.data.MODES["parking"], dist_to_barrier, interception, angle, stop_dist)
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             if self.data.is_all_system_stop():

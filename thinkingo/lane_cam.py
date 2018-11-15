@@ -160,6 +160,7 @@ class LaneCam():
                 break
 
         return merged_frame, min_dist, interception, angle
+        #TODO: return stop line distance
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
@@ -205,7 +206,7 @@ class LaneCam():
         return merged_frame, distance
 
     def lane_detection(self):
-        if self.data_source.mid_frame is None: return None
+        if self.data_source.mid_frame is None: return None, None, None
         temp_frame = self.data_source.mid_frame[290:448, 0:800].copy()
         edged = cv2.Canny(temp_frame, 50, 150)
 
