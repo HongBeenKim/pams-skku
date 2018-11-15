@@ -142,6 +142,8 @@ class Control(Subroutine):
                 gear, speed, steer, brake = self.__cross__(packet[1] / 100)
 
         elif self.mission_num == self.data.MODES["target_tracking"]:
+            if packet[1] is None:
+                packet[1] = 6
             gear, speed, steer, brake = self.__target__(packet[1] / 100, packet[2], packet[3] / 100)
 
         elif self.mission_num == self.data.MODES["parking"]:
@@ -297,7 +299,7 @@ class Control(Subroutine):
         term = (self.right_distance - self.right_distance_past)
 
         if self.u_sit == 0:
-            steer = self.turn_steer(term)
+            steer = self.__turn_steer__(term)
             self.right_distance_past = self.right_distance
 
             if 4.0 < self.front_distance < 4.5:
@@ -425,7 +427,7 @@ class Control(Subroutine):
             if speed > 60:
                 speed = 60
 
-            if distance > 3:  # TODO: 실험값 수정
+            if distance is 6:  # TODO: 실험값 수정
                 self.data.check_mission_completed("target_tracking")
 
         self.gear = gear
@@ -509,7 +511,7 @@ class Control(Subroutine):
         elif self.p_sit == 2:
             if self.pt3 == 0:
                 self.pt3 = self.enc_platform
-            self.pt4 =  self.enc_platform
+            self.pt4 = self.enc_platform
 
             term_2 = self.p4 - self.pt3
 
@@ -568,7 +570,7 @@ class Control(Subroutine):
 
         elif self.p_sit == 3:
             gear = 0
-            steer = self.__turn_steer__(line_distance, line_theta)
+            steer = self.__parking_steer__(line_distance, line_theta)
 
             if stop_distance > 1.5:
                 speed = 40
