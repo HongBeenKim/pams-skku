@@ -256,7 +256,7 @@ class MotionPlanner(Subroutine):
         y_pixel_size = 1000
         x_pixel_size = 2000
         #  모든 거리 값을 좌표로 변환해 점찍기 (왼쪽 상단 0,0으로!)
-        lidar_mat = np.zeros((y_pixel_size + 1, x_pixel_size + 1))
+        lidar_mat = np.zeros((y_pixel_size + 1, x_pixel_size + 1, 3), dtype=np.uint8)
 
         for i in range(len(lidar_raw_data)):
             radian_degree = math.radians(i / 2)  # 라디안으로 바꾼 각도
@@ -267,13 +267,14 @@ class MotionPlanner(Subroutine):
 
         # Lidar의 우측에 선긋기
         lidar_right_distance_mm = lidar_raw_data[0]
-        lidar_right_distance_cm = lidar_right_distance_mm / 10  # mm -> cm
-        cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)),(int(x_pixel_size / 2) + lidar_right_distance_cm, int(y_pixel_size)), (0, 0, 255), 1)
+        lidar_right_distance_cm = int(lidar_right_distance_mm / 10)  # mm -> cm
+        cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)),
+                 (int(x_pixel_size / 2) + lidar_right_distance_cm, int(y_pixel_size)), (0, 0, 255), 1)
 
         # 전방 최소점에 선긋기
         distance_front_index = np.argmin(np.array(lidar_raw_data)[angle_start:angle_end])
         front_min_dist = lidar_raw_data[distance_front_index] / 10
-        front_degree = distance_front_index / 2     # 실제 각도는 index의 1/2
+        front_degree = distance_front_index / 2  # 실제 각도는 index의 1/2
         front_x = int(x_pixel_size / 2) + int(front_min_dist * math.cos(front_degree))
         front_y = int(y_pixel_size) - int(front_min_dist * math.sin(front_degree))
         cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), (front_x, front_y), (0, 0, 255), 1)
@@ -282,7 +283,8 @@ class MotionPlanner(Subroutine):
         cv2.circle(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), 1, (255, 0, 0), 3)
 
         #  이미지 띄우는 곳
-        cv2.imshow('lidar', lidar_mat)
+        resized = cv2.resize(lidar_mat, (1000, 500))
+        self.data.planner_monitoring_frame = (resized, 1000, 500)
 
         return front_min_dist, front_degree, lidar_right_distance_cm
 
@@ -338,4 +340,3 @@ if __name__ == "__main__":
     right_cam_source_thread.start()
     mid_cam_source_thread.start()
     monitoring_thread.start()
-
