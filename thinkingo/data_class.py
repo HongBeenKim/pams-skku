@@ -138,14 +138,14 @@ class Data(object):
 
     def check_u_turn_complete(self):
         """
-        유턴을 끝내고 나면 다음 미션인 횡단보도로 넘어간다.
+        유턴을 끝내고 나면 다음 미션인 횡단보도로 넘어간다. (보험용)
         """
         self._mission_checklist[self.MODES["u_turn"]] = True
         self._detected_mission_number = self.MODES["crosswalk"]
 
     def check_crosswalk_complete(self):
         """
-        횡단보도 미션을 끝내고 나면 다음 미션인 타겟차 트래킹으로 넘어간다.
+        횡단보도 미션을 끝내고 나면 다음 미션인 타겟차 트래킹으로 넘어간다. (보험용)
         """
         self._mission_checklist[self.MODES["crosswalk"]] = True
         self._detected_mission_number = self.MODES["target_tracking"]
@@ -206,6 +206,14 @@ class Data(object):
             self._light_signal = self.LIGHT_MODE[light]
         except KeyError as e:
             print(e)
+
+    def light_reset(self):
+        """
+        신호등을 사용하는 미션이 끝난 후 신호등 값을 None으로 리셋한다.
+        control.py 가 사용하는 메서드
+        TODO: @박준혁 신호등 보는 미션 후 light_reset() 메서드로 리셋하도록 수정하기
+        """
+        self._light_signal = None
 
     @property
     def planner_monitoring_frame(self):
