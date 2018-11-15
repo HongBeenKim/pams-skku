@@ -4,7 +4,6 @@ import sys
 
 sys.path.append(".")
 sys.path.append("../test")
-from subroutine import Subroutine
 from data_source import Source
 from data_class import Data
 import random
@@ -54,10 +53,7 @@ class LaneCam():
         front_second = 105 * 2
 
         # TODO: need to test
-        min_dist = 1000
-        for i in range(front_first, front_second):
-            if lidar_raw_data[i] < min_dist:
-                min_dist = lidar_raw_data[i]
+        min_dist = min(lidar_raw_data[front_first:front_second])
 
         merged_frame = self.make_merged_frame()
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
@@ -114,7 +110,7 @@ class LaneCam():
                 a_temp_x = vec_a[0]
                 a_temp_y = vec_a[1]
                 vec_a_up = (100 * a_temp_x / magnitude_a, 100 * a_temp_y / magnitude_a) if a_temp_y >= 0 else (
-                -100 * a_temp_x / magnitude_a, -100 * a_temp_y / magnitude_a)
+                    -100 * a_temp_x / magnitude_a, -100 * a_temp_y / magnitude_a)
 
                 b_temp_x = vec_b[0]
                 b_temp_y = vec_b[1]
@@ -163,7 +159,7 @@ class LaneCam():
                                  2)
                 break
 
-        return min_dist, merged_frame, interception, angle
+        return merged_frame, min_dist, interception, angle
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
@@ -213,28 +209,62 @@ class LaneCam():
         temp_frame = self.data_source.mid_frame[290:448, 0:800].copy()
         edged = cv2.Canny(temp_frame, 50, 150)
 
-        # image, contours, hierachy = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # cv2.drawContours(temp_frame, contours, -1, (0, 255, 0), 10)
+        left_lines = []
+        right_lines = []
+        left_weights = []
+        right_weights = []
 
-        hough_lines = cv2.HoughLinesP(edged, rho=1, theta=np.pi / 180, threshold=20, minLineLength=20,
-                                      maxLineGap=500)
+        left_lane = None
+        right_lane = None
 
-        if hough_lines is not None:
-            for i in range(0, len(hough_lines)):
-                for x1, y1, x2, y2 in hough_lines[i]:
-                    if y1 == y2: continue
-                    ceiling_interception = int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2))
-                    bottom_interception = int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2))
-                    if 300 > ceiling_interception or ceiling_interception > 500 or x1 == x2 or (
-                            abs(y1 - y2) / abs(x1 - x2)) < 0.1 or np.sqrt(
-                        (x1 - x2) ** 2 + (y1 - y2) ** 2) < 200: continue
-                    cv2.circle(temp_frame, (int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2)), 0), 10, 255, -1)
-                    cv2.line(temp_frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
+        final_interception = None
+        final_angle = None
 
-        # TODO: return lane values
+        hough_lines = cv2.HoughLinesP(edged, rho=1, theta=np.pi / 180, threshold=20, minLineLength=20, maxLineGap=500)
 
-        cv2.imshow('test', temp_frame)
-        return temp_frame
+        for line in hough_lines:
+            for x1, y1, x2, y2 in line:
+                if x1 == x2 or y1 == y2: continue
+
+                slope = (y2 - y1) / (x2 - x1)
+                length = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+                ceiling_interception = int(x1 - (0 - y1) * (x2 - x1) / (y1 - y2))
+                bottom_interception = int(x1 - (158 - y1) * (x2 - x1) / (y1 - y2))
+
+                if 300 > ceiling_interception or ceiling_interception > 500 or bottom_interception < 0 or \
+                        bottom_interception > 800 or np.abs(slope) < 0.1 or length < 200: continue
+
+                if slope < 0:
+                    left_lines.append((slope, bottom_interception))
+                    left_weights.append((length))
+
+                else:
+                    right_lines.append((slope, bottom_interception))
+                    right_weights.append((length))
+
+                left_lane = np.dot(left_weights, left_lines) / np.sum(left_weights) if len(left_weights) > 0 else None
+                right_lane = np.dot(right_weights, right_lines) / np.sum(right_weights) if len(right_weights) > 0 else None
+
+        if left_lane is not None and right_lane is not None:
+            left_pt1 = (int(left_lane[1]), 158)
+            left_pt2 = (int(left_lane[1] - 158 / left_lane[0]), 0)
+            right_pt1 = (int(right_lane[1]), 158)
+            right_pt2 = (int(right_lane[1] - 158 / right_lane[0]), 0)
+            mid_pt1 = (int((left_pt1[0] + right_pt1[0]) / 2), 158)
+            mid_pt2 = (int((left_pt2[0] + right_pt2[0]) / 2), 0)
+
+            cv2.line(temp_frame, left_pt1, left_pt2, (0, 0, 255), 10)
+            cv2.line(temp_frame, right_pt1, right_pt2, (0, 0, 255), 10)
+            cv2.line(temp_frame, mid_pt1, mid_pt2, (0, 255, 0), 10)
+
+            mid_slope = 158 / (mid_pt2[0] - mid_pt1[0]) if mid_pt2[0] != mid_pt1[0] else 1000000
+            mid_angle = np.degrees(np.arctan(mid_slope))
+            if mid_angle < 0: mid_angle += 180
+
+            final_interception = mid_pt1[0] - 400
+            final_angle = mid_angle
+
+        return temp_frame, final_interception, final_angle
 
 
 if __name__ == "__main__":
@@ -244,7 +274,7 @@ if __name__ == "__main__":
 
     testData = Data()
     # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
-    testDDS = DummySource('2018-11-04-16-07-08')
+    testDDS = DummySource('2018-11-04-16-21-59')
     testLC = LaneCam(testDDS)  # DummySource for test
     dummy_thread = threading.Thread(target=testDDS.main)
     dummy_thread.start()

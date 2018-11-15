@@ -28,7 +28,6 @@ BLUE = (255, 0, 0)
 class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
         super().__init__(data)
-        # TODO: init 할 것 생각하기
         self.previous_data = None
         self.data_stream = data_stream
         self.lane_handler = LaneCam(data_stream)
@@ -50,6 +49,8 @@ class MotionPlanner(Subroutine):
             # 1. 부채살
             elif self.data.current_mode == self.data.MODES["narrow"]:
                 # TODO: 직진 매크로를 어디서 구현할지 결정하기
+                if self.is_forward_clear():
+                    self.data.current_mode = 0
                 dist, angle = self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
                 self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None)
 
@@ -82,9 +83,6 @@ class MotionPlanner(Subroutine):
                 self.pycuda_deallocation()
                 break
 
-        # TODO: main함수 마저 채우기
-
-    # TODO: 미션별로 필요한, main 속에서 loop로 돌릴 메서드 생각하기
     def pycuda_deallocation(self):
         # pycuda dealloc
         global context
