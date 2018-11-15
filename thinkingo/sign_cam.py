@@ -1,22 +1,27 @@
 # -*- coding: utf-8 -*-
 
-from module.pytorch_yolo import yolo 
+from module.pytorch_yolo import yolo
 from subroutine import Subroutine
 from data_class import Data
 from data_source import Source
 import time
 
 DEBUG_YOLO = True
+MINIMUM_RECOGNITION_RATE = 0.75  # 모델의 최소 인식률 정하는 곳
+BUFFER_SIZE = 50  # 과거에 봤던 프레임을 남겨두고 한 프레임씩 밀면서 업데이트한다
+THRESHOLD_OF_BUFFER_FRAME = 25  # 어떤 표지판이 버퍼에서 특정 프레임 개수 이상이면 인식
+
 
 class SignCam(Subroutine):
     def __init__(self, source, data: Data):
         super().__init__(data)
         self.source = source
         self.model = yolo.init_yolo_sign()
-        self.yolo_data = [None, None]
-        self.yolo_datas = [[0 for col in range(2)] for row in range(50)]
+        self.frame = None
+        self.yolo_datum = [None, None]
+        self.yolo_data = [[0 for col in range(2)] for row in range(BUFFER_SIZE)]
         self.sign = [[0 for col in range(9)] for row in range(3)]
-        self.sign_init() 
+        self.sign_init()
 
     def main(self):
         while True:
@@ -28,61 +33,60 @@ class SignCam(Subroutine):
             else:
                 start = time.time()
                 self.frame = self.source.mid_frame.copy()
-                self.data_decoding()
+                self.data_update()
                 self.first_selection()
                 self.second_selection()
                 self.third_selection()
                 self.parking_lot_selection()
                 self.sign_reinit()
-                print(time.time() - start)
+                print("SIGN CAM one frame: ", time.time() - start)
 
             if self.data.is_all_system_stop():
                 break
-        
-        
-        
 
     def sign_init(self):
-        self.sign[0][0] = 'default'
-        self.sign[0][1] = 'narrow'
-        self.sign[0][2] = 'u_turn'
-        self.sign[0][3] = 'crosswalk'
-        self.sign[0][4] = 'target_tracking'
-        self.sign[0][5] = 'parking'
-        self.sign[0][6] = 'parking_a'
-        self.sign[0][7] = 'parking_b'
-        self.sign[0][8] = 'green_light'
+        self.sign[0][self.data.MODES["default"]] = 'default'
+        self.sign[0][self.data.MODES["narrow"]] = 'narrow'
+        self.sign[0][self.data.MODES["u_turn"]] = 'u_turn'
+        self.sign[0][self.data.MODES["crosswalk"]] = 'crosswalk'
+        self.sign[0][self.data.MODES["target_tracking"]] = 'target_tracking'
+        self.sign[0][self.data.MODES["parking"]] = 'parking'
+        self.sign[0][self.data.PARKING_MODE["parking_a"]] = 'parking_a'
+        self.sign[0][self.data.PARKING_MODE["parking_b"]] = 'parking_b'
+        self.sign[0][self.data.LIGHT_MODE["green_light"]] = 'green_light'
+        # TODO: @유지찬 @한일석 red light 가 아직 없어요!
 
     # 최근 몇개의 데이터를 가져와 저장한다!
-    def data_decoding_init(self):
+    # TODO: 현재는 사용 안 되는 메서드. 사용 여부 정하기
+    def get_data_from_yolo_model(self):
         count = 0
-        while count<50:
-            self.yolo_data = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
+        while count < BUFFER_SIZE:
+            self.yolo_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
 
-            for data in self.yolo_data:
-                self.yolo_datas[count] = data
+            for datum in self.yolo_datum:
+                self.yolo_data[count] = datum
                 count += 1
 
     # 하나의 데이터를 가져와 업데이트한다!
-    def data_decoding(self):
-        self.yolo_data = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
-        print(self.yolo_data)
-        for data in self.yolo_data:
-            self.yolo_datas.pop(0)
-            self.yolo_datas.append(data)
+    def data_update(self):
+        self.yolo_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
+        print(self.yolo_datum)
+        for data in self.yolo_datum:
+            self.yolo_data.pop(0)
+            self.yolo_data.append(data)
 
-    #  조건1 최근 몇개의 데이터에서 특정 인식률 이상 인것에 (sign[1][#]+=1)
+    #  조건1 최근 몇개의 데이터에서 특정 인식률 이상인 것에 (sign[1][#] += 1)
     def first_selection(self):
         for i in range(0, 50):
             for j in range(0, 8):
-                if self.yolo_datas[i][0] == self.sign[0][j]:
-                    if float(self.yolo_datas[i][1]) > 0.75:  # 최소 인식률 정하는 곳
+                if self.yolo_data[i][0] == self.sign[0][j]:
+                    if float(self.yolo_data[i][1]) > MINIMUM_RECOGNITION_RATE:
                         self.sign[1][j] = self.sign[1][j] + 1
 
-    #  조건2 first_selection 거친 것중에 몇회이상 나오면 (sign[2][#]=1)
+    #  조건2 first_selection 거친 것 중에 몇 회 이상 나오면 (sign[2][#] = 1)
     def second_selection(self):
         for i in range(0, 8):
-            if self.sign[1][i] >= 25:
+            if self.sign[1][i] >= THRESHOLD_OF_BUFFER_FRAME:
                 self.sign[2][i] = 1
 
     #  조건3  이미 진행한 미션이거나 아직 수행하면 안 되는 미션인지 확인
@@ -142,11 +146,9 @@ if __name__ == "__main__":
     # start_from_u_turn(test_data)
 
     print(test_data._mission_checklist)
-    
+
     data_source_thread = threading.Thread(target=test_source.mid_cam_stream_main)
     sign_cam_thread = threading.Thread(target=test_sign_cam.main)
 
     data_source_thread.start()
     sign_cam_thread.start()
-
-

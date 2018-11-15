@@ -162,13 +162,13 @@ class Data(object):
             return False
 
     def is_in_mission(self):
-        if self._detected_mission_number == 0 or self._detected_mission_number == 1:
+        if self._current_mode == 0:
             return False
         else:
             return True
 
     def is_in_parking_mission(self):
-        if self._detected_mission_number == self.MODES["parking"]:
+        if self._current_mode == self.MODES["parking"]:
             return True
         else:
             return False
