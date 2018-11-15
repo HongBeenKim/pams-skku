@@ -56,6 +56,9 @@ class LaneCam():
 
         t1 = time.time()
 
+        interception = None
+        angle = None
+
         while True:
             if lines is None: break
 
@@ -96,6 +99,8 @@ class LaneCam():
                 bottom_interception_center = int((bottom_interception_a + bottom_interception_b) / 2)
 
                 cv2.circle(merged_frame, (bottom_interception_center, 300), 10, (0, 255, 0), -1)
+                interception = bottom_interception_center - 300
+
                 a_temp_x = vec_a[0]
                 a_temp_y = vec_a[1]
                 vec_a_up = (100 * a_temp_x / magnitude_a, 100 * a_temp_y / magnitude_a) if a_temp_y >= 0 else (
@@ -110,8 +115,7 @@ class LaneCam():
 
                 cv2.line(merged_frame, (bottom_interception_center + 10 * vec_mid[0], 300 - 10 * vec_mid[1]),
                          (bottom_interception_center - 10 * vec_mid[0], 300 + 10 * vec_mid[1]), (0, 255, 0), 2)
-
-                # TODO: 두 평행선의 중심선 찾기
+                angle = np.degrees(np.arctan(vec_mid[1] / vec_mid[0])) if vec_mid[0] != 0 else 90
 
                 # 두 직선에 모두 직교하는 직선 찾기를 시도하고 있으면 그리기
                 horizontal_line = None
@@ -149,8 +153,7 @@ class LaneCam():
                                  2)
                 break
 
-        cv2.imshow('test', merged_frame)
-        return merged_frame
+        return merged_frame, interception, angle
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
