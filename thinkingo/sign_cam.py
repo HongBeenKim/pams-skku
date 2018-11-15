@@ -8,8 +8,8 @@ import time
 import numpy as np
 
 DEBUG_YOLO = True
-
 BUFFER_SIZE = 10  # 과거에 봤던 프레임을 남겨두고 한 프레임씩 밀면서 업데이트한다
+
 
 class SignCam(Subroutine):
     def __init__(self, source, data: Data):
@@ -17,13 +17,13 @@ class SignCam(Subroutine):
         self.source = source
         self.frame = None
         self.model = yolo.init_yolo_sign()
-        self.parking_data = [0 for row in range(BUFFER_SIZE)]
-        self.traffic_data = [0 for row in range(BUFFER_SIZE)]
+        self.ModeList = ['default', 'narrow', 'u_turn', 'crosswalk', 'target_tracking', 'parking',
+                         'parking_a', 'parking_b', 'green_light', 'red_light']
+        self.parking_data = [10 for row in range(BUFFER_SIZE)]
+        self.traffic_data = [11 for row in range(BUFFER_SIZE)]
         self.sign_data = [0 for row in range(BUFFER_SIZE)]
         self.counter = [0 for col in range(12)]
         self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
-        self.ModeList = ['default', 'narrow', 'u_turn', 'crosswalk', 'target_tracking', 'parking',
-                         'parking_a', 'parking_b', 'green_light', 'red_light']
 
     def main(self):
         while True:
@@ -60,7 +60,6 @@ class SignCam(Subroutine):
         self.sign_data.append(sign_datum)
         self.counter[sign_datum] += 1
 
-
     # 어떤 표지판인지 확인하고 Data 에 넘겨주기
     def sign_selection(self):
         checkers = [0, 1, 2, 3, 4, 5]
@@ -70,6 +69,7 @@ class SignCam(Subroutine):
 
         max_index = np.argmax(sign_values)
         if checkers[max_index] != 0:
+            self.reset_buffers()
             self.data.detected_mission_number = self.ModeList[checkers[max_index]]
 
     # 어떤 주차장에서 주차할 것 인지 알려주기
@@ -82,6 +82,7 @@ class SignCam(Subroutine):
         max_index = np.argmax(parking_values)
 
         if checkers[max_index] != 10:
+            self.reset_buffers()
             self.data.parking_location = self.ModeList[checkers[max_index]]
             
     # 어떤 신호등인지 알려주기
@@ -94,7 +95,15 @@ class SignCam(Subroutine):
         max_index = np.argmax(light_values)
         print()
         if checkers[max_index] != 11:
+            self.reset_buffers()
             self.data.light_signal = self.ModeList[checkers[max_index]]
+
+    def reset_buffers(self):
+        self.parking_data = [10 for row in range(BUFFER_SIZE)]
+        self.traffic_data = [11 for row in range(BUFFER_SIZE)]
+        self.sign_data = [0 for row in range(BUFFER_SIZE)]
+        self.counter = [0 for col in range(12)]
+        self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
 
 
 if __name__ == "__main__":
