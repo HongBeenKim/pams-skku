@@ -251,11 +251,10 @@ class MotionPlanner(Subroutine):
         angle_start = 180 - U_angle
         angle_end = 180 + U_angle
 
-        # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
-        # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
-
+        #픽셀 사이즈를 설정한다.
         y_pixel_size = 1000
         x_pixel_size = 2000
+
         # Lidar_data의 자료를 받아온다
         lidar_raw_data = self.data_stream.lidar_data
         lidar_mat = self.data_stream.get_lidar_ndarray_data(y_pixel_size, x_pixel_size)
@@ -285,9 +284,12 @@ class MotionPlanner(Subroutine):
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
-        minimum_distance = 10000
+        minimum_distance = lidar_raw_data[170]
+        
         for theta in range(170, 190):
-            minimum_distance = min(lidar_raw_data[theta]) / 10  # 전방 좌우 10도의 라이다 값 중 최솟값
+            if(minimum_distance > lidar_raw_data[theta]):
+                minimum_distance = lidar_raw_data[theta]
+
 
         """
         TODO: 과연 최솟값으로 하면 문제가 없을까? 
