@@ -35,7 +35,6 @@ class Data(object):
 
         # from planner
         self._current_mode = self.MODES["default"]
-        self.__force_default_mode_switching_flag = False
 
         # planner to control
         self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
@@ -122,9 +121,6 @@ class Data(object):
         """
         self._detected_mission_number = self.MODES["default"]
         self._current_mode = self.MODES["default"]
-        self.__force_default_mode_switching_flag = True
-        time.sleep(2)
-        self.__force_default_mode_switching_flag = False
 
     def check_mission_completed(self, mission: str):
         """
