@@ -24,8 +24,8 @@ class Monitoring(Subroutine):
     def __init__(self, source: Source, data: Data):
         super().__init__(data)
         self.source = source
-        monitoring_size = (740, 1000)
-        self.canvas = np.zeros(shape=(*monitoring_size, 3), dtype=np.uint8)
+        self.monitoring_size = (740, 1000)
+        self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
         self.mode_string = {y: x for x, y in self.data.MODES.items()}
 
         # TODO: test
@@ -69,7 +69,7 @@ class Monitoring(Subroutine):
         cv2.destroyAllWindows()
 
     def init_canvas(self):
-        self.canvas = np.zeros(shape=(740, 1000, 3), dtype=np.uint8)
+        self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
 
     def get_planner_frame(self):
         planner_monitor = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
