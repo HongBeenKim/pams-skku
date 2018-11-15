@@ -71,7 +71,6 @@ class LaneCam():
                 vec_a = (x2 - x1, y1 - y2)
                 magnitude_a = np.sqrt(vec_a[0] ** 2 + vec_a[1] ** 2)
                 a, b, c = y1 - y2, x1 - x2, (300 - y1) * (x2 - x1) - x1 * (y1 - y2)
-                mid_x_a, mid_y_a = (x1 + x2) / 2, 300 - (y1 + y2) / 2
 
             if np.abs(vec_a[1] / vec_a[0]) < 1: continue
 
@@ -82,7 +81,9 @@ class LaneCam():
 
             cos_theta = (vec_a[0] * vec_b[0] + vec_a[1] * vec_b[1]) / (magnitude_a * magnitude_b)
             if -0.9 < cos_theta < 0.9: continue
+
             distance = np.abs(a * mid_x_b + b * mid_y_b + c) / np.sqrt(a ** 2 + b ** 2)
+
             if 150 < distance < 250:
                 cv2.line(merged_frame, (lines[rand[0]][0][0] + 10 * vec_a[0], lines[rand[0]][0][1] - 10 * vec_a[1]),
                          (lines[rand[0]][0][0] - 10 * vec_a[0], lines[rand[0]][0][1] + 10 * vec_a[1]), (0, 0, 255), 2)
@@ -90,11 +91,27 @@ class LaneCam():
                 cv2.line(merged_frame, (lines[rand[1]][0][0] + 10 * vec_b[0], lines[rand[1]][0][1] - 10 * vec_b[1]),
                          (lines[rand[1]][0][0] - 10 * vec_b[0], lines[rand[1]][0][1] + 10 * vec_b[1]), (0, 0, 255), 2)
 
-                #TODO: 두 평행선의 중심선 찾기
-                vertical_to_vec_b = (vec_b[1], -vec_b[0])
-                mid_a_to_mid_b = (mid_x_a - mid_x_b, mid_y_b - mid_y_a)
-                if (np.dot(vertical_to_vec_b, mid_a_to_mid_b)) < 0: vertical_to_vec_b = (-vec_b[1], vec_b[0])
+                bottom_interception_a = lines[rand[0]][0][0] + vec_a[0] * (lines[rand[0]][0][1] - 300) / vec_a[1]
+                bottom_interception_b = lines[rand[1]][0][0] + vec_b[0] * (lines[rand[1]][0][1] - 300) / vec_b[1]
+                bottom_interception_center = int((bottom_interception_a + bottom_interception_b) / 2)
 
+                cv2.circle(merged_frame, (bottom_interception_center, 300), 10, (0, 255, 0), -1)
+                a_temp_x = vec_a[0]
+                a_temp_y = vec_a[1]
+                vec_a_up = (100 * a_temp_x / magnitude_a, 100 * a_temp_y / magnitude_a) if a_temp_y >= 0 else (
+                -100 * a_temp_x / magnitude_a, -100 * a_temp_y / magnitude_a)
+
+                b_temp_x = vec_b[0]
+                b_temp_y = vec_b[1]
+                vec_b_up = (100 * b_temp_x / magnitude_b, 100 * b_temp_y / magnitude_b) if b_temp_y >= 0 else (
+                    -100 * b_temp_x / magnitude_b, -100 * b_temp_y / magnitude_b)
+
+                vec_mid = (int((vec_a_up[0] + vec_b_up[0]) / 2), int((vec_a_up[1] + vec_b_up[1]) / 2))
+
+                cv2.line(merged_frame, (bottom_interception_center + 10 * vec_mid[0], 300 - 10 * vec_mid[1]),
+                         (bottom_interception_center - 10 * vec_mid[0], 300 + 10 * vec_mid[1]), (0, 255, 0), 2)
+
+                # TODO: 두 평행선의 중심선 찾기
 
                 # 두 직선에 모두 직교하는 직선 찾기를 시도하고 있으면 그리기
                 horizontal_line = None
@@ -121,7 +138,7 @@ class LaneCam():
                         vec_b = (temp1, temp2)
 
                     horizontal_mid = (
-                    (horizontal_line[0] + horizontal_line[2]) / 2, (horizontal_line[1] + horizontal_line[3]) / 2)
+                        (horizontal_line[0] + horizontal_line[2]) / 2, (horizontal_line[1] + horizontal_line[3]) / 2)
                     vertical_mid = ((lines[rand[0]][0][0] + lines[rand[0]][0][2]) / 2,
                                     (lines[rand[0]][0][1] + lines[rand[0]][0][3]) / 2)
                     vec_VtoH = (horizontal_mid[0] - vertical_mid[0], vertical_mid[1] - horizontal_mid[1])
@@ -131,28 +148,8 @@ class LaneCam():
                                  (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
                                  2)
                 break
-            # 여기까지 왔으면 평행하고 거리가 150-250 사이인 두 직선을 찾아낸 것임.
-            # t2 = time.time()
-            # while True:
-            #     if (time.time() - t2) > 0.01: break
-            #     rand2 = random.randint(0, len(lines) - 1)
-            #     for x1, y1, x2, y2 in lines[rand2]:
-            #         vec_c = (x2 - x1, y1 - y2)
-            #         magnitude_c = np.sqrt(vec_c[0] ** 2 + vec_c[1] ** 2)
-            #     if np.abs((np.dot(vec_a, vec_c) / (magnitude_a * magnitude_c))) < 0.01 and np.abs(
-            #             (np.dot(vec_b, vec_c) / (magnitude_b * magnitude_c))) < 0.01: break
-            #
-            # cv2.line(merged_frame, (lines[rand[0]][0][0], lines[rand[0]][0][1]),
-            #          (lines[rand[0]][0][2], lines[rand[0]][0][3]), (0, 0, 255), 2)
-            #
-            # cv2.line(merged_frame, (lines[rand[1]][0][0], lines[rand[1]][0][1]),
-            #          (lines[rand[1]][0][2], lines[rand[1]][0][3]), (0, 0, 255), 2)
-            #
-            # cv2.line(merged_frame, (lines[rand2][0][0], lines[rand2][0][1]),
-            #          (lines[rand2][0][2], lines[rand2][0][3]), (0, 0, 255), 2)
 
-        # self.data.planner_monitoring_frame = (merged_frame, 600, 300)
-        # cv2.imshow('test', merged_frame)
+        cv2.imshow('test', merged_frame)
         return merged_frame
 
     def stop_line_detection(self):
@@ -236,7 +233,7 @@ if __name__ == "__main__":
     testData = Data()
     # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
     testDDS = DummySource('2018-11-14-16-22-43')
-    testLC = LaneCam(testDDS, testData)  # DummySource for test
+    testLC = LaneCam(testDDS)  # DummySource for test
     dummy_thread = threading.Thread(target=testDDS.main)
     dummy_thread.start()
 
@@ -254,4 +251,6 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------------
 
     time.sleep(1)
-    testLC.main()
+    while True:
+        testLC.parking_line_detection()
+        if cv2.waitKey(1) & 0xff == ord('q'): break
