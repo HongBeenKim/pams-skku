@@ -118,11 +118,11 @@ def run_yolo_sign(model, frame, SHOW):
 
         for Data in Datas:
             if Data[0] == 8 or Data[0] == 9:
-                Signs.append(Data)
+                Traffics.append(Data)
             if Data[0] == 6 or Data[0] == 7:
                 Parkings.append(Data)
             else:
-                Traffics.append(Data)
+                Signs.append(Data)
 
         if len(Signs) == 0:
             Sign = [0, 1]

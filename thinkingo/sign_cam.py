@@ -14,6 +14,7 @@ BUFFER_SIZE = 10  # 과거에 봤던 프레임을 남겨두고 한 프레임씩 
 class SignCam(Subroutine):
     def __init__(self, source, data: Data):
         super().__init__(data)
+        self.reset = False
         self.source = source
         self.frame = None
         self.model = yolo.init_yolo_sign()
@@ -40,6 +41,10 @@ class SignCam(Subroutine):
                 self.sign_selection()
                 self.light_selection()
                 self.parking_lot_selection()
+                print(self.counter)
+                if self.reset:
+                    self.reset_buffers()
+                    self.reset = False
 
             if self.data.is_all_system_stop():
                 break
@@ -47,6 +52,8 @@ class SignCam(Subroutine):
     # 하나의 데이터를 가져와 업데이트한다!
     def data_update(self):
         parking_datum, traffic_datum, sign_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
+
+        print(parking_datum, traffic_datum, sign_datum)
 
         self.counter[self.parking_data.pop(0)] -= 1
         self.parking_data.append(parking_datum)
@@ -69,7 +76,7 @@ class SignCam(Subroutine):
 
         max_index = np.argmax(sign_values)
         if checkers[max_index] != 0:
-            self.reset_buffers()
+            self.reset = True
             self.data.detected_mission_number = self.ModeList[checkers[max_index]]
 
     # 어떤 주차장에서 주차할 것 인지 알려주기
@@ -82,7 +89,7 @@ class SignCam(Subroutine):
         max_index = np.argmax(parking_values)
 
         if checkers[max_index] != 10:
-            self.reset_buffers()
+            self.reset = True
             self.data.parking_location = self.ModeList[checkers[max_index]]
             
     # 어떤 신호등인지 알려주기
@@ -93,9 +100,8 @@ class SignCam(Subroutine):
             light_values.append(self.counter[i])
 
         max_index = np.argmax(light_values)
-        print()
         if checkers[max_index] != 11:
-            self.reset_buffers()
+            self.reset = True
             self.data.light_signal = self.ModeList[checkers[max_index]]
 
     def reset_buffers(self):
