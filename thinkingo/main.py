@@ -34,27 +34,25 @@ def main():
     monitoring = Monitoring(data_source, database)
     platform = CarPlatform('COM5', database)  # PLEASE CHECK YOUR COMPORT
     sign_cam = SignCam(data_source, database)
-    lane_cam = LaneCam(data_source, database)
     planner = MotionPlanner(data_source, database)
     control = Control(database)
 
     monitoring_thread = threading.Thread(target=monitoring.main)
     platform_thread = threading.Thread(target=platform.main)
     sign_cam_thread = threading.Thread(target=sign_cam.main)
-    lane_cam_thread = threading.Thread(target=lane_cam.main)
     planner_thread = threading.Thread(target=planner.main)
     control_thread = threading.Thread(target=control.main)
 
     monitoring_thread.start()
     platform_thread.start()
     sign_cam_thread.start()
-    lane_cam_thread.start()
     planner_thread.start()
     control_thread.start()
 
     """
     test from keyboard input
     """
+    database.start_from_main_flag = False
     import keyboard
     from key_cam import KeyCam
     key = KeyCam(database)

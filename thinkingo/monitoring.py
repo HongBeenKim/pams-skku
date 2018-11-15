@@ -7,6 +7,7 @@ from subroutine import Subroutine
 from data_class import Data
 from data_source import Source
 from serial_packet import SerialPacket
+import time
 
 FONT_THICKNESS = 3
 
