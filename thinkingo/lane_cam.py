@@ -151,7 +151,7 @@ class LaneCam(Subroutine):
             # cv2.line(merged_frame, (lines[rand2][0][0], lines[rand2][0][1]),
             #          (lines[rand2][0][2], lines[rand2][0][3]), (0, 0, 255), 2)
 
-
+        # self.data.planner_monitoring_frame = (merged_frame, 600, 300)
         cv2.imshow('test', merged_frame)
 
     def stop_line_detection(self):
@@ -193,9 +193,8 @@ class LaneCam(Subroutine):
                 cv2.line(merged_frame, (x1 + 100 * (x1 - x2), y1 + 100 * (y2 - y1)),
                          (x1 - 100 * (x1 - x2), y1 - 100 * (y2 - y1)), (0, 0, 255), 2)
         print(distance)
-        self.data.lane_cam_monitoring_frame = (merged_frame, 600, 300)
-        cv2.imshow('lane', merged_frame)
-        cv2.imshow('filterd', filtered_frame)
+
+        self.data.planner_monitoring_frame = (merged_frame, 600, 300)
 
         return distance
 
@@ -224,8 +223,7 @@ class LaneCam(Subroutine):
 
         # self.data.lane_value  # TODO: set lane values
 
-        cv2.imshow('test', temp_frame)
-        cv2.imshow('edged', edged)
+        self.data.planner_monitoring_frame = (temp_frame, 158, 800)
 
 
 if __name__ == "__main__":
