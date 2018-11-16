@@ -22,7 +22,7 @@ class Data(object):
         self.PARKING_MODE = {"parking_a": 6, "parking_b": 7}
         self.LIGHT_MODE = {"green_light": 8, "red_light": 9}
 
-        self.start_from_main_flag = False
+        self.debug_flag = False
 
         # from car platform
         self._read_packet = SerialPacket()

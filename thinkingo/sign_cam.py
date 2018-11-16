@@ -7,7 +7,6 @@ from data_source import Source
 import time
 import numpy as np
 
-DEBUG_YOLO = True
 BUFFER_SIZE = 10  # 과거에 봤던 프레임을 남겨두고 한 프레임씩 밀면서 업데이트한다
 
 
@@ -51,7 +50,8 @@ class SignCam(Subroutine):
 
     # 하나의 데이터를 가져와 업데이트한다!
     def data_update(self):
-        parking_datum, traffic_datum, sign_datum = yolo.run_yolo_sign(self.model, self.frame, DEBUG_YOLO)
+        parking_datum, traffic_datum, sign_datum, debug_frame = yolo.run_yolo_sign(self.model, self.frame, True)
+        self.data.sign_cam_monitoring_frame = debug_frame
 
         self.counter[self.parking_data.pop(0)] -= 1
         self.parking_data.append(parking_datum)

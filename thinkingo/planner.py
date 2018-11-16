@@ -339,8 +339,6 @@ class MotionPlanner(Subroutine):
             img = cv2.putText(img, "%d" % distance,
                               (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance, ),
                               cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 255, 0))
-            cv2.imshow('test', img)
-            cv2.waitKey(1)
             img = cv2.resize(img, (684, 342))
             return img, distance
 
