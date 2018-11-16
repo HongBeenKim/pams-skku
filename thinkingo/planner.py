@@ -13,7 +13,7 @@ from data_source import Source
 from lane_cam import LaneCam
 
 ACTUAL_RADIUS = 300  # 부채살의 실제 반경
-CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
+CLEAR_RADIUS = 500  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
 ARC_ANGLE = 110  # 부채살 적용 각도
 OBSTACLE_OFFSET = 70  # 부채살 적용 시 장애물의 offset (cm 단위)
 U_TURN_ANGLE = 10  # 유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
@@ -74,9 +74,8 @@ class MotionPlanner(Subroutine):
                 print(min_dist)
                 dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
                 frame, intercept, angle = self.lane_handler.lane_detection()  # 800 158
-                # FIXME: 크기 안 맞음
                 self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)
-                frame = np.concatenate((frame, dist_frame), axis=0)
+                frame = np.concatenate((frame, dist_frame), axis=0)  # FIXME: 크기 안 맞음
                 self.data.planner_monitoring_frame = (frame, 800, 500)
 
             # TODO: 5. 주차 상황
@@ -284,7 +283,6 @@ class MotionPlanner(Subroutine):
         #  이미지 띄우는 곳
         resized = cv2.resize(lidar_mat, (1000, 500))
         self.data.planner_monitoring_frame = (resized, 1000, 500)
-        print(front_degree)
         return front_min_dist, front_degree, lidar_right_distance_cm
 
     def calculate_distance_phase_target(self):
