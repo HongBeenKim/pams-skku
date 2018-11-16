@@ -219,7 +219,7 @@ class Control(Subroutine):
     def __accel__(self, speed, brake):  # TODO: 후에 실험값을 통해서 값 수정
         if self.speed_platform < (speed / 2):
             if speed <= 10:
-                self.accel_speed = 30  # TODO: 후에 실험값을 통해서 값 수정
+                self.accel_speed = 5 * speed  # TODO: 후에 실험값을 통해서 값 수정
                 self.accel_brake = brake
             else:
                 self.accel_speed = 2 * speed
