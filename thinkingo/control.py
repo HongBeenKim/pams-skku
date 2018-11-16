@@ -78,7 +78,7 @@ class Control(Subroutine):
         self.st1 = 0
         self.st2 = 0
         self.pmode = 0
-        self.direction = 1
+        self.direction = 0
 
     def main(self):
         while True:
@@ -438,11 +438,11 @@ class Control(Subroutine):
             if (self.ct2 - self.ct1) < 600:
                 steer = -1350.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 780 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
+            elif 530 <= (self.ct2 - self.ct1) <= 805 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
                 speed = 24  # 30
                 steer = -1350.79
 
-            elif (self.ct2 - self.ct1) >= 780 + correction_enc:
+            elif (self.ct2 - self.ct1) >= 805 + correction_enc:
                 steer = -1350.79
                 speed = 0
                 brake = 60
