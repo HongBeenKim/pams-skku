@@ -511,14 +511,11 @@ class Control(Subroutine):
                     speed = 0
                     brake = 60
 
-            if speed > 35:  #60
+            if speed > 35:  # 60
                 speed = 35  # 60
 
             if distance is 6:  # TODO: 실험값 수정
                 self.data.check_mission_completed("target_tracking")
-
-        if distance == 0:
-            speed = self.speed_platform
 
         self.gear = gear
         self.speed = speed
