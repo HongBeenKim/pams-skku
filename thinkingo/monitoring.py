@@ -36,6 +36,8 @@ class Monitoring(Subroutine):
         self.monitor_writer = cv2.VideoWriter(DATA_ROOT_PATH + time_label + ".avi", fourcc, 60, self.video_writer_size)
 
     def main(self):
+        cv2.imshow('ThinKingo monitoring', self.canvas)
+        cv2.moveWindow('ThinKingo monitoring', 580, 0)
         while True:
             car_frame = self.put_car_status_and_mode()  # 240 600
             mid_cam_monitor = self.get_mid_cam_frame()  # 240 400
