@@ -1,3 +1,5 @@
+#TODO: light, parking A, B 모니터링 할 수 있도록 만들기
+
 import cv2
 import numpy as np
 import datetime

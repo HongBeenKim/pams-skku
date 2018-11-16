@@ -133,7 +133,7 @@ class Data(object):
     def check_mission_completed(self, mission: str):
         """
         어떤 미션이 끝나면 그 미션을 수행했다고 체크한 뒤 기본 주행으로 넘어간다.
-        # control.py 가 사용하는 메서드 TODO: @박준혁 컨트롤에서 미션을 끝내면 이 메서드로 체크하도록 수정하기
+        # control.py 가 사용하는 메서드
         :param mission: 미션 이름 string (self.modes dictionary 참조)
         """
         try:
@@ -219,7 +219,7 @@ class Data(object):
         """
         신호등을 사용하는 미션이 끝난 후 신호등 값을 None으로 리셋한다.
         control.py 가 사용하는 메서드
-        TODO: @박준혁 신호등 보는 미션 후 light_reset() 메서드로 리셋하도록 수정하기
+
         """
         self._light_signal = None
 
