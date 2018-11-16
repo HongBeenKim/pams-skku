@@ -68,5 +68,3 @@ while True:
         if cv2.waitKey(1) & 0xff == ord(' '): break
     except Exception:
         pass
-
-    # TODO: 끝나면 자연스럽게 프로그램 종료하는 코드 작성하기
