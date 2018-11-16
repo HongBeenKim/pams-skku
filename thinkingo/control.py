@@ -25,6 +25,7 @@ class Control(Subroutine):
         self.accel_brake = 0  # 가속된 최종 브레이크
         #######################################
         self.mission_num = 0  # DEFAULT 모드
+        self.packet[5] = [0, 0, 0, 0, 0]
         #######################################
         self.steer_past = 0
         self.speed_past = 0
@@ -124,54 +125,90 @@ class Control(Subroutine):
 
         gear = speed = steer = brake = 0
         if self.mission_num == self.data.MODES["default"]:
-            if packet[1] is None or packet[2] is None:
-                packet[1] = 0
-                packet[2] = 90
+            self.packet[0] = packet[0]
+            self.packet[1] = packet[1]
+            self.packet[2] = packet[2]
+            self.packet[3] = packet[3]
+            self.packet[4] = packet[4]
 
-            gear, speed, steer, brake = self.__default__(packet[1] / 100, packet[2])
+            if packet[1] is None or packet[2] is None:
+                self.packet[1] = 0
+                self.packet[2] = 90
+
+            gear, speed, steer, brake = self.__default__(self.packet[1] / 100, self.packet[2])
 
         elif self.mission_num == self.data.MODES["narrow"]:
+            self.packet[0] = packet[0]
+            self.packet[1] = packet[1]
+            self.packet[2] = packet[2]
+            self.packet[3] = packet[3]
+            self.packet[4] = packet[4]
+
             if packet[1] is None or packet[2] is None:
                 return 0, 0, 0, 0
-            gear, speed, steer, brake = self.__obs__(packet[1] / 100, packet[2])
+            gear, speed, steer, brake = self.__obs__(self.packet[1] / 100, self.packet[2])
 
         elif self.mission_num == self.data.MODES["u_turn"]:
-            if packet[1] is None:
-                packet[1] = 5
-            if packet[2] is None or packet[3] is None:
-                packet[2] = 0
-                packet[3] = 90
+            self.packet[0] = packet[0]
+            self.packet[1] = packet[1]
+            self.packet[2] = packet[2]
+            self.packet[3] = packet[3]
+            self.packet[4] = packet[4]
 
-            gear, speed, steer, brake = self.__turn__(packet[1] / 100, packet[2] / 100, packet[3])
+            if packet[1] is None:
+                self.packet[1] = 5
+            if packet[2] is None or packet[3] is None:
+                self.packet[2] = 0
+                self.packet[3] = 90
+
+            gear, speed, steer, brake = self.__turn__(self.packet[1] / 100, self.packet[2] / 100, self.packet[3])
             # TODO: 수정
 
         elif self.mission_num == self.data.MODES["crosswalk"]:
+            self.packet[0] = packet[0]
+            self.packet[1] = packet[1]
+            self.packet[2] = packet[2]
+            self.packet[3] = packet[3]
+            self.packet[4] = packet[4]
+
             if packet[1] is None:
                 gear, speed, steer, brake = 0, 30, 0, 0
             else:
-                gear, speed, steer, brake = self.__cross__(packet[1] / 100, packet[2])
+                gear, speed, steer, brake = self.__cross__(self.packet[1] / 100, self.packet[2])
 
         elif self.mission_num == self.data.MODES["target_tracking"]:
+            self.packet[0] = packet[0]
+            self.packet[1] = packet[1]
+            self.packet[2] = packet[2]
+            self.packet[3] = packet[3]
+            self.packet[4] = packet[4]
+
             if packet[1] is None:
-                packet[1] = 6
+                self.packet[1] = 6
 
             if packet[2] is None or packet[3] is None:
-                packet[2] = 0
-                packet[3] = 90
+                self.packet[2] = 0
+                self.packet[3] = 90
 
-            gear, speed, steer, brake = self.__target__(packet[1] / 100, packet[2] / 100, packet[3])
+            gear, speed, steer, brake = self.__target__(self.packet[1] / 100, self.packet[2] / 100, self.packet[3])
 
         elif self.mission_num == self.data.MODES["parking"]:
-            if packet[1] is None:
-                packet[1] = 0
-            if packet[2] is None:
-                packet[2] = 0
-            if packet[3] is None:
-                packet[3] = 0
-            if packet[4] is None:
-                packet[4] = 3
+            self.packet[0] = packet[0]
+            self.packet[1] = packet[1]
+            self.packet[2] = packet[2]
+            self.packet[3] = packet[3]
+            self.packet[4] = packet[4]
 
-            gear, speed, steer, brake = self.__parking__(packet[1] / 100, packet[2] / 100, packet[3], packet[4] / 100)
+            if packet[1] is None:
+                self.packet[1] = 0
+            if packet[2] is None:
+                self.packet[2] = 0
+            if packet[3] is None:
+                self.packet[3] = 0
+            if packet[4] is None:
+                self.packet[4] = 3
+
+            gear, speed, steer, brake = self.__parking__(self.packet[1] / 100, self.packet[2] / 100, self.packet[3], self.packet[4] / 100)
 
         return gear, speed, steer, brake
 
