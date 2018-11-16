@@ -66,7 +66,7 @@ class SignCam(Subroutine):
             sign_values.append(self.counter[i])
 
         max_index = np.argmax(sign_values)
-        if checkers[max_index] != 0:
+        if checkers[max_index] != 0 and (not self.data.ready_for_mission):
             self.reset_sign_buffer()
             self.data.detected_mission_number = self.ModeList[checkers[max_index]]
 
@@ -79,7 +79,7 @@ class SignCam(Subroutine):
 
         max_index = np.argmax(parking_values)
 
-        if checkers[max_index] != 10 and self.data.ready_for_mission():
+        if checkers[max_index] != 10 and self.data.ready_for_mission:
             self.reset_option_buffer()
             self.data.parking_location = self.ModeList[checkers[max_index]]
             
@@ -91,7 +91,7 @@ class SignCam(Subroutine):
             light_values.append(self.counter[i])
 
         max_index = np.argmax(light_values)
-        if checkers[max_index] != 11 and self.data.ready_for_mission():
+        if checkers[max_index] != 11 and self.data.ready_for_mission:
             self.reset_option_buffer()
             self.data.light_signal = self.ModeList[checkers[max_index]]
 
