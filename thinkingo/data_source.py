@@ -77,7 +77,7 @@ class Source():
             if raw_data.__contains__('sEA'): continue
             temp = raw_data.split(' ')[116:477]
             try:
-                self.lidar_data = [int(item, 16) for item in temp]
+                self.lidar_data = [int(item, 16) if int(item, 16) > 2 else 1000000 for item in temp]
             except:
                 pass
             if self.data.is_all_system_stop():
