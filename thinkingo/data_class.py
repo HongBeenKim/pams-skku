@@ -1,7 +1,8 @@
 import numpy as np
 import sys
+import os
 
-sys.path.append(".")
+sys.path.append(".")  # FIXME
 from serial_packet import SerialPacket
 
 NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
