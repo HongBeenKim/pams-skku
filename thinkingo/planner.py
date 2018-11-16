@@ -336,8 +336,12 @@ class MotionPlanner(Subroutine):
         else:
             img = self.data_stream.get_lidar_ndarray_data(500, 1000, 5)
             distance = int(distance)
+            img = cv2.line(img, (-int(car_width / 2), 500),
+                           (-int(car_width / 2) , 0), (0, 0, 255), 2)
             img = cv2.line(img, (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500),
                            (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance),(255, 255, 0), 2)
+            img = cv2.line(img, (int(car_width / 2), 500),
+                           (int(car_width / 2) , 0), (0, 0, 255), 2)
             img = cv2.putText(img, "%d" % distance,
                               (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance, ),
                               cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 255, 0))
