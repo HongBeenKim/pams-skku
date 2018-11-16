@@ -1,7 +1,8 @@
 import numpy as np
 import sys
+import os
 
-sys.path.append(".")
+sys.path.append(".")  # FIXME
 from serial_packet import SerialPacket
 
 NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
@@ -22,7 +23,7 @@ class Data(object):
         self.PARKING_MODE = {"parking_a": 6, "parking_b": 7}
         self.LIGHT_MODE = {"green_light": 8, "red_light": 9}
 
-        self.start_from_main_flag = False
+        self.debug_flag = False
 
         # from car platform
         self._read_packet = SerialPacket()
@@ -43,7 +44,7 @@ class Data(object):
         self._current_mode = self.MODES["default"]
 
         # planner to control
-        self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
+        self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None, None)
 
         # monitoring
         self.sign_cam_monitoring_frame = np.zeros(shape=(MID_FRAME_Y, MID_FRAME_X, 3), dtype=np.uint8)

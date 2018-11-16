@@ -161,7 +161,7 @@ class LaneCam():
                     if (np.dot(vec_a, vec_VtoH) > 0 and np.dot(vec_b, vec_VtoH) > 0):
                         # 정지선은 horizontal_line 과 평행함.
                         t = (300 - horizontal_line[0]) / vec_h[0]
-                        final_stop_dist = horizontal_line[0] - t * vec_h[1]
+                        final_stop_dist = 300 - (horizontal_line[1] - t * vec_h[1])
                         cv2.line(merged_frame, (horizontal_line[0] + 10 * vec_h[0], horizontal_line[1] - 10 * vec_h[1]),
                                  (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
                                  2)

@@ -28,8 +28,8 @@ class Monitoring(Subroutine):
         self.video_writer_size = (1000, 740)
         self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
         self.mode_string = {y: x for x, y in self.data.MODES.items()}
+        self.mode_string[4] = 'target'
 
-        # TODO: test
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         today = datetime.datetime.now()
         time_label = today.strftime("%Y-%m-%d-%H-%M-%S")
@@ -82,18 +82,27 @@ class Monitoring(Subroutine):
             padding1_y = PLANNER_FRAME_Y - self.data.planner_monitoring_frame_size[1]
             padding1_x = self.data.planner_monitoring_frame_size[0]
             under_padding = np.zeros(shape=(padding1_y, padding1_x, 3), dtype=np.uint8)
-            planner_monitor = np.concatenate((planner_monitor, under_padding), axis=0)
 
             padding2_y = PLANNER_FRAME_Y
             padding2_x = PLANNER_FRAME_X - self.data.planner_monitoring_frame_size[0]
             right_padding = np.zeros(shape=(padding2_y, padding2_x, 3), dtype=np.uint8)
-            planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)
+
+            try:
+                planner_monitor = np.concatenate((planner_monitor, under_padding), axis=0)
+                planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)
+            except ValueError as e:
+                print(e)
+                planner_monitor = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
 
         return planner_monitor
 
     def get_mid_cam_frame(self):
         mid_cam_monitor = np.zeros(shape=(MID_FRAME_Y, MID_FRAME_X, 3), dtype=np.uint8)
-        if self.source.mid_frame is not None:
+        if not self.data.is_in_mission() and self.data.sign_cam_monitoring_frame is not None:
+            mid_cam_monitor = self.data.sign_cam_monitoring_frame
+            mid_cam_monitor = cv2.resize(mid_cam_monitor, (MID_FRAME_X, MID_FRAME_Y))
+
+        elif self.source.mid_frame is not None:
             mid_cam_monitor = self.source.mid_frame
             mid_cam_monitor = cv2.resize(mid_cam_monitor, (MID_FRAME_X, MID_FRAME_Y))
 
@@ -132,9 +141,9 @@ class Monitoring(Subroutine):
         current = self.mode_string[self.data.current_mode]
         detected = self.mode_string[self.data.detected_mission_number]
 
-        frame = cv2.putText(img=frame, text=current, org=(0, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+        frame = cv2.putText(img=frame, text=current, org=(0, 220), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                             color=(255, 200, 0), thickness=FONT_THICKNESS)
-        frame = cv2.putText(img=frame, text=detected, org=(300, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+        frame = cv2.putText(img=frame, text=detected, org=(300, 220), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                             color=(0, 255, 255), thickness=FONT_THICKNESS)
         return frame
 

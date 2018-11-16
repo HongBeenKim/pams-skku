@@ -98,12 +98,7 @@ def run_yolo_sign(model, frame, SHOW):
         Sign = [0, 1]
         Traffic = [10, 1]
         Parking = [11, 1]
-        if SHOW:
-            cv2.imshow("frame", orig_im)
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord('q'):
-                pass
-        return Parking[0], Traffic[0], Sign[0]
+        return Parking[0], Traffic[0], Sign[0], orig_im
     # Else Result is Names and percentages.
     else:
         output2 = output.cpu().numpy()
@@ -151,8 +146,4 @@ def run_yolo_sign(model, frame, SHOW):
             output[:, [2, 4]] *= frame.shape[0]
             list(map(lambda x: write(x, orig_im), output))
 
-            cv2.imshow("frame", orig_im)
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord('q'):
-                pass
-    return int(Parking[0]), int(Traffic[0]), int(Sign[0])
+    return int(Parking[0]), int(Traffic[0]), int(Sign[0]), orig_im
