@@ -43,7 +43,7 @@ class Data(object):
         self._current_mode = self.MODES["default"]
 
         # planner to control
-        self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
+        self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None, None)
 
         # monitoring
         self.sign_cam_monitoring_frame = np.zeros(shape=(MID_FRAME_Y, MID_FRAME_X, 3), dtype=np.uint8)
