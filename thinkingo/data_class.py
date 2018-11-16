@@ -1,10 +1,16 @@
-import time
+import numpy as np
 import sys
 
 sys.path.append(".")
 from serial_packet import SerialPacket
 
 NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
+
+PLANNER_FRAME_X = 1000
+PLANNER_FRAME_Y = 500
+
+MID_FRAME_X = 400
+MID_FRAME_Y = 240
 
 
 class Data(object):
@@ -40,9 +46,9 @@ class Data(object):
         self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None)
 
         # monitoring
-        self.sign_cam_monitoring_frame = None
-        self._planner_monitoring_frame = None
-        self.planner_monitoring_frame_size = (None, None)
+        self.sign_cam_monitoring_frame = np.zeros(shape=(MID_FRAME_Y, MID_FRAME_X, 3), dtype=np.uint8)
+        self._planner_monitoring_frame = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
+        self.planner_monitoring_frame_size = (PLANNER_FRAME_X, PLANNER_FRAME_Y)
 
         # stop flag
         self._all_end_and_stop_yeah = False

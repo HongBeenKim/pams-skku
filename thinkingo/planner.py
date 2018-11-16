@@ -28,7 +28,6 @@ BLUE = (255, 0, 0)
 class MotionPlanner(Subroutine):
     def __init__(self, data_stream: Source, data: Data):
         super().__init__(data)
-        # TODO: init 할 것 생각하기
         self.previous_data = None
         self.data_stream = data_stream
         self.lane_handler = LaneCam(data_stream)
@@ -43,48 +42,49 @@ class MotionPlanner(Subroutine):
             # 0. default는 표지판과 차선만 본다
             if self.data.current_mode == self.data.MODES["default"]:
                 # TODO: lane_handler에서 값 받아서 패킷에 넘겨주기
-                frame = self.lane_handler.lane_detection()
+                frame, intercept, angle = self.lane_handler.lane_detection()
+                self.data.planner_to_control_packet = (self.data.MODES["default"], intercept, angle, None, None)
                 self.data.planner_monitoring_frame = (frame, 800, 158)
                 self.data.current_mode = self.data.detected_mission_number
 
             # 1. 부채살
             elif self.data.current_mode == self.data.MODES["narrow"]:
                 # TODO: 직진 매크로를 어디서 구현할지 결정하기
+                if self.is_forward_clear():
+                    self.data.current_mode = 0
+                    continue
                 dist, angle = self.obs_handling(ARC_ANGLE, OBSTACLE_OFFSET)
-                self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None)
+                self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None, None)
 
             # 2. 유턴 상황
             elif self.data.current_mode == self.data.MODES["u_turn"]:
                 front_dist, angle, right_dist = self.U_turn_data(U_TURN_ANGLE)
-                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, right_dist)
+                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, right_dist, None)
 
             # 3. 횡단보도 상황
             elif self.data.current_mode == self.data.MODES["crosswalk"]:
                 frame, dist = self.lane_handler.stop_line_detection()
                 signal = self.data.light_signal
-                self.data.planner_to_control_packet = (self.data.MODES["crosswalk"], dist, signal, None)
+                self.data.planner_to_control_packet = (self.data.MODES["crosswalk"], dist, signal, None, None)
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
                 min_dist = self.calculate_distance_phase_target()
-                self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, None, None)
+                frame, intercept, angle = self.lane_handler.lane_detection()
+                self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)
+                self.data.planner_monitoring_frame = (frame, 600, 300)
 
             # TODO: 5. 주차 상황
             elif self.data.current_mode == self.data.MODES["parking"]:
-                # 주차 미션번호, A or B, 편차, 각도
-                # TODO: 라이다로 잰 배리어까지의 거리는 언제 주지?
-                # TODO: 패킷 사이즈를 늘린다 vs control 에서 신호를 받아서 주는 패킷 종류를 바꾼다
-                frame = self.lane_handler.parking_line_detection()
+                frame, dist_to_barrier, interception, angle, stop_dist = self.lane_handler.parking_line_detection()
+                self.data.planner_to_control_packet = (self.data.MODES["parking"], dist_to_barrier, interception, angle, stop_dist)
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             if self.data.is_all_system_stop():
                 self.pycuda_deallocation()
                 break
 
-        # TODO: main함수 마저 채우기
-
-    # TODO: 미션별로 필요한, main 속에서 loop로 돌릴 메서드 생각하기
     def pycuda_deallocation(self):
         # pycuda dealloc
         global context
@@ -251,11 +251,10 @@ class MotionPlanner(Subroutine):
         angle_start = 180 - U_angle
         angle_end = 180 + U_angle
 
-        # 읽지 않는 부분을 이 값으로 초기화한다. 이후에 min 함수를 사용하므로 크게 잡았다.
-        # lidar의 최대 인식 거리는 20m이므로, 20m = 2000 cm = 20000 mm 임을 감안하여 20001을 대입했다.
-
+        #픽셀 사이즈를 설정한다.
         y_pixel_size = 1000
         x_pixel_size = 2000
+
         # Lidar_data의 자료를 받아온다
         lidar_raw_data = self.data_stream.lidar_data
         lidar_mat = self.data_stream.get_lidar_ndarray_data(y_pixel_size, x_pixel_size)
@@ -285,16 +284,49 @@ class MotionPlanner(Subroutine):
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
-        minimum_distance = 10000
-        for theta in range(170, 190):
-            minimum_distance = min(lidar_raw_data[theta]) / 10  # 전방 좌우 10도의 라이다 값 중 최솟값
+        minimum_distance = lidar_raw_data[180] / 10
+        min_theta = 0
+        car_width = 160 #cm
+        
+        for theta in range(360):
+            if(minimum_distance > lidar_raw_data[theta] / 10) and \
+                    ((lidar_raw_data[theta] / 10) * math.abs(math.cos(theta * 90 / math.pi)) < (car_width / 2)): #2 Conditions
+                minimum_distance = lidar_raw_data[theta] / 10
+                min_theta = theta
+
+        distance = minimum_distance * math.sin(min_theta * 90 / math.pi)
 
         """
-        TODO: 과연 최솟값으로 하면 문제가 없을까? 
-        튀는 값을 대비하여 3번째 최소인 값을 대입해야 하는 것 아닌가?
+            [INFO]
+            Horizontal line:  A, B     Diagonal line: C     Vertical line : D
+            
+            A: C * cos(theta)
+            B: Car Width / 2
+            C: Raw Data
+            D: C * sin(theta)
+            
+            [Condition 1]
+            A should be smaller than B
+            
+            [Condition 2]
+            C is minimum distance of lidar raw data which is satis
+            
+                     A - - > X
+                            /|
+                           / |
+                     C    /  | D
+                         /   |
+                        /    |
+                     B - - - - - >
+           ------------------------
+           |                      |
+           |       OUR CAR        |
+           |                      |
+           
         """
-
-        return minimum_distance
+        if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
+            return
+        return distance
 
 
 if __name__ == "__main__":
