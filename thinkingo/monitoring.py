@@ -93,7 +93,7 @@ class Monitoring(Subroutine):
 
     def get_mid_cam_frame(self):
         mid_cam_monitor = np.zeros(shape=(MID_FRAME_Y, MID_FRAME_X, 3), dtype=np.uint8)
-        if self.data.sign_cam_monitoring_frame is not None:
+        if not self.data.is_in_mission() and self.data.sign_cam_monitoring_frame is not None:
             mid_cam_monitor = self.data.sign_cam_monitoring_frame
             mid_cam_monitor = cv2.resize(mid_cam_monitor, (MID_FRAME_X, MID_FRAME_Y))
 
