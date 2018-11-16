@@ -47,53 +47,13 @@ class Monitoring(Subroutine):
             car_frame = self.put_car_status_and_mode()  # 240 600
             mid_cam_monitor = self.get_mid_cam_frame()  # 240 400
             planner_monitor = self.get_planner_frame()  # 500 1000
-
-            status_frame = np.zeros((80, 1000, 3), dtype=np.uint8)
-            aorm = self.data.read_packet.aorm
-            if aorm == SerialPacket.AORM_MANUAL:
-                aorm = 'Man'
-            else:
-                aorm = 'Auto'
-            cv2.putText(status_frame, text=aorm, org=(0, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
-                            color=(0, 255, 255), thickness=FONT_THICKNESS)
-
-            write_pac = self.data.write_packet
-            gear = write_pac.gear
-            enc = write_pac.enc
-            speed = write_pac.speed
-            steer = write_pac.steer
-            brake = write_pac.brake
-
-            gear_string = ''
-            if gear == SerialPacket.GEAR_FORWARD:
-                gear_string = 'Drive   '
-            elif gear == SerialPacket.GEAR_NEUTRAL:
-                gear_string = 'Neutral '
-            elif gear == SerialPacket.GEAR_BACKWARD:
-                gear_string = 'Rear   '
-
-            gear_speed_string = gear_string + '{:4.2f}'.format(speed) + 'kph'
-            steer_direction_string = 'Left    ' if steer > 0 else 'Right   '
-            if steer == 0:
-                steer_direction_string = 'Straight'
-
-            steer_string = steer_direction_string + '{:5.2f}'.format(abs(steer)) + 'deg'
-
-            brake_string = 'Brake' + '{:7.2f}'.format(brake)
-            status_frame = cv2.putText(img=status_frame, text=gear_speed_string, org=(150, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                                fontScale=1,
-                                color=(255, 255, 255), thickness=FONT_THICKNESS)
-            status_frame = cv2.putText(img=status_frame, text=steer_string, org=(450, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                                fontScale=1,
-                                color=(255, 200, 200), thickness=FONT_THICKNESS)
-            status_frame = cv2.putText(img=status_frame, text=brake_string, org=(750, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                                fontScale=1,
-                                color=(255, 255, 255), thickness=FONT_THICKNESS)
+            control_stat_frame = self.put_control_status()  # 80 1000
+            # TODO: after refactor, need to test
 
             try:
                 self.canvas = np.concatenate((car_frame, mid_cam_monitor), axis=1)
                 self.canvas = np.concatenate((self.canvas, planner_monitor), axis=0)
-                self.canvas = np.concatenate((self.canvas, status_frame), axis=0)
+                self.canvas = np.concatenate((self.canvas, control_stat_frame), axis=0)
             except ValueError as e:
                 print(e)
                 self.init_canvas()
@@ -121,6 +81,53 @@ class Monitoring(Subroutine):
 
     def init_canvas(self):
         self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
+
+    def put_control_status(self):
+        control_stat_frame = np.zeros((80, 1000, 3), dtype=np.uint8)
+        aorm = self.data.read_packet.aorm
+        if aorm == SerialPacket.AORM_MANUAL:
+            aorm = 'Man'
+        else:
+            aorm = 'Auto'
+        cv2.putText(control_stat_frame, text=aorm, org=(0, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+                    color=(0, 255, 255), thickness=FONT_THICKNESS)
+
+        write_pac = self.data.write_packet
+        gear = write_pac.gear
+        enc = write_pac.enc
+        speed = write_pac.speed
+        steer = write_pac.steer
+        brake = write_pac.brake
+
+        gear_string = ''
+        if gear == SerialPacket.GEAR_FORWARD:
+            gear_string = 'Drive   '
+        elif gear == SerialPacket.GEAR_NEUTRAL:
+            gear_string = 'Neutral '
+        elif gear == SerialPacket.GEAR_BACKWARD:
+            gear_string = 'Rear   '
+
+        gear_speed_string = gear_string + '{:4.2f}'.format(speed) + 'kph'
+        steer_direction_string = 'Left    ' if steer > 0 else 'Right   '
+        if steer == 0:
+            steer_direction_string = 'Straight'
+
+        steer_string = steer_direction_string + '{:5.2f}'.format(abs(steer)) + 'deg'
+
+        brake_string = 'Brake' + '{:7.2f}'.format(brake)
+        control_stat_frame = cv2.putText(img=control_stat_frame, text=gear_speed_string, org=(150, 50),
+                                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                         fontScale=1,
+                                         color=(255, 255, 255), thickness=FONT_THICKNESS)
+        control_stat_frame = cv2.putText(img=control_stat_frame, text=steer_string, org=(450, 50),
+                                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                         fontScale=1,
+                                         color=(255, 200, 200), thickness=FONT_THICKNESS)
+        control_stat_frame = cv2.putText(img=control_stat_frame, text=brake_string, org=(750, 50),
+                                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                         fontScale=1,
+                                         color=(255, 255, 255), thickness=FONT_THICKNESS)
+        return control_stat_frame
 
     def get_planner_frame(self):
         planner_monitor = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
