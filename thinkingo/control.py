@@ -165,7 +165,7 @@ class Control(Subroutine):
                 self.packet[2] = 0
                 self.packet[3] = 90
 
-            gear, speed, steer, brake = self.__turn__(self.packet[1] / 100, self.packet[2] / 100, self.packet[3])
+            gear, speed, steer, brake = self.__turn__(self.packet[1] / 100, self.packet[2], self.packet[3] / 100)
             # TODO: 수정
 
         elif self.mission_num == self.data.MODES["crosswalk"]:
