@@ -53,8 +53,7 @@ class LaneCam():
         front_second = 105 * 2
 
         # TODO: need to test
-        min_dist = None
-        # min_dist = min(lidar_raw_data[front_first:front_second])
+        min_dist = min(lidar_raw_data[front_first:front_second]) / 10
 
         final_interception = None
         final_angle = None
