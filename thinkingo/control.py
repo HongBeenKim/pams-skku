@@ -25,7 +25,7 @@ class Control(Subroutine):
         self.accel_brake = 0  # 가속된 최종 브레이크
         #######################################
         self.mission_num = 0  # DEFAULT 모드
-        self.packet[5] = [0, 0, 0, 0, 0]
+        self.packet = [0, 0, 0, 0, 0]
         #######################################
         self.steer_past = 0
         self.speed_past = 0
