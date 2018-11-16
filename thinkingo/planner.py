@@ -329,8 +329,10 @@ class MotionPlanner(Subroutine):
            |                      |
            
         """
-        if distance > 1000:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
-            return
+        if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
+            img = self.data_stream.get_lidar_ndarray_data(500, 1000, 5)
+            img = cv2.resize(img, (684, 342))
+            return img, None
         else:
             img = self.data_stream.get_lidar_ndarray_data(500, 1000, 5)
             distance = int(distance)
