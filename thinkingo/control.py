@@ -127,6 +127,7 @@ class Control(Subroutine):
             if packet[1] is None or packet[2] is None:
                 packet[1] = 0
                 packet[2] = 90
+
             gear, speed, steer, brake = self.__default__(packet[1] / 100, packet[2])
 
         elif self.mission_num == self.data.MODES["narrow"]:
@@ -140,6 +141,7 @@ class Control(Subroutine):
             if packet[2] is None or packet[3] is None:
                 packet[2] = 0
                 packet[3] = 90
+
             gear, speed, steer, brake = self.__turn__(packet[1] / 100, packet[2] / 100, packet[3])
             # TODO: 수정
 
@@ -156,6 +158,7 @@ class Control(Subroutine):
             if packet[2] is None or packet[3] is None:
                 packet[2] = 0
                 packet[3] = 90
+
             gear, speed, steer, brake = self.__target__(packet[1] / 100, packet[2] / 100, packet[3])
 
         elif self.mission_num == self.data.MODES["parking"]:
@@ -166,7 +169,7 @@ class Control(Subroutine):
             if packet[3] is None:
                 packet[3] = 0
             if packet[4] is None:
-                packet[4] is 3
+                packet[4] = 3
 
             gear, speed, steer, brake = self.__parking__(packet[1] / 100, packet[2] / 100, packet[3], packet[4] / 100)
 
