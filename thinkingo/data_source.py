@@ -76,8 +76,11 @@ class Source():
             raw_data = str(self.lidar_socket.recv(self.BUFF))
             if raw_data.__contains__('sEA'): continue
             temp = raw_data.split(' ')[116:477]
+            self.lidar_data = [0] * 361
             try:
-                self.lidar_data = [int(item, 16) if int(item, 16) > 2 else 1000000 for item in temp]
+                for i in range(0, 361):
+                    self.lidar_data[i] = int(temp[i], 16)
+                    if self.lidar_data[i] < 3: self.lidar_data[i] = 1000000
             except:
                 pass
             if self.data.is_all_system_stop():
