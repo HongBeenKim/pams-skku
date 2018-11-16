@@ -12,7 +12,7 @@ from data_class import Data
 from data_source import Source
 from lane_cam import LaneCam
 
-ACTUAL_RADIUS = 400  # 부채살의 실제 반경
+ACTUAL_RADIUS = 300  # 부채살의 실제 반경
 CLEAR_RADIUS = 300  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
 ARC_ANGLE = 110  # 부채살 적용 각도
 OBSTACLE_OFFSET = 70  # 부채살 적용 시 장애물의 offset (cm 단위)
