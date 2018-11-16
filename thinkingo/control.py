@@ -217,7 +217,7 @@ class Control(Subroutine):
         return gear, speed, steer, brake
 
     def __accel__(self, speed, brake):  # TODO: 후에 실험값을 통해서 값 수정
-        if self.speed_platform < ((3 * speed) / 5):
+        if self.speed_platform < (speed / 2):
             if speed <= 10:
                 self.accel_speed = 30  # TODO: 후에 실험값을 통해서 값 수정
                 self.accel_brake = brake
@@ -379,12 +379,12 @@ class Control(Subroutine):
         term = (self.right_distance - self.right_distance_past)
 
         if self.u_sit == 0:
-            steer = self.__turn_steer__(term * 1)
+            steer = 0  # self.__turn_steer__(term * 1)
             self.right_distance_past = self.right_distance
 
-            if 4.0 < self.front_distance < 4.5:
+            if 6 < self.front_distance < 8:
                 speed = 25  # 35
-            elif self.front_distance < 4.0:
+            elif self.front_distance < 6:
                 speed = 0
                 brake = 60
 
@@ -392,6 +392,8 @@ class Control(Subroutine):
                     self.theta_turn = front_theta
                     steer = 0
                     self.u_sit = 1
+            else:
+                speed = 30
 
         elif self.u_sit == 1:
             correction_enc = ((90 - self.theta_turn) / 180) * 786
@@ -456,11 +458,13 @@ class Control(Subroutine):
 
         if self.c_sit == 0:
             if 1.5 < abs(stop_line) < 2:  # TODO: 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
-                speed = 24  #35
+                speed = 24  # 35
             elif abs(stop_line) < 1.5:
                 speed = 0
                 brake = 60
                 self.c_sit = 1
+            else:
+                speed = 30
 
         elif self.c_sit == 1:
             if light_signal is True:
@@ -486,13 +490,16 @@ class Control(Subroutine):
         time_change = 0.05  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
-            if 1.5 < distance < 2.0:
+            if 2.0 < distance < 3.5:
                 speed = 24  # 30
 
-            elif distance < 1.5:
+            elif distance < 2.0:
                 speed = 0
                 brake = 60  # 80
                 self.t_sit = 1
+
+            else:
+                speed = 30
 
         elif self.t_sit == 1:
             self.speed_past = self.speed_platform
@@ -567,10 +574,13 @@ class Control(Subroutine):
 
                 if self.speed_platform == 0:
                     brake = 0
-                    self.park_front_distance = front_distance / 2 + 0.90 + 3
+                    self.park_front_distance = front_distance / 2 + 0.50 + 1.5
                     self.park_line_distance = line_distance / 2
                     self.park_line_theta = (90 - line_theta)
                     self.p_sit = 1
+
+            else:
+                speed = 30
 
         elif self.p_sit == 1:
             if self.pt1 == 0:
@@ -579,11 +589,11 @@ class Control(Subroutine):
 
             term_1 = self.pt1 - self.pt2
 
-            if term_1 > -80:
+            if term_1 > -30:
                 gear = 2
                 speed = 20  # 50
 
-            elif term_1 <= -80:
+            elif term_1 <= -30:
                 speed = 0
                 brake = 60
                 gear = 0
