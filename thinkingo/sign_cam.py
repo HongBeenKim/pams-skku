@@ -13,7 +13,6 @@ BUFFER_SIZE = 10  # 과거에 봤던 프레임을 남겨두고 한 프레임씩 
 class SignCam(Subroutine):
     def __init__(self, source, data: Data):
         super().__init__(data)
-        self.reset = False
         self.source = source
         self.frame = None
         self.model = yolo.init_yolo_sign()
@@ -32,18 +31,12 @@ class SignCam(Subroutine):
                 continue
             if self.data.is_in_mission():
                 continue
-
             else:
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
-
                 self.sign_selection()
                 self.light_selection()
                 self.parking_lot_selection()
-
-                if self.reset:
-                    self.reset_buffers()
-                    self.reset = False
 
             if self.data.is_all_system_stop():
                 break
@@ -74,7 +67,7 @@ class SignCam(Subroutine):
 
         max_index = np.argmax(sign_values)
         if checkers[max_index] != 0:
-            self.reset = True
+            self.reset_sign_buffer()
             self.data.detected_mission_number = self.ModeList[checkers[max_index]]
 
     # 어떤 주차장에서 주차할 것 인지 알려주기
@@ -86,8 +79,8 @@ class SignCam(Subroutine):
 
         max_index = np.argmax(parking_values)
 
-        if checkers[max_index] != 10:
-            self.reset = True
+        if checkers[max_index] != 10 and self.data.ready_for_mission():
+            self.reset_option_buffer()
             self.data.parking_location = self.ModeList[checkers[max_index]]
             
     # 어떤 신호등인지 알려주기
@@ -98,16 +91,21 @@ class SignCam(Subroutine):
             light_values.append(self.counter[i])
 
         max_index = np.argmax(light_values)
-        if checkers[max_index] != 11:
-            self.reset = True
+        if checkers[max_index] != 11 and self.data.ready_for_mission():
+            self.reset_option_buffer()
             self.data.light_signal = self.ModeList[checkers[max_index]]
 
-    def reset_buffers(self):
+    def reset_sign_buffer(self):
+        self.sign_data = [0 for row in range(BUFFER_SIZE)]
+        self.counter[1] = self.counter[2] = self.counter[3] = self.counter[4] = self.counter[5] = 0
+        self.counter[0] = BUFFER_SIZE
+
+    def reset_option_buffer(self):
         self.parking_data = [10 for row in range(BUFFER_SIZE)]
         self.traffic_data = [11 for row in range(BUFFER_SIZE)]
-        self.sign_data = [0 for row in range(BUFFER_SIZE)]
-        self.counter = [0 for col in range(12)]
-        self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
+        self.counter[6] = self.counter[7] = self.counter[8] = self.counter[9] = 0
+        self.counter[10] = self.counter[11] = BUFFER_SIZE
+
 
 
 if __name__ == "__main__":
