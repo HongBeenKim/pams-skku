@@ -1,4 +1,5 @@
 import threading
+import time
 import sys
 
 sys.path.append(".")
@@ -52,6 +53,13 @@ def main():
     sign_cam_thread.start()
     planner_thread.start()
     control_thread.start()
+
+    while True:
+        time.sleep(0.1)
+        if database.is_all_system_stop():
+            break
+    time.sleep(2)
+    return 0
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ class Monitoring(Subroutine):
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         today = datetime.datetime.now()
         time_label = today.strftime("%Y-%m-%d-%H-%M-%S")
-        self.monitor_writer = cv2.VideoWriter(DATA_ROOT_PATH + time_label + ".avi", fourcc, 60, monitoring_size)
+        self.monitor_writer = cv2.VideoWriter(DATA_ROOT_PATH + time_label + ".avi", fourcc, 60, (1000, 740))
 
     def main(self):
         while True:
