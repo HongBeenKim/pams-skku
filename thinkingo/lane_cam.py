@@ -53,7 +53,12 @@ class LaneCam():
         front_second = 105 * 2
 
         # TODO: need to test
-        min_dist = min(lidar_raw_data[front_first:front_second])
+        min_dist = None
+        #min_dist = min(lidar_raw_data[front_first:front_second])
+
+        final_interception = None
+        final_angle = None
+        final_stop_dist = None
 
         merged_frame = self.make_merged_frame()
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
@@ -105,7 +110,7 @@ class LaneCam():
                 bottom_interception_center = int((bottom_interception_a + bottom_interception_b) / 2)
 
                 cv2.circle(merged_frame, (bottom_interception_center, 300), 10, (0, 255, 0), -1)
-                interception = bottom_interception_center - 300
+                final_interception = bottom_interception_center - 300
 
                 a_temp_x = vec_a[0]
                 a_temp_y = vec_a[1]
@@ -121,7 +126,7 @@ class LaneCam():
 
                 cv2.line(merged_frame, (bottom_interception_center + 10 * vec_mid[0], 300 - 10 * vec_mid[1]),
                          (bottom_interception_center - 10 * vec_mid[0], 300 + 10 * vec_mid[1]), (0, 255, 0), 2)
-                angle = np.degrees(np.arctan(vec_mid[1] / vec_mid[0])) if vec_mid[0] != 0 else 90
+                final_angle = np.degrees(np.arctan(vec_mid[1] / vec_mid[0])) if vec_mid[0] != 0 else 90
 
                 # 두 직선에 모두 직교하는 직선 찾기를 시도하고 있으면 그리기
                 horizontal_line = None
@@ -154,13 +159,17 @@ class LaneCam():
                     vec_VtoH = (horizontal_mid[0] - vertical_mid[0], vertical_mid[1] - horizontal_mid[1])
 
                     if (np.dot(vec_a, vec_VtoH) > 0 and np.dot(vec_b, vec_VtoH) > 0):
+                        # 정지선은 horizontal_line 과 평행함.
+                        t = (300 - horizontal_line[0]) / vec_h[0]
+                        dist = horizontal_line[0] - t * vec_h[1]
+                        #print(dist)
                         cv2.line(merged_frame, (horizontal_line[0] + 10 * vec_h[0], horizontal_line[1] - 10 * vec_h[1]),
                                  (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
                                  2)
                 break
-
-        return merged_frame, min_dist, interception, angle
-        #TODO: return stop line distance
+        #cv2.imshow('test', merged_frame)
+        return merged_frame, min_dist, final_interception, final_angle
+        # TODO: return stop line distance
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
@@ -222,6 +231,7 @@ class LaneCam():
         final_angle = None
 
         hough_lines = cv2.HoughLinesP(edged, rho=1, theta=np.pi / 180, threshold=20, minLineLength=20, maxLineGap=500)
+        if not hough_lines: return temp_frame, None, None
 
         for line in hough_lines:
             for x1, y1, x2, y2 in line:
@@ -244,7 +254,8 @@ class LaneCam():
                     right_weights.append((length))
 
                 left_lane = np.dot(left_weights, left_lines) / np.sum(left_weights) if len(left_weights) > 0 else None
-                right_lane = np.dot(right_weights, right_lines) / np.sum(right_weights) if len(right_weights) > 0 else None
+                right_lane = np.dot(right_weights, right_lines) / np.sum(right_weights) if len(
+                    right_weights) > 0 else None
 
         if left_lane is not None and right_lane is not None:
             left_pt1 = (int(left_lane[1]), 158)
@@ -275,7 +286,7 @@ if __name__ == "__main__":
 
     testData = Data()
     # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
-    testDDS = DummySource('2018-11-04-16-21-59')
+    testDDS = DummySource('2018-11-14-16-28-38')
     testLC = LaneCam(testDDS)  # DummySource for test
     dummy_thread = threading.Thread(target=testDDS.main)
     dummy_thread.start()
@@ -295,5 +306,5 @@ if __name__ == "__main__":
 
     time.sleep(1)
     while True:
-        testLC.lane_detection()
+        testLC.parking_line_detection()
         if cv2.waitKey(1) & 0xff == ord('q'): break
