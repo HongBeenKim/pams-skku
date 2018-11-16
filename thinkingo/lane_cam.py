@@ -13,6 +13,7 @@ import time
 
 
 class LaneCam():
+    BOX_WIDTH = 10
     camera_matrix_L = np.array([[474.383699, 0, 404.369647], [0, 478.128447, 212.932297], [0, 0, 1]])
     camera_matrix_R = np.array([[473.334870, 0, 386.312394], [0, 476.881433, 201.662339], [0, 0, 1]])
     distortion_coefficients_L = np.array([0.164159, -0.193892, -0.002730, -0.001859])
@@ -33,7 +34,16 @@ class LaneCam():
     def __init__(self, data_source: Source):
         self.data_source = data_source
 
-    def make_merged_frame(self):
+        self.left_previous_points = None
+        self.right_previous_points = None
+
+        self.left_current_points = np.array([0] * 10)
+        self.right_current_points = np.array([0] * 10)
+
+        self.left_coefficients = None
+        self.right_coefficients = None
+
+    def get_frame(self):
         if self.data_source.left_frame is None or self.data_source.right_frame is None:
             return None
         left_frame = self.data_source.left_frame.copy()
@@ -46,8 +56,7 @@ class LaneCam():
         transformed_left = cv2.warpPerspective(undistorted_left, self.Bird_view_matrix_L, (526, 427))[95:395, 224:524]
         transformed_right = cv2.warpPerspective(undistorted_right, self.Bird_view_matrix_R, (459, 415))[73:373, 15:315]
 
-        merged_frame = np.hstack((transformed_left, transformed_right))
-        return merged_frame
+        return transformed_left, transformed_right
 
     def parking_line_detection(self):
         lidar_raw_data = self.data_source.lidar_data
@@ -60,15 +69,13 @@ class LaneCam():
         final_angle = None
         final_stop_dist = None
 
-        merged_frame = self.make_merged_frame()
+        left, right = self.get_frame()
+        merged_frame = np.hstack((left, right))
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
 
         lines = cv2.HoughLinesP(filtered_frame, 1, np.pi / 360, 40, 100, 40)
 
         t1 = time.time()
-
-        interception = None
-        angle = None
 
         while True:
             if lines is None: break
@@ -170,7 +177,8 @@ class LaneCam():
         return merged_frame, min_dist, final_interception, final_angle, final_stop_dist
 
     def stop_line_detection(self):
-        merged_frame = self.make_merged_frame()
+        left, right = self.get_frame()
+        merged_frame = np.hstack((left, right))
         # filtered_frame = cv2.Canny(merged_frame, 50, 100)
         filtered_frame = cv2.inRange(merged_frame, self.lower_white, self.upper_white)
 
@@ -276,6 +284,308 @@ class LaneCam():
 
         return temp_frame, final_interception, final_angle
 
+    # 질량중심 찾기 함수, 차선 검출에서 사용됌
+    def findCenterofMass(self, src):
+        sum_of_y_mass_coordinates = 0
+        num_of_mass_points = 0
+
+        for y in range(0, len(src)):
+            for x in range(0, len(src[0])):
+                if src[y][x] == 255:
+                    sum_of_y_mass_coordinates += y
+                    num_of_mass_points += 1
+
+        if num_of_mass_points == 0:
+            center_of_mass_y = -1
+
+        else:
+            center_of_mass_y = int(round(sum_of_y_mass_coordinates / num_of_mass_points))
+
+        return center_of_mass_y
+
+    def lane_detection2(self):
+        left, right = self.get_frame()
+        transposed_L = cv2.flip(cv2.transpose(left), 0)
+        transposed_R = cv2.flip(cv2.transpose(right), 0)
+
+        filtered_L = cv2.inRange(transposed_L, self.lower_white, self.upper_white)
+        filtered_R = cv2.inRange(transposed_R, self.lower_white, self.upper_white)
+
+        both = np.vstack((transposed_R, transposed_L))
+
+        # ---------------------------------- 여기부터 왼쪽 차선 박스 쌓기 영역 ----------------------------------
+        if self.left_previous_points is None:
+            row_sum = np.sum(filtered_L[0:300, 200:300], axis=1)
+            start_point = np.argmax(row_sum)
+
+            # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
+            # 차선이 없는 것으로 간주함
+            if (row_sum[start_point] > 7650):
+                self.left_current_points = np.array([0] * 10)
+                self.left_current_points[0] = start_point
+
+                for i in range(1, 10):
+                    reference = self.left_current_points[i - 1] - self.BOX_WIDTH
+
+                    x1, x2 = 300 - 30 * i, 330 - 30 * i
+                    y1 = self.left_current_points[i - 1] - self.BOX_WIDTH
+                    y2 = self.left_current_points[i - 1] + self.BOX_WIDTH
+
+                    small_box = filtered_L[y1:y2, x1:x2]
+                    center_of_mass = self.findCenterofMass(small_box)
+
+                    # 박스가 비어 있는 경우 -1을 저장
+                    if center_of_mass == -1:
+                        self.left_current_points[i] = -1
+                    else:
+                        location = reference + center_of_mass
+                        # 질량중심 결과가 전체 영상을 벗어나지 않았을 때만 저장하고
+                        if 0 <= location < 300:
+                            self.left_current_points[i] = location
+                        # 벗어나면 -1을 저장함
+                        else:
+                            self.left_current_points[i] = -1
+
+            else:
+                self.left_current_points = None
+
+        else:
+            for i in range(0, 10):
+
+                if self.left_current_points[i] != -1:
+                    reference = self.left_previous_points[i] - self.BOX_WIDTH
+
+                    x1, x2 = 270 - 30 * i, 300 - 30 * i
+                    y1 = self.left_previous_points[i] - self.BOX_WIDTH
+                    y2 = self.left_previous_points[i] + self.BOX_WIDTH
+
+                    small_box = filtered_L[y1:y2, x1:x2]
+                    center_of_mass = self.findCenterofMass(small_box)
+
+                    if center_of_mass == -1:
+                        self.left_current_points[i] = -1
+                    else:
+                        location = reference + center_of_mass
+
+                        if 0 <= location < 300:
+                            self.left_current_points[i] = location
+                        else:
+                            self.left_current_points[i] = -1
+
+                else:
+                    if i == 0:
+                        reference = self.left_previous_points[1] - self.BOX_WIDTH
+                        x1, x2 = 270, 300
+                        y1 = self.left_previous_points[1] - self.BOX_WIDTH
+                        y2 = self.left_previous_points[1] + self.BOX_WIDTH
+
+                        small_box = filtered_L[y1:y2, x1:x2]
+                        center_of_mass = self.findCenterofMass(small_box)
+
+                        if center_of_mass == -1:
+                            self.left_current_points[0] = -1
+                        else:
+                            location = reference + center_of_mass
+
+                            if 0 <= location < 300:
+                                self.left_current_points[0] = location
+                            else:
+                                self.left_current_points[0] = -1
+
+                    else:
+                        reference = self.left_previous_points[i - 1] - self.BOX_WIDTH
+
+                        x1, x2 = 270 - 30 * i, 300 - 30 * i
+                        y1 = self.left_previous_points[i - 1] - self.BOX_WIDTH
+                        y2 = self.left_previous_points[i - 1] + self.BOX_WIDTH
+
+                        small_box = filtered_L[y1:y2, x1:x2]
+                        center_of_mass = self.findCenterofMass(small_box)
+
+                        if center_of_mass == -1:
+                            self.left_current_points[i] = -1
+                        else:
+                            location = reference + center_of_mass
+
+                            if 0 <= location < 300:
+                                self.left_current_points[i] = location
+                            else:
+                                self.left_current_points[i] = -1
+
+        if np.count_nonzero(self.left_current_points == -1) >= 5:
+            self.left_current_points = None
+
+        self.left_previous_points = self.left_current_points
+        # ---------------------------------- 여기까지 왼쪽 차선 박스 쌓기 영역 ----------------------------------
+
+        # ---------------------------------- 여기부터 오른쪽 차선 박스 쌓기 영역 ----------------------------------
+        if self.right_previous_points is None:
+            row_sum = np.sum(filtered_R[0:300, 200:300], axis=1)
+            start_point = np.argmax(row_sum)
+
+            # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
+            # 차선이 없는 것으로 간주함
+            if (row_sum[start_point] > 7650):
+                self.right_current_points = np.array([0] * 10)
+                self.right_current_points[0] = start_point
+
+                for i in range(1, 10):
+                    reference = self.right_current_points[i - 1] - self.BOX_WIDTH
+
+                    x1, x2 = 300 - 30 * i, 330 - 30 * i
+                    y1 = self.right_current_points[i - 1] - self.BOX_WIDTH
+                    y2 = self.right_current_points[i - 1] + self.BOX_WIDTH
+
+                    small_box = filtered_R[y1:y2, x1:x2]
+                    center_of_mass = self.findCenterofMass(small_box)
+
+                    # 박스가 비어 있는 경우 -1을 저장
+                    if center_of_mass == -1:
+                        self.right_current_points[i] = -1
+                    else:
+                        location = reference + center_of_mass
+                        # 질량중심 결과가 전체 영상을 벗어나지 않았을 때만 저장하고
+                        if 0 <= location < 300:
+                            self.right_current_points[i] = location
+                        # 벗어나면 -1을 저장함
+                        else:
+                            self.right_current_points[i] = -1
+
+            else:
+                self.right_current_points = None
+
+        else:
+            for i in range(0, 10):
+
+                if self.right_current_points[i] != -1:
+                    reference = self.right_previous_points[i] - self.BOX_WIDTH
+
+                    x1, x2 = 270 - 30 * i, 300 - 30 * i
+                    y1 = self.right_previous_points[i] - self.BOX_WIDTH
+                    y2 = self.right_previous_points[i] + self.BOX_WIDTH
+
+                    small_box = filtered_R[y1:y2, x1:x2]
+                    center_of_mass = self.findCenterofMass(small_box)
+
+                    if center_of_mass == -1:
+                        self.right_current_points[i] = -1
+                    else:
+                        location = reference + center_of_mass
+
+                        if 0 <= location < 300:
+                            self.right_current_points[i] = location
+                        else:
+                            self.right_current_points[i] = -1
+
+                else:
+                    if i == 0:
+                        reference = self.right_previous_points[1] - self.BOX_WIDTH
+                        x1, x2 = 270, 300
+                        y1 = self.right_previous_points[1] - self.BOX_WIDTH
+                        y2 = self.right_previous_points[1] + self.BOX_WIDTH
+
+                        small_box = filtered_L[y1:y2, x1:x2]
+                        center_of_mass = self.findCenterofMass(small_box)
+
+                        if center_of_mass == -1:
+                            self.right_current_points[0] = -1
+                        else:
+                            location = reference + center_of_mass
+
+                            if 0 <= location < 300:
+                                self.right_current_points[0] = location
+                            else:
+                                self.right_current_points[0] = -1
+
+                    else:
+                        reference = self.right_previous_points[i - 1] - self.BOX_WIDTH
+
+                        x1, x2 = 270 - 30 * i, 300 - 30 * i
+                        y1 = self.right_previous_points[i - 1] - self.BOX_WIDTH
+                        y2 = self.right_previous_points[i - 1] + self.BOX_WIDTH
+
+                        small_box = filtered_R[y1:y2, x1:x2]
+                        center_of_mass = self.findCenterofMass(small_box)
+
+                        if center_of_mass == -1:
+                            self.right_current_points[i] = -1
+                        else:
+                            location = reference + center_of_mass
+
+                            if 0 <= location < 300:
+                                self.right_current_points[i] = location
+                            else:
+                                self.right_current_points[i] = -1
+
+        if np.count_nonzero(self.right_current_points == -1) >= 5:
+            self.right_current_points = None
+
+        self.right_previous_points = self.right_current_points
+
+        # ---------------------------------- 여기까지 오른쪽 차선 박스 쌓기 영역 ----------------------------------
+        if self.left_current_points is not None:
+            xs_valid = []
+            ys_L_valid = []
+
+            for i in range(0, 10):
+                temp = self.left_current_points[i]
+                if temp != -1:
+                    xs_valid.append(-30 * i)
+                    ys_L_valid.append(-1 * temp)
+                    cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH),
+                             (300 - 30 * i, temp + self.BOX_WIDTH),
+                             150)
+
+            self.left_coefficients = np.polyfit(xs_valid, ys_L_valid, 2)
+
+            xs_plot = np.array([1 * i for i in range(-299, 1)])
+            ys_plot_L = np.array(
+                [self.left_coefficients[2] + self.left_coefficients[1] * v + self.left_coefficients[0] * v ** 2 for
+                 v in
+                 xs_plot])
+
+            transformed_x = xs_plot + 299
+            transformed_y_L = 0 - ys_plot_L
+
+            for i in range(0, 300):
+                cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
+
+
+            if self.right_current_points is not None:
+                xs_valid = []
+                ys_R_valid = []
+
+                for i in range(0, 10):
+                    temp = self.right_current_points[i]
+                    if temp != -1:
+                        xs_valid.append(-30 * i)
+                        ys_R_valid.append(300 - temp)
+                        cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH),
+                                 (300 - 30 * i, temp + self.BOX_WIDTH),
+                                 150)
+
+                self.right_coefficients = np.polyfit(xs_valid, ys_R_valid, 2)
+
+                xs_plot = np.array([1 * i for i in range(-299, 1)])
+                ys_plot_R = np.array(
+                    [self.right_coefficients[2] + self.right_coefficients[1] * v + self.right_coefficients[0] * v ** 2
+                     for v
+                     in xs_plot])
+
+                transformed_x = xs_plot + 299
+                transformed_y_R = 299 - ys_plot_R
+
+                for i in range(0, 300):
+                    cv2.circle(filtered_R, (int(transformed_x[i]), int(transformed_y_R[i])), 2, 150, -1)
+
+        else:
+            self.right_coefficients = None
+
+        filtered_both = np.vstack((filtered_R, filtered_L))
+        final = cv2.flip(cv2.transpose(filtered_both), 1)
+
+        cv2.imshow('final', final)
+        cv2.waitKey(1)
 
 if __name__ == "__main__":
     import threading
