@@ -23,7 +23,7 @@ class CarPlatform(Subroutine):
             self.receive()
             self.send()
 
-            if self.data.start_from_main_flag and self.data.read_packet.aorm == SerialPacket.AORM_MANUAL:
+            if not self.data.debug_flag and self.data.read_packet.aorm == SerialPacket.AORM_MANUAL:
                 self.data.reset_to_default()
 
             if self.data.is_all_system_stop():
