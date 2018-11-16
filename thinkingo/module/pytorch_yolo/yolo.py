@@ -44,7 +44,8 @@ def prep_image(img, inp_dim):
 
 # path to models
 cfgfile = "module/data/yolo-sign.cfg"
-weightsfile = "module/data/yolo-sign_15700.weights"
+#weightsfile = "module/data/yolo-sign_16300.weights"
+weightsfile = "module/data/yolo-sign_17200.weights"
 classes = load_classes('module/data/sign.names')
 
 # parameters
