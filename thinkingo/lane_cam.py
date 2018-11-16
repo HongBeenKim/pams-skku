@@ -54,7 +54,7 @@ class LaneCam():
 
         # TODO: need to test
         min_dist = None
-        #min_dist = min(lidar_raw_data[front_first:front_second])
+        # min_dist = min(lidar_raw_data[front_first:front_second])
 
         final_interception = None
         final_angle = None
@@ -161,14 +161,13 @@ class LaneCam():
                     if (np.dot(vec_a, vec_VtoH) > 0 and np.dot(vec_b, vec_VtoH) > 0):
                         # 정지선은 horizontal_line 과 평행함.
                         t = (300 - horizontal_line[0]) / vec_h[0]
-                        dist = horizontal_line[0] - t * vec_h[1]
+                        final_stop_dist = horizontal_line[0] - t * vec_h[1]
                         cv2.line(merged_frame, (horizontal_line[0] + 10 * vec_h[0], horizontal_line[1] - 10 * vec_h[1]),
                                  (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
                                  2)
                 break
-        cv2.imshow('test', merged_frame)
-        return merged_frame, min_dist, final_interception, final_angle, dist
-        # TODO: return stop line distance
+        # cv2.imshow('test', merged_frame)
+        return merged_frame, min_dist, final_interception, final_angle, final_stop_dist
 
     def stop_line_detection(self):
         merged_frame = self.make_merged_frame()
