@@ -32,10 +32,14 @@ class Control(Subroutine):
         self.front_distance = 0
         self.theta_turn = 0
         #######################################
+        self.d_sit = 0
         self.u_sit = 0
         self.c_sit = 0
         self.t_sit = 0
         self.p_sit = 0
+        #######################################
+        self.dt1 = 0
+        self.dt2 = 0
         #######################################
         self.target_steer = 0
         self.target_steer_past = 0
@@ -232,6 +236,21 @@ class Control(Subroutine):
         if self.check[0] != 0:
             self.check[1] = 1
             self.data.check_mission_completed("narrow")
+
+        if self.d_sit == 0:
+
+            if self.dt1 == 0:
+                self.dt1 = self.enc_platform
+            self.dt2 = self.enc_platform
+
+            term = (self.dt2 - self.dt1)
+
+            if term < 100:
+                return 0, 40, 0, 0
+
+            elif term > 100:
+                self.d_sit = 1
+                pass
 
         gear = 0
         brake = 0
@@ -490,6 +509,9 @@ class Control(Subroutine):
 
             if distance is 6:  # TODO: 실험값 수정
                 self.data.check_mission_completed("target_tracking")
+
+        if distance == 0:
+            speed = self.speed_platform
 
         self.gear = gear
         self.speed = speed
