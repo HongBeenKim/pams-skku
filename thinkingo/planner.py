@@ -71,7 +71,6 @@ class MotionPlanner(Subroutine):
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
                 dist_frame, min_dist = self.calculate_distance_phase_target()  # 684 342
-                print(min_dist)
                 dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
                 frame, intercept, angle = self.lane_handler.lane_detection()  # 800 158
                 self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)

@@ -102,19 +102,22 @@ class Control(Subroutine):
             packet[1] = 부채꼴함수에서 계산된 거리(반지름), 넘겨받는 단위: cm
             packet[2] = 부채꼴함수에서 계산된 각도
         1. narrow
-            TODO: ???
+            packet[1] = 최대 부채살의 길이
+            packet[2] = 최대 부채살의 각도
         
         2. u_turn
-            TODO: 명료화 필요.
-            packet[1] =  Lidar에서 180도 값 수치 (벽에서 차량정면에 내린 수선의 발의 길이) (Wiki 참고) 
-            packet[2] =  차량 정면의 법선벡터와 x축과의 거리
+            packet[1] = 전방 거리
+            packet[2] =  전방 각도
+            packet[3] = 오른쪽 거리 (안씀, 하지만 그냥 내버려둠)
+            #TODO: packet[4] 채우기 @김홍빈
+            packet[4] = 차선의 바닥 절편만 건네주기, 차선 없으면 None
         
         3. crosswalk
             packet[1] = 정지선으로 부터 거리, 넘겨받는 단위: cm
         4. target_tracking
             packet[1] = target car 와의 거리, 넘겨받는 단위: cm
         5. parking
-            TODO: ???
+            TODO: 매크로 만들기 @박준혁
         :return: 리턴 값은 없습니다.
         """
 
@@ -168,7 +171,7 @@ class Control(Subroutine):
             print(self.packet[1])
 
             gear, speed, steer, brake = self.__turn__(self.packet[1] / 100, self.packet[2], self.packet[3] / 100)
-            # TODO: 수정
+
 
         elif self.mission_num == self.data.MODES["crosswalk"]:
             self.packet[0] = packet[0]
@@ -218,7 +221,7 @@ class Control(Subroutine):
 
         return gear, speed, steer, brake
 
-    def __accel__(self, speed, brake):  # TODO: 후에 실험값을 통해서 값 수정
+    def __accel__(self, speed, brake):
         self.accel_speed = speed
         self.accel_brake = brake
         return self.accel_speed, self.accel_brake
@@ -267,9 +270,9 @@ class Control(Subroutine):
                     self.steer_past = -27.746
 
                 if abs(steer_now) > 15:
-                    speed = 24  # TODO: 실험값 수정하기 / 60
+                    speed = 24
                 else:
-                    speed = 24  # TODO: 실험값 수정하기 / 72
+                    speed = 24
 
                 self.gear = gear
                 self.speed = speed
@@ -286,8 +289,8 @@ class Control(Subroutine):
         adjust = 0.05
         car_circle = 1
 
-        speed_mission = 36  # TODO: 미션용 속도, 실험하고 변경바람
-        speed = speed_mission  # TODO: 연습장 상태가 좋지 않음(기울기 존재)
+        speed_mission = 36
+        speed = speed_mission
 
         if obs_r < 2:
             speed = 20
@@ -385,10 +388,10 @@ class Control(Subroutine):
                 self.ct1 = self.enc_platform
             self.ct2 = self.enc_platform
 
-            if (self.ct2 - self.ct1) < 600:  # TODO: 실험값 수정
+            if (self.ct2 - self.ct1) < 600:
                 steer = -1469.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 700 + correction_enc:  # TODO: 실험값 수정
+            elif 530 <= (self.ct2 - self.ct1) <= 700 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
                 speed = 24  # 30
                 steer = -1469.79
 
@@ -440,7 +443,7 @@ class Control(Subroutine):
         brake = 0
 
         if self.c_sit == 0:
-            if 1.5 < abs(stop_line) < 2:  # TODO: 기준선까지의 거리값, 경로생성 알고리즘에서 값 받아오기
+            if 1.5 < abs(stop_line) < 2:
                 speed = 24  # 35
             elif abs(stop_line) < 1.5:
                 speed = 0
@@ -494,7 +497,7 @@ class Control(Subroutine):
             if speed > 35:  # 60
                 speed = 35  # 60
 
-            if distance is 6:  # TODO: 실험값 수정
+            if distance is 6:
                 self.data.check_mission_completed("target_tracking")
 
         self.gear = gear
