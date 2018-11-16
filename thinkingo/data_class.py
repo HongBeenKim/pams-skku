@@ -43,6 +43,7 @@ class Data(object):
 
         # from planner
         self._current_mode = self.MODES["default"]
+        self.ready_for_mission = False
 
         # planner to control
         self.planner_to_control_packet = (self._detected_mission_number, 300, 90, None, None)
