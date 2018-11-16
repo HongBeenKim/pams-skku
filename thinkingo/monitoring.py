@@ -28,8 +28,8 @@ class Monitoring(Subroutine):
         self.video_writer_size = (1000, 740)
         self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
         self.mode_string = {y: x for x, y in self.data.MODES.items()}
+        self.mode_string[4] = 'target'
 
-        # TODO: test
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         today = datetime.datetime.now()
         time_label = today.strftime("%Y-%m-%d-%H-%M-%S")
@@ -141,9 +141,9 @@ class Monitoring(Subroutine):
         current = self.mode_string[self.data.current_mode]
         detected = self.mode_string[self.data.detected_mission_number]
 
-        frame = cv2.putText(img=frame, text=current, org=(0, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+        frame = cv2.putText(img=frame, text=current, org=(0, 220), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                             color=(255, 200, 0), thickness=FONT_THICKNESS)
-        frame = cv2.putText(img=frame, text=detected, org=(300, 230), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+        frame = cv2.putText(img=frame, text=detected, org=(300, 220), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                             color=(0, 255, 255), thickness=FONT_THICKNESS)
         return frame
 
