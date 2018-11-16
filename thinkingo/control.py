@@ -185,7 +185,7 @@ class Control(Subroutine):
             theta_2 = 0
         else:
             velocity = (self.speed_platform * 100) / 3600
-            theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
+            theta_2 = math.degrees(math.atan((k * cross_track_error) / (velocity + 0.01)))
 
         steer_now = (theta_1 + theta_2)
 
@@ -352,7 +352,7 @@ class Control(Subroutine):
         adjust = 0.5
 
         velocity = (self.speed_platform * 100) / 3600
-        steer = math.degrees(math.atan((k * term) / velocity))
+        steer = math.degrees(math.atan((k * term) / (velocity + 0.01)))
 
         steer_final = ((adjust * self.turn_steer_past) + ((1 - adjust) * steer))
 
@@ -448,7 +448,7 @@ class Control(Subroutine):
             theta_2 = 0
         else:
             velocity = (self.speed_platform * 100) / 3600
-            theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
+            theta_2 = math.degrees(math.atan((k * cross_track_error) / (velocity + 0.01)))
 
         steer_now = (theta_1 + theta_2)
 
@@ -609,7 +609,7 @@ class Control(Subroutine):
             theta_2 = 0
         else:
             velocity = (self.speed_platform * 100) / 3600
-            theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity))
+            theta_2 = math.degrees(math.atan((k * cross_track_error) / velocity + 0.01))
 
         steer_now = (theta_1 + theta_2)
 
