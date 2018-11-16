@@ -260,7 +260,7 @@ class Control(Subroutine):
             if self.speed_platform > 1:
                 self.start = 1
 
-            if self.pmode == 0:
+            if self.pmode == 1:
                 if self.st1 == 0:
                     self.st1 = time.time()
                 self.st2 = time.time()
@@ -398,7 +398,7 @@ class Control(Subroutine):
     def __turn__(self, turn_distance, front_theta, right_distance):  # (전방 장애물 거리, 전방 각도, 오른쪽 직각 거리)
         gear = 0
         speed = 30   # 60
-        steer = - 0.5
+        steer = 0
         brake = 0
 
         radian_theta = math.radians(abs(90 - front_theta))
@@ -436,14 +436,14 @@ class Control(Subroutine):
             self.ct2 = self.enc_platform
 
             if (self.ct2 - self.ct1) < 600:
-                steer = -1400.79
+                steer = -1350.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 750 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
+            elif 530 <= (self.ct2 - self.ct1) <= 780 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
                 speed = 24  # 30
-                steer = -1400.79
+                steer = -1350.79
 
-            elif (self.ct2 - self.ct1) >= 750 + correction_enc:
-                steer = -1400.79
+            elif (self.ct2 - self.ct1) >= 780 + correction_enc:
+                steer = -1350.79
                 speed = 0
                 brake = 60
 
@@ -645,10 +645,10 @@ class Control(Subroutine):
 
                 term_1 = self.pt2 - self.pt1
 
-                if term_1 < 163:
+                if term_1 < 170:
                     steer = 1970
                     speed = 20  # 50
-                elif term_1 > 163:
+                elif term_1 > 170:
                     steer = 1970
                     speed = 0
                     brake = 80
@@ -666,10 +666,10 @@ class Control(Subroutine):
 
                 if self.direction == 0:
 
-                    if term_2 < 163:
+                    if term_2 < 170:
                         steer = 1970
                         speed = 20  # 50
-                    elif term_2 > 163:
+                    elif term_2 > 170:
                         steer = 1970
                         speed = 0
                         brake = 80
