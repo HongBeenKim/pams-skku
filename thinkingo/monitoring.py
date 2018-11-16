@@ -17,6 +17,9 @@ PLANNER_FRAME_Y = 500
 MID_FRAME_X = 400
 MID_FRAME_Y = 240
 
+SKY_BLUE = (255, 200, 0)
+YELLOW = (0, 255, 255)
+
 DATA_ROOT_PATH = "C:\\pams-skku-monitoring-log\\2018-11-16\\"
 
 
@@ -24,8 +27,8 @@ class Monitoring(Subroutine):
     def __init__(self, source: Source, data: Data):
         super().__init__(data)
         self.source = source
-        self.monitoring_size = (740, 1000)
-        self.video_writer_size = (1000, 740)
+        self.monitoring_size = (860, 1000)
+        self.video_writer_size = (1000, 860)
         self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
         self.mode_string = {y: x for x, y in self.data.MODES.items()}
         self.mode_string[4] = 'target'
@@ -43,9 +46,19 @@ class Monitoring(Subroutine):
             mid_cam_monitor = self.get_mid_cam_frame()  # 240 400
             planner_monitor = self.get_planner_frame()  # 500 1000
 
+            status_frame = np.zeros((120, 1000, 3), dtype=np.uint8)
+            aorm = self.data.read_packet.aorm
+            if aorm == SerialPacket.AORM_MANUAL:
+                aorm = 'Manual'
+            else:
+                aorm = 'Auto'
+            cv2.putText(status_frame, text=aorm, org=(0, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+                            color=(0, 255, 255), thickness=FONT_THICKNESS)
+
             try:
                 self.canvas = np.concatenate((car_frame, mid_cam_monitor), axis=1)
                 self.canvas = np.concatenate((self.canvas, planner_monitor), axis=0)
+                self.canvas = np.concatenate((self.canvas, status_frame), axis=0)
             except ValueError as e:
                 print(e)
                 self.init_canvas()
@@ -142,9 +155,9 @@ class Monitoring(Subroutine):
         detected = self.mode_string[self.data.detected_mission_number]
 
         frame = cv2.putText(img=frame, text=current, org=(0, 220), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
-                            color=(255, 200, 0), thickness=FONT_THICKNESS)
+                            color=SKY_BLUE, thickness=FONT_THICKNESS)
         frame = cv2.putText(img=frame, text=detected, org=(300, 220), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
-                            color=(0, 255, 255), thickness=FONT_THICKNESS)
+                            color=YELLOW, thickness=FONT_THICKNESS)
         return frame
 
 
