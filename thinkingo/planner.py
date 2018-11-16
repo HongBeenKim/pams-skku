@@ -70,10 +70,12 @@ class MotionPlanner(Subroutine):
 
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
-                min_dist = self.calculate_distance_phase_target()
+                min_dist, dist_frame = self.calculate_distance_phase_target()
                 frame, intercept, angle = self.lane_handler.lane_detection()
+                # FIXME: 크기 안 맞음
                 self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)
-                self.data.planner_monitoring_frame = (frame, 600, 300)
+                frame = np.concatenate((frame, dist_frame), axis=0)
+                self.data.planner_monitoring_frame = (frame, 600, 500)
 
             # TODO: 5. 주차 상황
             elif self.data.current_mode == self.data.MODES["parking"]:
@@ -326,12 +328,12 @@ class MotionPlanner(Subroutine):
         if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
             return
         else:
-            img = self.data_stream.get_lidar_ndarray_data(500, 1000)
+            img = self.data_stream.get_lidar_ndarray_data(1000, 500)
             distance = int(distance)
-            img = cv2.line(img, (distance, 0), (distance, 500 + distance * math.cos(min_theta * 90 / math.pi)), (255, 255, 0), 2)
-            img = cv2.putText(img, "%d"%distance, (distance / 2, 500 + distance * math.cos(min_theta * 90 / math.pi)), cv2.FONT_HERSHEY_SIMPLEX, 4, (255,255,0))
-            self.data.planner_monitoring_frame = (img, 1000, 500)
-            return distance
+            img = cv2.line(img, (distance, 0), (distance, int(500 + distance * math.cos(min_theta * 90 / math.pi)) ), (255, 255, 0), 2)
+            img = cv2.putText(img, "%d"%distance, (int(distance / 2) , int(500 + distance * math.cos(min_theta * 90 / math.pi)) ), cv2.FONT_HERSHEY_SIMPLEX, 4, (255,255,0))
+            img = cv2.resize(img, (400, 200))
+            return distance, img
 
 
 if __name__ == "__main__":
