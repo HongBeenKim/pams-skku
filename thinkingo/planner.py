@@ -293,7 +293,6 @@ class MotionPlanner(Subroutine):
                     ((lidar_raw_data[theta] / 10) * abs(math.cos(theta * 90 / math.pi)) < (car_width / 2)): #2 Conditions
                 minimum_distance = lidar_raw_data[theta] / 10
                 min_theta = theta
-
         distance = minimum_distance * math.sin(min_theta * 90 / math.pi)
 
         """
@@ -326,7 +325,13 @@ class MotionPlanner(Subroutine):
         """
         if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
             return
-        return distance
+        else:
+            img = self.data_stream.get_lidar_ndarray_data(500, 1000)
+            distance = int(distance)
+            img = cv2.line(img, (distance, 0), (distance, 500 + distance * math.cos(min_theta * 90 / math.pi)), (255, 255, 0), 2)
+            img = cv2.putText(img, "%d"%distance, (distance / 2, 500 + distance * math.cos(min_theta * 90 / math.pi)), cv2.FONT_HERSHEY_SIMPLEX, 4, (255,255,0))
+            self.data.planner_monitoring_frame = (img, 1000, 500)
+            return distance
 
 
 if __name__ == "__main__":
