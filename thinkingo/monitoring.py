@@ -25,6 +25,7 @@ class Monitoring(Subroutine):
         super().__init__(data)
         self.source = source
         self.monitoring_size = (740, 1000)
+        self.video_writer_size = (1000, 740)
         self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
         self.mode_string = {y: x for x, y in self.data.MODES.items()}
 
@@ -32,7 +33,7 @@ class Monitoring(Subroutine):
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         today = datetime.datetime.now()
         time_label = today.strftime("%Y-%m-%d-%H-%M-%S")
-        self.monitor_writer = cv2.VideoWriter(DATA_ROOT_PATH + time_label + ".avi", fourcc, 60, (1000, 740))
+        self.monitor_writer = cv2.VideoWriter(DATA_ROOT_PATH + time_label + ".avi", fourcc, 60, self.video_writer_size)
 
     def main(self):
         while True:

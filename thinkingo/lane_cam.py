@@ -231,7 +231,7 @@ class LaneCam():
         final_angle = None
 
         hough_lines = cv2.HoughLinesP(edged, rho=1, theta=np.pi / 180, threshold=20, minLineLength=20, maxLineGap=500)
-        if not hough_lines: return temp_frame, None, None
+        if hough_lines is None: return temp_frame, None, None
 
         for line in hough_lines:
             for x1, y1, x2, y2 in line:
