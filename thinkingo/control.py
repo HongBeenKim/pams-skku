@@ -78,7 +78,7 @@ class Control(Subroutine):
         self.st1 = 0
         self.st2 = 0
         self.pmode = 0
-        self.direction = 0
+        self.direction = 1
 
     def main(self):
         while True:
@@ -90,7 +90,8 @@ class Control(Subroutine):
                 a_speed, a_brake = self.__accel__(speed, brake)
             elif self.mode == 1:
                 a_speed, a_brake = speed, brake
-            self.data.set_control_value(self.__start__(gear, a_speed, steer, a_brake))
+            self.data.set_control_value(gear, a_speed, steer, a_brake)
+            # self.data.set_control_value(self.__start__(gear, a_speed, steer, a_brake))
             time.sleep(0.01)
             if self.data.is_all_system_stop():
                 break
@@ -710,6 +711,19 @@ class Control(Subroutine):
 
                     if self.speed_platform == 0:
                         self.p_sit = 5
+
+            elif self.direction == 1:
+                if term_3 < 180:
+                    steer = 0
+                    speed = 20  # 50
+                elif term_3 > 180:
+                    steer = 0
+                    speed = 0
+                    brake = 80
+
+                    if self.speed_platform == 0:
+                        self.p_sit = 5
+
 
         elif self.p_sit == 4:
             steer = self.__parking_steer__(line_distance, line_theta)
