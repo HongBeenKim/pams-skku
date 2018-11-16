@@ -124,29 +124,50 @@ class Control(Subroutine):
 
         gear = speed = steer = brake = 0
         if self.mission_num == self.data.MODES["default"]:
-            if packet is None:
-                return 0, 0, 0, 0
+            if packet[1] is None or packet[2] is None:
+                packet[1] = 0
+                packet[2] = 90
             gear, speed, steer, brake = self.__default__(packet[1] / 100, packet[2])
 
         elif self.mission_num == self.data.MODES["narrow"]:
+            if packet[1] is None or packet[2] is None:
+                return 0, 0, 0, 0
             gear, speed, steer, brake = self.__obs__(packet[1] / 100, packet[2])
 
         elif self.mission_num == self.data.MODES["u_turn"]:
-            gear, speed, steer, brake = self.__turn__(packet[1] / 100, packet[2], packet[3] / 100)
+            if packet[1] is None:
+                packet[1] = 5
+            if packet[2] is None or packet[3] is None:
+                packet[2] = 0
+                packet[3] = 90
+            gear, speed, steer, brake = self.__turn__(packet[1] / 100, packet[2] / 100, packet[3])
             # TODO: 수정
 
         elif self.mission_num == self.data.MODES["crosswalk"]:
-            if packet is None:
-                gear, speed, steer, brake = 0, 0, 0, 0
+            if packet[1] is None:
+                gear, speed, steer, brake = 0, 30, 0, 0
             else:
-                gear, speed, steer, brake = self.__cross__(packet[1] / 100)
+                gear, speed, steer, brake = self.__cross__(packet[1] / 100, packet[2])
 
         elif self.mission_num == self.data.MODES["target_tracking"]:
             if packet[1] is None:
                 packet[1] = 6
-            gear, speed, steer, brake = self.__target__(packet[1] / 100, packet[2], packet[3] / 100)
+
+            if packet[2] is None or packet[3] is None:
+                packet[2] = 0
+                packet[3] = 90
+            gear, speed, steer, brake = self.__target__(packet[1] / 100, packet[2] / 100, packet[3])
 
         elif self.mission_num == self.data.MODES["parking"]:
+            if packet[1] is None:
+                packet[1] = 0
+            if packet[2] is None:
+                packet[2] = 0
+            if packet[3] is None:
+                packet[3] = 0
+            if packet[4] is None:
+                packet[4] is 3
+
             gear, speed, steer, brake = self.__parking__(packet[1] / 100, packet[2] / 100, packet[3], packet[4] / 100)
 
         return gear, speed, steer, brake
@@ -191,11 +212,6 @@ class Control(Subroutine):
 
         adjust = 0.3
 
-        if abs(steer_now) > 15:
-            speed = 60  # TODO: 실험값 수정하기 / 60
-        else:
-            speed = 72  # TODO: 실험값 수정하기 / 72
-
         steer_final = ((adjust * self.steer_past) + ((1 - adjust) * steer_now))
         self.steer_past = steer_final
 
@@ -206,6 +222,11 @@ class Control(Subroutine):
         elif steer < -1970:
             steer = -1970
             self.steer_past = -27.746
+
+        if abs(steer_now) > 15:
+            speed = 60  # TODO: 실험값 수정하기 / 60
+        else:
+            speed = 72  # TODO: 실험값 수정하기 / 72
 
         self.gear = gear
         self.speed = speed
