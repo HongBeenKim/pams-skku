@@ -68,9 +68,20 @@ class MotionPlanner(Subroutine):
                 self.data.planner_to_control_packet = (self.data.MODES["narrow"], dist, angle, None, None)
 
             # 2. 유턴 상황
+            # 미션넘버, 전방 거리, 전방 각도, 크로스 에러, 기울기
             elif self.data.current_mode == self.data.MODES["u_turn"]:
                 front_dist, angle, right_dist = self.U_turn_data(U_TURN_ANGLE)
-                self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, right_dist, None)
+                frame = self.lane_handler.lane_detection2()
+
+                if self.lane_handler.left_coefficients is not None and self.lane_handler.right_coefficients is not None:
+                    path_coefficients = (self.lane_handler.left_coefficients + self.lane_handler.right_coefficients) / 2
+                    path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
+
+                    self.data.planner_to_control_packet = (
+                        self.data.MODES["u_turn"], front_dist, angle, path.get_value(-10), path.get_derivative(-10))
+
+                else:
+                    self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, None, None)
 
             # 3. 횡단보도 상황
             elif self.data.current_mode == self.data.MODES["crosswalk"]:
