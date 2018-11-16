@@ -22,6 +22,7 @@ class SignCam(Subroutine):
         self.traffic_data = [11 for row in range(BUFFER_SIZE)]
         self.sign_data = [0 for row in range(BUFFER_SIZE)]
         self.counter = [0 for col in range(12)]
+        self.ready_for_mission = False
         self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
         
     def main(self):
@@ -29,14 +30,22 @@ class SignCam(Subroutine):
             time.sleep(0.03)  # for threading schedule
             if self.source.mid_frame is None:
                 continue
+            if self.ready_for_mission and (self.data.current_mode == 1 or self.data.current_mode == 3
+                                           or self.data.current_mode == 5):
+                self.frame = self.source.mid_frame.copy()
+                self.data_update()
+                self.light_selection()
+                self.parking_lot_selection()
+
+            if self.ready_for_mission and (self.data.current_mode == 2 or self.data.current_mode == 4):
+                self.ready_for_mission = False
+
             if self.data.is_in_mission():
                 continue
             else:
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
                 self.sign_selection()
-                self.light_selection()
-                self.parking_lot_selection()
 
             if self.data.is_all_system_stop():
                 break
@@ -66,8 +75,9 @@ class SignCam(Subroutine):
             sign_values.append(self.counter[i])
 
         max_index = np.argmax(sign_values)
-        if checkers[max_index] != 0 and (not self.data.ready_for_mission):
+        if checkers[max_index] != 0 and (not self.ready_for_mission):
             self.reset_sign_buffer()
+            self.ready_for_mission = True
             self.data.detected_mission_number = self.ModeList[checkers[max_index]]
 
     # 어떤 주차장에서 주차할 것 인지 알려주기
@@ -79,8 +89,9 @@ class SignCam(Subroutine):
 
         max_index = np.argmax(parking_values)
 
-        if checkers[max_index] != 10 and self.data.ready_for_mission:
+        if checkers[max_index] != 10:
             self.reset_option_buffer()
+            self.ready_for_mission = False
             self.data.parking_location = self.ModeList[checkers[max_index]]
             
     # 어떤 신호등인지 알려주기
@@ -91,8 +102,12 @@ class SignCam(Subroutine):
             light_values.append(self.counter[i])
 
         max_index = np.argmax(light_values)
-        if checkers[max_index] != 11 and self.data.ready_for_mission:
+        if checkers[max_index] != 11:
             self.reset_option_buffer()
+            if checkers[max_index] == 8:
+                self.ready_for_mission = False
+            if self.data.light_signal == self.ModeList[8]:
+                self.ready_for_mission = False
             self.data.light_signal = self.ModeList[checkers[max_index]]
 
     def reset_sign_buffer(self):
