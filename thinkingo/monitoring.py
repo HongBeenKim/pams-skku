@@ -22,7 +22,7 @@ MID_FRAME_Y = 240
 SKY_BLUE = (255, 200, 0)
 YELLOW = (0, 255, 255)
 
-DATA_ROOT_PATH = "C:\\pams-skku-monitoring-log\\2018-11-16\\"
+DATA_ROOT_PATH = "C:\\pams-skku-monitoring-log\\temp\\"
 
 
 class Monitoring(Subroutine):
@@ -97,9 +97,9 @@ class Monitoring(Subroutine):
             sig_text_color = (30, 255, 0)
             light_sig_string = 'G'
         else:
-            sig_text_color = (100, 100, 100)
+            sig_text_color = (200, 200, 200)
             light_sig_string = 'N'
-        cv2.putText(frame, text=light_sig_string, org=(0, 0),
+        cv2.putText(frame, text=light_sig_string, org=(20, 80),
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=sig_text_color, thickness=FONT_THICKNESS)
 
         parking_signal = self.data.parking_lot
@@ -110,9 +110,9 @@ class Monitoring(Subroutine):
             parking_text_color = (30, 255, 0)
             parking_sig_string = 'B'
         else:
-            parking_text_color = (100, 100, 100)
+            parking_text_color = (200, 200, 200)
             parking_sig_string = 'N'
-        cv2.putText(frame, text=parking_sig_string, org=(70, 0),
+        cv2.putText(frame, text=parking_sig_string, org=(20, 170),
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=parking_text_color,
                     thickness=FONT_THICKNESS)
 
