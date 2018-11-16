@@ -70,7 +70,7 @@ class MotionPlanner(Subroutine):
 
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
-                min_dist, dist_frame = self.calculate_distance_phase_target()  # 684 342
+                dist_frame, min_dist = self.calculate_distance_phase_target()  # 684 342
                 dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
                 frame, intercept, angle = self.lane_handler.lane_detection()  # 800 158
                 # FIXME: 크기 안 맞음
@@ -339,7 +339,7 @@ class MotionPlanner(Subroutine):
                               (int(distance / 2), int(500 + distance * math.cos(min_theta * 90 / math.pi))),
                               cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 255, 0))
             img = cv2.resize(img, (684, 342))
-            return distance, img
+            return img, distance
 
 
 if __name__ == "__main__":
