@@ -1,4 +1,4 @@
-#TODO: light, parking A, B 모니터링 할 수 있도록 만들기
+# TODO: light, parking A, B 모니터링 할 수 있도록 만들기
 
 import cv2
 import numpy as np
@@ -29,8 +29,8 @@ class Monitoring(Subroutine):
     def __init__(self, source: Source, data: Data):
         super().__init__(data)
         self.source = source
-        self.monitoring_size = (820, 1000)
-        self.video_writer_size = (1000, 820)
+        self.monitoring_size = (820, 1090)
+        self.video_writer_size = (1090, 820)
         self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
         self.mode_string = {y: x for x, y in self.data.MODES.items()}
         self.mode_string[4] = 'target'
@@ -42,18 +42,22 @@ class Monitoring(Subroutine):
 
     def main(self):
         cv2.imshow('ThinKingo monitoring', self.canvas)
-        cv2.moveWindow('ThinKingo monitoring', 580, 0)
+        cv2.moveWindow('ThinKingo monitoring', 480, 0)
         while True:
             car_frame = self.put_car_status_and_mode()  # 240 600
             mid_cam_monitor = self.get_mid_cam_frame()  # 240 400
             planner_monitor = self.get_planner_frame()  # 500 1000
-            control_stat_frame = self.put_control_status()  # 80 1000
             # TODO: after refactor, need to test
+            control_stat_frame = self.put_control_status()  # 80 1000
+
+            # TODO: add signal monitoring, need to test
+            light_and_parking_signal_frame = self.put_light_and_parking_signal()
 
             try:
                 self.canvas = np.concatenate((car_frame, mid_cam_monitor), axis=1)
                 self.canvas = np.concatenate((self.canvas, planner_monitor), axis=0)
                 self.canvas = np.concatenate((self.canvas, control_stat_frame), axis=0)
+                self.canvas = np.concatenate((self.canvas, light_and_parking_signal_frame), axis=1)
             except ValueError as e:
                 print(e)
                 self.init_canvas()
@@ -82,14 +86,46 @@ class Monitoring(Subroutine):
     def init_canvas(self):
         self.canvas = np.zeros(shape=(*self.monitoring_size, 3), dtype=np.uint8)
 
+    def put_light_and_parking_signal(self):
+        frame = np.zeros((820, 90, 3), dtype=np.uint8)
+
+        light_signal = self.data.light_signal
+        if light_signal == self.data.LIGHT_MODE["red_light"]:
+            sig_text_color = (0, 0, 255)
+            light_sig_string = 'R'
+        elif light_signal == self.data.LIGHT_MODE["green_light"]:
+            sig_text_color = (30, 255, 0)
+            light_sig_string = 'G'
+        else:
+            sig_text_color = (100, 100, 100)
+            light_sig_string = 'N'
+        cv2.putText(frame, text=light_sig_string, org=(0, 0),
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=sig_text_color, thickness=FONT_THICKNESS)
+
+        parking_signal = self.data.parking_lot
+        if parking_signal == self.data.PARKING_MODE["parking_a"]:
+            parking_text_color = (0, 0, 255)
+            parking_sig_string = 'A'
+        elif parking_signal == self.data.PARKING_MODE["parking_b"]:
+            parking_text_color = (30, 255, 0)
+            parking_sig_string = 'B'
+        else:
+            parking_text_color = (100, 100, 100)
+            parking_sig_string = 'N'
+        cv2.putText(frame, text=parking_sig_string, org=(70, 0),
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=parking_text_color,
+                    thickness=FONT_THICKNESS)
+
+        return frame
+
     def put_control_status(self):
-        control_stat_frame = np.zeros((80, 1000, 3), dtype=np.uint8)
+        frame = np.zeros((80, 1000, 3), dtype=np.uint8)
         aorm = self.data.read_packet.aorm
         if aorm == SerialPacket.AORM_MANUAL:
             aorm = 'Man'
         else:
             aorm = 'Auto'
-        cv2.putText(control_stat_frame, text=aorm, org=(0, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
+        cv2.putText(frame, text=aorm, org=(0, 50), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2,
                     color=(0, 255, 255), thickness=FONT_THICKNESS)
 
         write_pac = self.data.write_packet
@@ -115,24 +151,24 @@ class Monitoring(Subroutine):
         steer_string = steer_direction_string + '{:5.2f}'.format(abs(steer)) + 'deg'
 
         brake_string = 'Brake' + '{:7.2f}'.format(brake)
-        control_stat_frame = cv2.putText(img=control_stat_frame, text=gear_speed_string, org=(150, 50),
-                                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                                         fontScale=1,
-                                         color=(255, 255, 255), thickness=FONT_THICKNESS)
-        control_stat_frame = cv2.putText(img=control_stat_frame, text=steer_string, org=(450, 50),
-                                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                                         fontScale=1,
-                                         color=(255, 200, 200), thickness=FONT_THICKNESS)
-        control_stat_frame = cv2.putText(img=control_stat_frame, text=brake_string, org=(750, 50),
-                                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                                         fontScale=1,
-                                         color=(255, 255, 255), thickness=FONT_THICKNESS)
-        return control_stat_frame
+        frame = cv2.putText(img=frame, text=gear_speed_string, org=(150, 50),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=1,
+                            color=(255, 255, 255), thickness=FONT_THICKNESS)
+        frame = cv2.putText(img=frame, text=steer_string, org=(450, 50),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=1,
+                            color=(255, 200, 200), thickness=FONT_THICKNESS)
+        frame = cv2.putText(img=frame, text=brake_string, org=(750, 50),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=1,
+                            color=(255, 255, 255), thickness=FONT_THICKNESS)
+        return frame
 
     def get_planner_frame(self):
-        planner_monitor = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
+        frame = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
         if self.data.planner_monitoring_frame is not None:
-            planner_monitor = self.data.planner_monitoring_frame
+            frame = self.data.planner_monitoring_frame
 
             padding1_y = PLANNER_FRAME_Y - self.data.planner_monitoring_frame_size[1]
             padding1_x = self.data.planner_monitoring_frame_size[0]
@@ -143,25 +179,25 @@ class Monitoring(Subroutine):
             right_padding = np.zeros(shape=(padding2_y, padding2_x, 3), dtype=np.uint8)
 
             try:
-                planner_monitor = np.concatenate((planner_monitor, under_padding), axis=0)
-                planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)
+                frame = np.concatenate((frame, under_padding), axis=0)
+                frame = np.concatenate((frame, right_padding), axis=1)
             except ValueError as e:
                 print(e)
-                planner_monitor = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
+                frame = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
 
-        return planner_monitor
+        return frame
 
     def get_mid_cam_frame(self):
-        mid_cam_monitor = np.zeros(shape=(MID_FRAME_Y, MID_FRAME_X, 3), dtype=np.uint8)
+        frame = np.zeros(shape=(MID_FRAME_Y, MID_FRAME_X, 3), dtype=np.uint8)
         if not self.data.is_in_mission() and self.data.sign_cam_monitoring_frame is not None:
-            mid_cam_monitor = self.data.sign_cam_monitoring_frame
-            mid_cam_monitor = cv2.resize(mid_cam_monitor, (MID_FRAME_X, MID_FRAME_Y))
+            frame = self.data.sign_cam_monitoring_frame
+            frame = cv2.resize(frame, (MID_FRAME_X, MID_FRAME_Y))
 
         elif self.source.mid_frame is not None:
-            mid_cam_monitor = self.source.mid_frame
-            mid_cam_monitor = cv2.resize(mid_cam_monitor, (MID_FRAME_X, MID_FRAME_Y))
+            frame = self.source.mid_frame
+            frame = cv2.resize(frame, (MID_FRAME_X, MID_FRAME_Y))
 
-        return mid_cam_monitor
+        return frame
 
     def put_car_status_and_mode(self):
         frame = np.zeros((240, 600, 3), dtype=np.uint8)
