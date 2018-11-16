@@ -162,13 +162,12 @@ class LaneCam():
                         # 정지선은 horizontal_line 과 평행함.
                         t = (300 - horizontal_line[0]) / vec_h[0]
                         dist = horizontal_line[0] - t * vec_h[1]
-                        #print(dist)
                         cv2.line(merged_frame, (horizontal_line[0] + 10 * vec_h[0], horizontal_line[1] - 10 * vec_h[1]),
                                  (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
                                  2)
                 break
-        #cv2.imshow('test', merged_frame)
-        return merged_frame, min_dist, final_interception, final_angle
+        cv2.imshow('test', merged_frame)
+        return merged_frame, min_dist, final_interception, final_angle, dist
         # TODO: return stop line distance
 
     def stop_line_detection(self):
