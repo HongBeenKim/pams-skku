@@ -281,10 +281,8 @@ class LaneCam():
 
             final_interception = mid_pt1[0] - 400
             final_angle = mid_angle
-
         return temp_frame, final_interception, final_angle
 
-    # 질량중심 찾기 함수, 차선 검출에서 사용됌
     def findCenterofMass(self, src):
         sum_of_y_mass_coordinates = 0
         num_of_mass_points = 0
@@ -585,7 +583,6 @@ class LaneCam():
         final = cv2.flip(cv2.transpose(filtered_both), 1)
 
         cv2.imshow('final', final)
-        cv2.waitKey(1)
 
 if __name__ == "__main__":
     import threading
@@ -594,7 +591,7 @@ if __name__ == "__main__":
 
     testData = Data()
     # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
-    testDDS = DummySource('2018-11-14-16-28-38')
+    testDDS = DummySource('2018-11-16-15-11-45')
     testLC = LaneCam(testDDS)  # DummySource for test
     dummy_thread = threading.Thread(target=testDDS.main)
     dummy_thread.start()
@@ -614,5 +611,5 @@ if __name__ == "__main__":
 
     time.sleep(1)
     while True:
-        testLC.parking_line_detection()
+        testLC.lane_detection()
         if cv2.waitKey(1) & 0xff == ord('q'): break

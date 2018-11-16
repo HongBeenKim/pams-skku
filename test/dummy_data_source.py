@@ -4,14 +4,14 @@ import sys
 sys.path.append(".")
 from data_class import Data
 
-DATA_ROOT_PATH = 'c:\\pams-skku-data-11-14\\'
+DATA_ROOT_PATH = 'c:\\pams-skku-data\\'
 
 
 class DummySource():
     def __init__(self, filename: str):
         self.cap_left = cv2.VideoCapture(DATA_ROOT_PATH + 'leftcam\\' + filename + '.avi')
         self.cap_right = cv2.VideoCapture(DATA_ROOT_PATH + 'rightcam\\' + filename + '.avi')
-        self.cap_mid = cv2.VideoCapture(DATA_ROOT_PATH + 'midcam\\' + filename + '.avi')
+        self.cap_mid = cv2.VideoCapture(DATA_ROOT_PATH + 'signcam\\' + filename + '.avi')
         self.lidar_file = open(DATA_ROOT_PATH + 'lidar\\' + filename + '.txt', 'rb')
 
         self.left_frame = None
