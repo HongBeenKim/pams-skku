@@ -289,16 +289,17 @@ class MotionPlanner(Subroutine):
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
         minimum_distance = lidar_raw_data[180] / 10
-        min_theta = 0
-        car_width = 160  # cm
+        min_theta = 180
+        car_width = 120  # cm
 
-        for theta in range(360):
+        for theta in range(90, 270):
             if (minimum_distance > lidar_raw_data[theta] / 10) and \
-                    ((lidar_raw_data[theta] / 10) * abs(math.cos(theta * 90 / math.pi)) < (
+                    ((lidar_raw_data[theta] / 10) * abs(math.cos(theta * math.pi / 360)) < (
                             car_width / 2)):  # 2 Conditions
                 minimum_distance = lidar_raw_data[theta] / 10
                 min_theta = theta
-        distance = minimum_distance * math.sin(min_theta * 90 / math.pi)
+
+        distance = minimum_distance * math.sin(min_theta * math.pi / 360)
 
         """
             [INFO]
@@ -328,16 +329,18 @@ class MotionPlanner(Subroutine):
            |                      |
            
         """
-        if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
+        if distance > 1000:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
             return
         else:
-            img = self.data_stream.get_lidar_ndarray_data(1000, 500, 5)
+            img = self.data_stream.get_lidar_ndarray_data(500, 1000, 5)
             distance = int(distance)
-            img = cv2.line(img, (distance, 0), (distance, int(500 + distance * math.cos(min_theta * 90 / math.pi))),
-                           (255, 255, 0), 2)
+            img = cv2.line(img, (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500),
+                           (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance),(255, 255, 0), 2)
             img = cv2.putText(img, "%d" % distance,
-                              (int(distance / 2), int(500 + distance * math.cos(min_theta * 90 / math.pi))),
+                              (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance, ),
                               cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 255, 0))
+            cv2.imshow('test', img)
+            cv2.waitKey(1)
             img = cv2.resize(img, (684, 342))
             return img, distance
 
