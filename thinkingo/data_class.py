@@ -27,6 +27,7 @@ class Data(object):
 
         # from car platform
         self._read_packet = SerialPacket()
+        self._read_packet.aorm = SerialPacket.AORM_MANUAL
         # to car platform
         self._write_packet = SerialPacket()
 
