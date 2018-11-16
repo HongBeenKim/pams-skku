@@ -1,3 +1,5 @@
+#TODO: 협로 끝나고 차선 잘 보게 만들기 (유턴 끝나고도 마찬가지)
+
 import cv2
 import numpy as np
 import sys
@@ -52,7 +54,6 @@ class LaneCam():
         front_first = 75 * 2
         front_second = 105 * 2
 
-        # TODO: need to test
         min_dist = min(lidar_raw_data[front_first:front_second]) / 10
 
         final_interception = None

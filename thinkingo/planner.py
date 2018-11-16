@@ -6,6 +6,7 @@ import numpy as np
 import sys
 import math
 
+# TODO: @김홍빈 신호등 보는 미션 후 light_reset() 메서드로 리셋하도록 수정하기
 sys.path.append(".")
 from subroutine import Subroutine
 from data_class import Data
@@ -37,11 +38,9 @@ class MotionPlanner(Subroutine):
         while True:
             if self.data_stream.lidar_data is None: continue
 
-            # TODO: sign cam 이랑 미션 들어가있는 여부 공유하는 방법 어떻게 할지 정하기
             time.sleep(0.01)  # for threading schedule
             # 0. default는 표지판과 차선만 본다
             if self.data.current_mode == self.data.MODES["default"]:
-                # TODO: lane_handler에서 값 받아서 패킷에 넘겨주기
                 frame, intercept, angle = self.lane_handler.lane_detection()
                 self.data.planner_to_control_packet = (self.data.MODES["default"], intercept, angle, None, None)
                 self.data.planner_monitoring_frame = (frame, 800, 158)
@@ -49,7 +48,6 @@ class MotionPlanner(Subroutine):
 
             # 1. 부채살
             elif self.data.current_mode == self.data.MODES["narrow"]:
-                # TODO: 직진 매크로를 어디서 구현할지 결정하기
                 if self.is_forward_clear():
                     self.data.current_mode = 0
                     continue
@@ -71,13 +69,19 @@ class MotionPlanner(Subroutine):
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
                 dist_frame, min_dist = self.calculate_distance_phase_target()  # 684 342
-                dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
                 frame, intercept, angle = self.lane_handler.lane_detection()  # 800 158
                 self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)
-                frame = np.concatenate((frame, dist_frame), axis=0)  # FIXME: 크기 안 맞음
+
+                # send a frame to monitoring system
+                # TODO: need to test
+                try:
+                    dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
+                    frame = np.concatenate((frame, dist_frame), axis=0)
+                except ValueError as e:
+                    print(e)
+                    frame = np.zeros((500, 800, 3), dtype=np.uint8)
                 self.data.planner_monitoring_frame = (frame, 800, 500)
 
-            # TODO: 5. 주차 상황
             elif self.data.current_mode == self.data.MODES["parking"]:
                 frame, dist_to_barrier, interception, angle, stop_dist = self.lane_handler.parking_line_detection()
                 self.data.planner_to_control_packet = (

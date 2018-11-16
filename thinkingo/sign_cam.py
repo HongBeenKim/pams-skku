@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+# TODO: 다양한 정확도로 표지판을 인식해보고 적당한 경계값 찾아내기
 from module.pytorch_yolo import yolo
 from subroutine import Subroutine
 from data_class import Data
