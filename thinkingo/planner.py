@@ -70,15 +70,19 @@ class MotionPlanner(Subroutine):
 
             # 4. 차량추종 상황
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
-                min_dist = self.calculate_distance_phase_target()
-                frame, intercept, angle = self.lane_handler.lane_detection()
+                dist_frame, min_dist = self.calculate_distance_phase_target()  # 684 342
+                dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
+                frame, intercept, angle = self.lane_handler.lane_detection()  # 800 158
+                # FIXME: 크기 안 맞음
                 self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)
-                self.data.planner_monitoring_frame = (frame, 600, 300)
+                frame = np.concatenate((frame, dist_frame), axis=0)
+                self.data.planner_monitoring_frame = (frame, 800, 500)
 
             # TODO: 5. 주차 상황
             elif self.data.current_mode == self.data.MODES["parking"]:
                 frame, dist_to_barrier, interception, angle, stop_dist = self.lane_handler.parking_line_detection()
-                self.data.planner_to_control_packet = (self.data.MODES["parking"], dist_to_barrier, interception, angle, stop_dist)
+                self.data.planner_to_control_packet = (
+                self.data.MODES["parking"], dist_to_barrier, interception, angle, stop_dist)
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             if self.data.is_all_system_stop():
@@ -251,13 +255,13 @@ class MotionPlanner(Subroutine):
         angle_start = 180 - U_angle
         angle_end = 180 + U_angle
 
-        #픽셀 사이즈를 설정한다.
+        # 픽셀 사이즈를 설정한다.
         y_pixel_size = 1000
         x_pixel_size = 2000
 
         # Lidar_data의 자료를 받아온다
         lidar_raw_data = self.data_stream.lidar_data
-        lidar_mat = self.data_stream.get_lidar_ndarray_data(y_pixel_size, x_pixel_size)
+        lidar_mat = self.data_stream.get_lidar_ndarray_data(y_pixel_size, x_pixel_size, 10)
 
         # Lidar의 우측에 선긋기
         lidar_right_distance_mm = lidar_raw_data[0]
@@ -266,11 +270,11 @@ class MotionPlanner(Subroutine):
                  (int(x_pixel_size / 2) + lidar_right_distance_cm, int(y_pixel_size)), RED, U_TURN_LIDAR_LINE_SIZE)
 
         # 전방 최소점에 선긋기
-        distance_front_index = np.argmin(np.array(lidar_raw_data)[angle_start:angle_end])
+        distance_front_index = np.argmin(np.array(lidar_raw_data)[angle_start:angle_end]) + angle_start
         front_min_dist = lidar_raw_data[distance_front_index] / 10
         front_degree = distance_front_index / 2  # 실제 각도는 index의 1/2
-        front_x = int(x_pixel_size / 2) + int(front_min_dist * math.cos(front_degree))
-        front_y = int(y_pixel_size) - int(front_min_dist * math.sin(front_degree))
+        front_x = int(x_pixel_size / 2) + int(front_min_dist * math.cos(np.radians(front_degree)))
+        front_y = int(y_pixel_size) - int(front_min_dist * math.sin(np.radians(front_degree)))
         cv2.line(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), (front_x, front_y), RED, U_TURN_LIDAR_LINE_SIZE)
 
         # 라이다 위치에 파란점
@@ -285,16 +289,17 @@ class MotionPlanner(Subroutine):
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
         minimum_distance = lidar_raw_data[180] / 10
-        min_theta = 0
-        car_width = 160 #cm
-        
-        for theta in range(360):
-            if(minimum_distance > lidar_raw_data[theta] / 10) and \
-                    ((lidar_raw_data[theta] / 10) * abs(math.cos(theta * 90 / math.pi)) < (car_width / 2)): #2 Conditions
+        min_theta = 180
+        car_width = 120  # cm
+
+        for theta in range(90, 270):
+            if (minimum_distance > lidar_raw_data[theta] / 10) and \
+                    ((lidar_raw_data[theta] / 10) * abs(math.cos(theta * math.pi / 360)) < (
+                            car_width / 2)):  # 2 Conditions
                 minimum_distance = lidar_raw_data[theta] / 10
                 min_theta = theta
 
-        distance = minimum_distance * math.sin(min_theta * 90 / math.pi)
+        distance = minimum_distance * math.sin(min_theta * math.pi / 360)
 
         """
             [INFO]
@@ -324,9 +329,20 @@ class MotionPlanner(Subroutine):
            |                      |
            
         """
-        if distance > 300:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
+        if distance > 1000:  # 300cm 앞까지 물체가 없으면 차가 없어진걸로.. 수치적으로 검토바람
             return
-        return distance
+        else:
+            img = self.data_stream.get_lidar_ndarray_data(500, 1000, 5)
+            distance = int(distance)
+            img = cv2.line(img, (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500),
+                           (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance),(255, 255, 0), 2)
+            img = cv2.putText(img, "%d" % distance,
+                              (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance, ),
+                              cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 255, 0))
+            cv2.imshow('test', img)
+            cv2.waitKey(1)
+            img = cv2.resize(img, (684, 342))
+            return img, distance
 
 
 if __name__ == "__main__":

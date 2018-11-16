@@ -85,7 +85,7 @@ class Source():
         self.lidar_socket.close()
         return 0
 
-    def get_lidar_ndarray_data(self, y_pixel_size, x_pixel_size):
+    def get_lidar_ndarray_data(self, y_pixel_size, x_pixel_size, point_size):
         #  모든 거리 값을 좌표로 변환해 점찍기 (왼쪽 상단 0, 0으로!)
         lidar_mat = np.zeros((y_pixel_size + 1, x_pixel_size + 1, 3), dtype=np.uint8)
 
@@ -94,7 +94,7 @@ class Source():
 
             x_coordinate = int(x_pixel_size / 2) + int((self.lidar_data[i] / 10) * math.cos(radian_degree))
             y_coordinate = int(y_pixel_size) - int((self.lidar_data[i] / 10) * math.sin(radian_degree))
-            cv2.circle(lidar_mat, (x_coordinate, y_coordinate), 1, (255, 255, 255), 1)
+            cv2.circle(lidar_mat, (x_coordinate, y_coordinate), point_size, (255, 255, 255), -1)
         return lidar_mat
 
 

@@ -82,12 +82,17 @@ class Monitoring(Subroutine):
             padding1_y = PLANNER_FRAME_Y - self.data.planner_monitoring_frame_size[1]
             padding1_x = self.data.planner_monitoring_frame_size[0]
             under_padding = np.zeros(shape=(padding1_y, padding1_x, 3), dtype=np.uint8)
-            planner_monitor = np.concatenate((planner_monitor, under_padding), axis=0)
 
             padding2_y = PLANNER_FRAME_Y
             padding2_x = PLANNER_FRAME_X - self.data.planner_monitoring_frame_size[0]
             right_padding = np.zeros(shape=(padding2_y, padding2_x, 3), dtype=np.uint8)
-            planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)
+
+            try:
+                planner_monitor = np.concatenate((planner_monitor, under_padding), axis=0)
+                planner_monitor = np.concatenate((planner_monitor, right_padding), axis=1)
+            except ValueError as e:
+                print(e)
+                planner_monitor = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
 
         return planner_monitor
 
