@@ -290,7 +290,7 @@ class MotionPlanner(Subroutine):
         
         for theta in range(360):
             if(minimum_distance > lidar_raw_data[theta] / 10) and \
-                    ((lidar_raw_data[theta] / 10) * math.abs(math.cos(theta * 90 / math.pi)) < (car_width / 2)): #2 Conditions
+                    ((lidar_raw_data[theta] / 10) * abs(math.cos(theta * 90 / math.pi)) < (car_width / 2)): #2 Conditions
                 minimum_distance = lidar_raw_data[theta] / 10
                 min_theta = theta
 
