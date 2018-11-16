@@ -434,14 +434,14 @@ class Control(Subroutine):
             self.ct2 = self.enc_platform
 
             if (self.ct2 - self.ct1) < 600:
-                steer = -1469.79
+                steer = -1400.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 715 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
+            elif 530 <= (self.ct2 - self.ct1) <= 750 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
                 speed = 24  # 30
-                steer = -1469.79
+                steer = -1400.79
 
-            elif (self.ct2 - self.ct1) >= 715 + correction_enc:
-                steer = -1469.79
+            elif (self.ct2 - self.ct1) >= 750 + correction_enc:
+                steer = -1400.79
                 speed = 0
                 brake = 60
 
@@ -625,10 +625,10 @@ class Control(Subroutine):
 
                 term_1 = self.pt2 - self.pt1
 
-                if term_1 < 120:
+                if term_1 < 135:
                     steer = -1970
                     speed = 20  # 50
-                elif term_1 > 120:
+                elif term_1 > 135:
                     steer = -1970
                     speed = 0
                     brake = 80
@@ -643,10 +643,10 @@ class Control(Subroutine):
 
                 term_1 = self.pt2 - self.pt1
 
-                if term_1 < 143:
+                if term_1 < 163:
                     steer = 1970
                     speed = 20  # 50
-                elif term_1 > 143:
+                elif term_1 > 163:
                     steer = 1970
                     speed = 0
                     brake = 80
@@ -664,10 +664,10 @@ class Control(Subroutine):
 
                 if self.direction == 0:
 
-                    if term_2 < 143:
+                    if term_2 < 163:
                         steer = 1970
                         speed = 20  # 50
-                    elif term_2 > 143:
+                    elif term_2 > 163:
                         steer = 1970
                         speed = 0
                         brake = 80
@@ -676,10 +676,10 @@ class Control(Subroutine):
                             self.p_sit = 3
 
                 if self.direction == 1:
-                    if term_2 < 120:
+                    if term_2 < 135:
                         steer = -1970
                         speed = 20  # 50
-                    elif term_2 > 120:
+                    elif term_2 > 135:
                         steer = -1970
                         speed = 0
                         brake = 80
