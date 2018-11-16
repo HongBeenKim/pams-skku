@@ -37,8 +37,8 @@ class LaneCam():
         self.left_previous_points = None
         self.right_previous_points = None
 
-        self.left_current_points = np.array([0] * 10)
-        self.right_current_points = np.array([0] * 10)
+        self.left_current_points = np.array([0] * 5)
+        self.right_current_points = np.array([0] * 5)
 
         self.left_coefficients = None
         self.right_coefficients = None
@@ -281,6 +281,7 @@ class LaneCam():
 
             final_interception = mid_pt1[0] - 400
             final_angle = mid_angle
+        cv2.imshow('test', temp_frame)
         return temp_frame, final_interception, final_angle
 
     def findCenterofMass(self, src):
@@ -319,13 +320,13 @@ class LaneCam():
             # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
             # 차선이 없는 것으로 간주함
             if (row_sum[start_point] > 7650):
-                self.left_current_points = np.array([0] * 10)
+                self.left_current_points = np.array([0] * 5)
                 self.left_current_points[0] = start_point
 
-                for i in range(1, 10):
+                for i in range(1, 5):
                     reference = self.left_current_points[i - 1] - self.BOX_WIDTH
 
-                    x1, x2 = 300 - 30 * i, 330 - 30 * i
+                    x1, x2 = 300 - 60 * i, 330 - 60 * i
                     y1 = self.left_current_points[i - 1] - self.BOX_WIDTH
                     y2 = self.left_current_points[i - 1] + self.BOX_WIDTH
 
@@ -348,12 +349,12 @@ class LaneCam():
                 self.left_current_points = None
 
         else:
-            for i in range(0, 10):
+            for i in range(0, 5):
 
                 if self.left_current_points[i] != -1:
                     reference = self.left_previous_points[i] - self.BOX_WIDTH
 
-                    x1, x2 = 270 - 30 * i, 300 - 30 * i
+                    x1, x2 = 240 - 60 * i, 300 - 60 * i
                     y1 = self.left_previous_points[i] - self.BOX_WIDTH
                     y2 = self.left_previous_points[i] + self.BOX_WIDTH
 
@@ -373,7 +374,7 @@ class LaneCam():
                 else:
                     if i == 0:
                         reference = self.left_previous_points[1] - self.BOX_WIDTH
-                        x1, x2 = 270, 300
+                        x1, x2 = 240, 300
                         y1 = self.left_previous_points[1] - self.BOX_WIDTH
                         y2 = self.left_previous_points[1] + self.BOX_WIDTH
 
@@ -393,7 +394,7 @@ class LaneCam():
                     else:
                         reference = self.left_previous_points[i - 1] - self.BOX_WIDTH
 
-                        x1, x2 = 270 - 30 * i, 300 - 30 * i
+                        x1, x2 = 240 - 60 * i, 300 - 60 * i
                         y1 = self.left_previous_points[i - 1] - self.BOX_WIDTH
                         y2 = self.left_previous_points[i - 1] + self.BOX_WIDTH
 
@@ -410,7 +411,7 @@ class LaneCam():
                             else:
                                 self.left_current_points[i] = -1
 
-        if np.count_nonzero(self.left_current_points == -1) >= 5:
+        if np.count_nonzero(self.left_current_points == -1) >= 3:
             self.left_current_points = None
 
         self.left_previous_points = self.left_current_points
@@ -424,13 +425,13 @@ class LaneCam():
             # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
             # 차선이 없는 것으로 간주함
             if (row_sum[start_point] > 7650):
-                self.right_current_points = np.array([0] * 10)
+                self.right_current_points = np.array([0] * 5)
                 self.right_current_points[0] = start_point
 
-                for i in range(1, 10):
+                for i in range(1, 5):
                     reference = self.right_current_points[i - 1] - self.BOX_WIDTH
 
-                    x1, x2 = 300 - 30 * i, 330 - 30 * i
+                    x1, x2 = 300 - 60 * i, 360 - 60 * i
                     y1 = self.right_current_points[i - 1] - self.BOX_WIDTH
                     y2 = self.right_current_points[i - 1] + self.BOX_WIDTH
 
@@ -453,12 +454,12 @@ class LaneCam():
                 self.right_current_points = None
 
         else:
-            for i in range(0, 10):
+            for i in range(0, 5):
 
                 if self.right_current_points[i] != -1:
                     reference = self.right_previous_points[i] - self.BOX_WIDTH
 
-                    x1, x2 = 270 - 30 * i, 300 - 30 * i
+                    x1, x2 = 240 - 60 * i, 300 - 60 * i
                     y1 = self.right_previous_points[i] - self.BOX_WIDTH
                     y2 = self.right_previous_points[i] + self.BOX_WIDTH
 
@@ -478,7 +479,7 @@ class LaneCam():
                 else:
                     if i == 0:
                         reference = self.right_previous_points[1] - self.BOX_WIDTH
-                        x1, x2 = 270, 300
+                        x1, x2 = 240, 300
                         y1 = self.right_previous_points[1] - self.BOX_WIDTH
                         y2 = self.right_previous_points[1] + self.BOX_WIDTH
 
@@ -498,7 +499,7 @@ class LaneCam():
                     else:
                         reference = self.right_previous_points[i - 1] - self.BOX_WIDTH
 
-                        x1, x2 = 270 - 30 * i, 300 - 30 * i
+                        x1, x2 = 240 - 60 * i, 300 - 60 * i
                         y1 = self.right_previous_points[i - 1] - self.BOX_WIDTH
                         y2 = self.right_previous_points[i - 1] + self.BOX_WIDTH
 
@@ -515,7 +516,7 @@ class LaneCam():
                             else:
                                 self.right_current_points[i] = -1
 
-        if np.count_nonzero(self.right_current_points == -1) >= 5:
+        if np.count_nonzero(self.right_current_points == -1) >= 3:
             self.right_current_points = None
 
         self.right_previous_points = self.right_current_points
@@ -525,13 +526,13 @@ class LaneCam():
             xs_valid = []
             ys_L_valid = []
 
-            for i in range(0, 10):
+            for i in range(0, 5):
                 temp = self.left_current_points[i]
                 if temp != -1:
-                    xs_valid.append(-30 * i)
+                    xs_valid.append(-60 * i)
                     ys_L_valid.append(-1 * temp)
-                    cv2.line(filtered_L, (300 - 30 * i, temp - self.BOX_WIDTH),
-                             (300 - 30 * i, temp + self.BOX_WIDTH),
+                    cv2.line(filtered_L, (300 - 60 * i, temp - self.BOX_WIDTH),
+                             (300 - 60 * i, temp + self.BOX_WIDTH),
                              150)
 
             self.left_coefficients = np.polyfit(xs_valid, ys_L_valid, 2)
@@ -553,13 +554,13 @@ class LaneCam():
                 xs_valid = []
                 ys_R_valid = []
 
-                for i in range(0, 10):
+                for i in range(0, 5):
                     temp = self.right_current_points[i]
                     if temp != -1:
-                        xs_valid.append(-30 * i)
+                        xs_valid.append(-60 * i)
                         ys_R_valid.append(300 - temp)
-                        cv2.line(filtered_R, (300 - 30 * i, temp - self.BOX_WIDTH),
-                                 (300 - 30 * i, temp + self.BOX_WIDTH),
+                        cv2.line(filtered_R, (300 - 60 * i, temp - self.BOX_WIDTH),
+                                 (300 - 60 * i, temp + self.BOX_WIDTH),
                                  150)
 
                 self.right_coefficients = np.polyfit(xs_valid, ys_R_valid, 2)
@@ -582,7 +583,7 @@ class LaneCam():
         filtered_both = np.vstack((filtered_R, filtered_L))
         final = cv2.flip(cv2.transpose(filtered_both), 1)
 
-        cv2.imshow('final', final)
+        return final
 
 if __name__ == "__main__":
     import threading
@@ -611,5 +612,5 @@ if __name__ == "__main__":
 
     time.sleep(1)
     while True:
-        testLC.lane_detection()
+        testLC.lane_detection2()
         if cv2.waitKey(1) & 0xff == ord('q'): break

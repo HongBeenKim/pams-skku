@@ -12,6 +12,7 @@ from subroutine import Subroutine
 from data_class import Data
 from data_source import Source
 from lane_cam import LaneCam
+from parabola import Parabola
 
 ACTUAL_RADIUS = 300  # 부채살의 실제 반경
 CLEAR_RADIUS = 500  # 전방 항시 검사 반경 (부채살과 차선 모드를 넘나들기 위함)
@@ -41,9 +42,21 @@ class MotionPlanner(Subroutine):
             time.sleep(0.01)  # for threading schedule
             # 0. default는 표지판과 차선만 본다
             if self.data.current_mode == self.data.MODES["default"]:
-                frame, intercept, angle = self.lane_handler.lane_detection()
-                self.data.planner_to_control_packet = (self.data.MODES["default"], intercept, angle, None, None)
-                self.data.planner_monitoring_frame = (frame, 800, 158)
+                #frame, intercept, angle = self.lane_handler.lane_detection()
+                frame = self.lane_handler.lane_detection2()
+
+                if self.lane_handler.left_coefficients is not None and self.lane_handler.right_coefficients is not None:
+                    path_coefficients = (self.lane_handler.left_coefficients + self.lane_handler.right_coefficients) / 2
+                    path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
+
+                    self.data.planner_to_control_packet = (
+                        self.data.MODES["default"], path.get_value(-10), path.get_derivative(-10), None, None)
+
+                else:
+                    self.data.planner_to_control_packet = (self.data.MODES["default"], None, None, None, None)
+
+                # self.data.planner_to_control_packet = (self.data.MODES["default"], intercept, angle, None, None)
+                self.data.planner_monitoring_frame = (frame, 600, 300)
                 self.data.current_mode = self.data.detected_mission_number
 
             # 1. 부채살
