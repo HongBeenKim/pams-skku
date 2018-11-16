@@ -309,7 +309,7 @@ class MotionPlanner(Subroutine):
             A should be smaller than B
             
             [Condition 2]
-            C is minimum distance of lidar raw data which is satis
+            C is minimum distance of lidar raw data which is satisfied
             
                      A - - > X
                             /|
