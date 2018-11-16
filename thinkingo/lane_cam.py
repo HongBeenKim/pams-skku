@@ -173,7 +173,6 @@ class LaneCam():
                                  (horizontal_line[0] - 10 * vec_h[0], horizontal_line[1] + 10 * vec_h[1]), (255, 0, 0),
                                  2)
                 break
-        cv2.imshow('test', merged_frame)
         return merged_frame, min_dist, final_interception, final_angle, final_stop_dist
 
     def stop_line_detection(self):
@@ -583,7 +582,7 @@ class LaneCam():
         filtered_both = np.vstack((filtered_R, filtered_L))
         final = cv2.flip(cv2.transpose(filtered_both), 1)
 
-        return final
+        return cv2.cvtColor(final, cv2.COLOR_GRAY2BGR)
 
 if __name__ == "__main__":
     import threading

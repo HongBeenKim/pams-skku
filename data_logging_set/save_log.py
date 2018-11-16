@@ -29,7 +29,7 @@ sign_cam_num = 2
 
 COMPORT = 'COM5'
 
-DATA_ROOT_PATH = "C:\\pams-skku-11-16\\"
+DATA_ROOT_PATH = "C:\\pams-skku-data-11-17\\"
 
 
 # -----------------------------------------------------------------------------------

@@ -59,7 +59,7 @@ class Monitoring(Subroutine):
                 self.canvas = np.concatenate((self.canvas, control_stat_frame), axis=0)
                 self.canvas = np.concatenate((self.canvas, light_and_parking_signal_frame), axis=1)
             except ValueError as e:
-                print(e)
+                print("MONITORING: ", e)
                 self.init_canvas()
 
             cv2.imshow('ThinKingo monitoring', self.canvas)
@@ -179,10 +179,10 @@ class Monitoring(Subroutine):
             right_padding = np.zeros(shape=(padding2_y, padding2_x, 3), dtype=np.uint8)
 
             try:
-                frame = np.concatenate((frame, under_padding), axis=0)
+                frame = np.concatenate((frame, under_padding), axis=0)  # FIXME
                 frame = np.concatenate((frame, right_padding), axis=1)
             except ValueError as e:
-                print(e)
+                print("MONITORING planner: ", e)
                 frame = np.zeros(shape=(PLANNER_FRAME_Y, PLANNER_FRAME_X, 3), dtype=np.uint8)
 
         return frame

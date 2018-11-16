@@ -56,7 +56,8 @@ class MotionPlanner(Subroutine):
                     self.data.planner_to_control_packet = (self.data.MODES["default"], None, None, None, None)
 
                 # self.data.planner_to_control_packet = (self.data.MODES["default"], intercept, angle, None, None)
-                self.data.planner_monitoring_frame = (frame, 600, 300)
+                if frame is not None:
+                    self.data.planner_monitoring_frame = (frame, 600, 300)
                 self.data.current_mode = self.data.detected_mission_number
 
             # 1. 부채살
@@ -91,7 +92,7 @@ class MotionPlanner(Subroutine):
                     dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
                     frame = np.concatenate((frame, dist_frame), axis=0)
                 except ValueError as e:
-                    print(e)
+                    print("PLANNER: ", e)
                     frame = np.zeros((500, 800, 3), dtype=np.uint8)
                 self.data.planner_monitoring_frame = (frame, 800, 500)
 
