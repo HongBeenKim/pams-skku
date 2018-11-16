@@ -247,6 +247,7 @@ class Control(Subroutine):
     def __accel__(self, speed, brake):
         if self.speed_platform < (speed / 2):
             self.accel_speed = speed * 2
+            self.accel_brake = brake
         else:
             self.accel_speed = speed
             self.accel_brake = brake
@@ -660,7 +661,7 @@ class Control(Subroutine):
                     self.pt3 = self.enc_platform
                 self.pt4 = self.enc_platform
 
-                term_2 = self.p4 - self.pt3
+                term_2 = self.pt4 - self.pt3
 
                 if self.direction == 0:
 
@@ -695,7 +696,7 @@ class Control(Subroutine):
                 self.pt5 = self.enc_platform
             self.pt6 = self.enc_platform
 
-            term_3 = self.p6 - self.pt5
+            term_3 = self.pt6 - self.pt5
 
             if self.direction == 0:
 
