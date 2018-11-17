@@ -552,6 +552,7 @@ class Control(Subroutine):
         return self.gear, self.speed, self.steer, self.brake
 
     def __target__(self, distance, cross_track_error, theta):  # (차량과의 거리, cross_track_error, 차선 기울기 각도)
+        print(distance)
         speed = 40
         gear = 0
         brake = 0
@@ -561,10 +562,11 @@ class Control(Subroutine):
         time_change = 0.1  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
-            if distance < 3.2:
+            if distance < 3.2:  # TODO: 미션 규정에 맞게 정지거리 수정
                 speed = 0
                 brake = 80
-                self.t_sit = 1
+                if self.speed_platform == 0:
+                    self.t_sit = 1
 
             else:
                 speed = 48
