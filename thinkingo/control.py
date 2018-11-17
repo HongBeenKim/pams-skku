@@ -82,24 +82,10 @@ class Control(Subroutine):
         self.pmode = 0
         self.direction = 0
         self.check = 0
-        self.x = [ 0, 0, 0, 0, 0]
-
 
     def main(self):
         while True:
-            if self.x[0] == 1 and self.x[1] == 0:
-                self.data.current_mode = self.data.MODES["u_turn"]
-
-            elif self.x[0] == 1 and self.x[1] == 1 and self.x[2] == 0:
-                self.data.current_mode = self.data.MODES["crosswalk"]
-
-            elif self.x[0] == 1 and self.x[1] == 1 and self.x[2] == 1 and self.x[3] == 0:
-                self.data.current_mode = self.data.MODES["target_tracking"]
-
-            elif self.x[0] == 1 and self.x[1] == 1 and self.x[2] == 1 and self.x[3] == 1 and self.x[4] == 0:
-                self.data.current_mode = self.data.MODES["parking"]
             packet = self.read_packet_from_planner()
-            
             speed_platform, pmode, enc_platform = self.read_car_platform_status()
             gear, speed, steer, brake = self.do_mission(packet, speed_platform, enc_platform, pmode)
             if self.smode == 0:
@@ -400,8 +386,6 @@ class Control(Subroutine):
                 return self.gear, self.speed, self.steer, self.brake
 
     def __obs__(self, obs_r, obs_theta):
-        if self.x[0] == 0:
-            self.x[0] = 1
         gear = 0
         brake = 0
 
@@ -507,11 +491,11 @@ class Control(Subroutine):
             if (self.ct2 - self.ct1) < 600:
                 steer = -1350.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 800 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
+            elif 530 <= (self.ct2 - self.ct1) <= 805 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
                 speed = 48
                 steer = -1350.79
 
-            elif (self.ct2 - self.ct1) >= 800 + correction_enc:
+            elif (self.ct2 - self.ct1) >= 805 + correction_enc:
                 steer = -1350.79
                 speed = 0
                 brake = 60
@@ -519,7 +503,7 @@ class Control(Subroutine):
                 if self.speed_platform == 0:
                     steer = 0
                     speed = 0
-                    self.x[1] = 1
+                    self.data.check_mission_completed()
 
         self.gear = gear
         self.speed = speed
@@ -610,7 +594,7 @@ class Control(Subroutine):
             elif self.ct4 - self.ct3 > 200:
                 speed = 20
                 brake = 0
-                self.x[3] = 1
+                self.data.check_mission_completed()
 
         if self.mode == 0:
             gear1, speed1, steer1, brake1 = self.__accel__(gear, speed, steer, brake)
@@ -662,7 +646,7 @@ class Control(Subroutine):
                     brake = 60
 
             if distance is 6.00:
-                self.x[3] = 1
+                self.data.check_mission_completed()
                 self.t_sit = 2
 
         elif self.t_sit == 2:
