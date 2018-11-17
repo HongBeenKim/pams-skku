@@ -61,6 +61,8 @@ class Control(Subroutine):
         self.turn_steer_past = 0
         self.ct1 = 0
         self.ct2 = 0
+        self.ct3 = 0
+        self.ct4 = 0
         #######################################
         self.park_front_distance = 0
         self.park_line_distance = 0
@@ -444,7 +446,7 @@ class Control(Subroutine):
             steer = -1970
             self.steer_past = -27.746
 
-        if self.speed_platform > speed:  # 기울기가 있어서 가속받을 경우 급정지
+        if self.speed_platform > speed + 5:  # 기울기가 있어서 가속받을 경우 급정지
             speed = 0
             brake = 60
 
@@ -565,7 +567,8 @@ class Control(Subroutine):
         elif self.c_sit == 1:
             if self.mode1 == 0:
                 if light_signal is True:
-                    self.data.check_mission_completed()
+                    self.c_sit = 2
+                    speed = 0
                 else:
                     speed = 0
                     brake = 0
@@ -580,7 +583,21 @@ class Control(Subroutine):
                     speed = 40
                     brake = 0
                     self.data.light_signal = "green_light"
-                    self.data.check_mission_completed()
+                    self.c_sit = 2
+
+        elif self.c_sit == 2:
+            if self.ct3 == 0:
+                self.ct3 = self.enc_platform
+            self.ct4 = self.enc_platform
+
+            if self.ct4 - self.ct3 < 100:
+                speed = 60
+                brake = 0
+
+            elif self.ct4 - self.ct3 > 100:
+                speed = 20
+                brake = 0
+                self.data.check_mission_completed()
 
         if self.mode == 0:
             gear1, speed1, steer1, brake1 = self.__accel__(gear, speed, steer, brake)
