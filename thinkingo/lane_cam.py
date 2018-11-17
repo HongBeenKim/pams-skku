@@ -28,9 +28,11 @@ class LaneCam():
     Bird_view_matrix_L = cv2.getPerspectiveTransform(pts1_L, pts2_L)
     Bird_view_matrix_R = cv2.getPerspectiveTransform(pts1_R, pts2_R)
 
-    lower_white = np.array([187, 180, 160], dtype=np.uint8)
-    upper_white = np.array([255, 254, 255], dtype=np.uint8)
+    # lower_white = np.array([187, 180, 160], dtype=np.uint8)
+    # upper_white = np.array([255, 254, 255], dtype=np.uint8)
 
+    lower_white = np.array([150, 150, 150], dtype=np.uint8)
+    upper_white = np.array([255, 254, 255], dtype=np.uint8)
     def __init__(self, data_source: Source):
         self.data_source = data_source
 
@@ -45,7 +47,7 @@ class LaneCam():
 
     def get_frame(self):
         if self.data_source.left_frame is None or self.data_source.right_frame is None:
-            return None
+            return None, None
         left_frame = self.data_source.left_frame.copy()
         right_frame = self.data_source.right_frame.copy()
         undistorted_left = cv2.undistort(left_frame, self.camera_matrix_L,
@@ -591,7 +593,7 @@ if __name__ == "__main__":
 
     testData = Data()
     # ------------------- Dummy Data 사용 시 아래 코드를 활성화 ----------------------
-    testDDS = DummySource('2018-11-16-15-11-45')
+    testDDS = DummySource('2018-11-17-08-14-08')
     testLC = LaneCam(testDDS)  # DummySource for test
     dummy_thread = threading.Thread(target=testDDS.main)
     dummy_thread.start()
