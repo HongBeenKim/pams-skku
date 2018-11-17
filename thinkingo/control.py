@@ -17,13 +17,12 @@ class Control(Subroutine):
     def __init__(self, data: Data):
         super().__init__(data)
 
-        self.smode = 0
+        self.smode = 1
         self.mode = 0
         self.mode1 = 0
         self.mode2 = 0
         self.st1 = 0
         self.st2 = 0
-
 
         self.steer = 0  # 계산된 조향각
         self.speed = 0  # 계산된 속도
@@ -245,7 +244,7 @@ class Control(Subroutine):
 
     def __accel__(self, gear, speed, steer, brake):
         if self.speed_platform < (speed / 2):
-            self.accel_speed = speed * 2
+            self.accel_speed = (speed * 2)
             self.accel_brake = brake
         else:
             self.accel_speed = speed
@@ -522,7 +521,7 @@ class Control(Subroutine):
                 else:
                     speed = 0
                     brake = 0
-            if self.mode1 == 1:
+
                 if self.ct1 == 0:
                     self.ct1 = time.time()
                 self.ct2 = time.time()
@@ -552,7 +551,6 @@ class Control(Subroutine):
         return self.gear, self.speed, self.steer, self.brake
 
     def __target__(self, distance, cross_track_error, theta):  # (차량과의 거리, cross_track_error, 차선 기울기 각도)
-        print(distance)
         speed = 40
         gear = 0
         brake = 0
@@ -562,7 +560,7 @@ class Control(Subroutine):
         time_change = 0.1  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
-            if distance < 3.2:  # TODO: 미션 규정에 맞게 정지거리 수정
+            if distance < 1.2:  # TODO: 미션 규정에 맞게 정지거리 수정
                 speed = 0
                 brake = 80
                 if self.speed_platform == 0:
