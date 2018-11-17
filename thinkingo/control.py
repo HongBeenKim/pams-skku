@@ -79,17 +79,20 @@ class Control(Subroutine):
         self.st2 = 0
         self.pmode = 0
         self.direction = 0
+        self.check = 0
 
     def main(self):
         while True:
             packet = self.read_packet_from_planner()
             speed_platform, pmode, enc_platform = self.read_car_platform_status()
             gear, speed, steer, brake = self.do_mission(packet, speed_platform, enc_platform, pmode)
-            print(self.speed_platform)
+            print (pmode)
+            print (self.data.light_signal)
             if self.smode == 0:
                 self.data.set_control_value(gear, speed, steer, brake)
             elif self.smode == 1:
-                self.data.set_control_value(self.__start__(gear, speed, steer, brake))
+                gear1, speed1, steer1, brake1 = self.__start__(gear, speed, steer, brake)
+                self.data.set_control_value(gear1, speed1, steer1, brake1)
             time.sleep(0.01)
             if self.data.is_all_system_stop():
                 break
@@ -253,23 +256,68 @@ class Control(Subroutine):
         return gear, self.accel_speed, steer, self.accel_brake
 
     def __start__(self, gear, speed, steer, brake):
+        gear1 = 0
+        speed1 = 0
+        steer1 = 0
+        brake1 = 0
+
         if self.start == 0:
-            if self.speed_platform > 1:
+            if self.check == 0:
+                if self.data.light_signal is None or self.data.light_signal == 9:
+                    gear1 = 0
+                    speed1 = 0
+                    steer1 = 0
+                    brake1 = 0
+
+                if self.pmode == 1:
+                    if self.st1 == 0:
+                        self.st1 = time.time()
+                    self.st2 = time.time()
+
+                print(self.st2 - self.st1)
+
+                if self.st2 - self.st1 < 10:
+                    gear1 = 0
+                    speed1 = 0
+                    steer1 = 0
+                    brake1 = 0
+
+                elif self.st2 - self.st1 > 10:
+                    self.start = 1
+                    self.data.light_signal = "green_light"
+
+            if self.data.light_signal == 8:
+                self.check = 1
                 self.start = 1
 
-            if self.pmode == 1:
-                if self.st1 == 0:
-                    self.st1 = time.time()
-                self.st2 = time.time()
-                if self.st2 - self.st1 > 10:
-                    self.start = 1
-                    self.data.light_signal = "green"
-                    return 0, 30, 0, 0
-        else:
-            return gear, speed, steer, brake
+            if self.speed_platform > 1:
+                self.check = 1
+                self.start = 1
 
-        if self.start == 1:
-            return gear, speed, steer, brake
+            return gear1, speed1, steer1, brake1
+
+        else:
+            if self.data.light_signal == 8:
+                gear1 = gear
+                speed1 = speed
+                steer1 = steer
+                brake1 = brake
+
+            elif self.check == 1:
+                if self.data.light_signal is None:
+                    gear1 = gear
+                    speed1 = speed
+                    steer1 = steer
+                    brake1 = brake
+
+                if self.data.light_signal == 9:
+                    gear1 = 0
+                    speed1 = 0
+                    steer1 = 0
+                    brake1 = 0
+
+            return gear1, speed1, steer1, brake1
+
 
     def __theta__(self, linear):
         tan_value = linear * (-1)
