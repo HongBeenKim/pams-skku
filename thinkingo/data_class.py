@@ -32,8 +32,6 @@ class Data(object):
         self._write_packet = SerialPacket()
 
         # from sign cam
-        # TODO: 표지판 안 될때의 보험 쓸지 말지 결정하기
-        self._mission_checklist = {1: False, 2: False, 3: False, 4: False, 5: False}  # 보험용
         self._detected_mission_number = self.MODES["default"]
         self._parking_lot = None  # None or 6 or 7, PARKING_MODE dict 참조
         self._light_signal = None  # None or 8 or 9, LIGHT_MODE dict 참조
@@ -133,33 +131,13 @@ class Data(object):
         self._light_signal = None
         self._parking_lot = None
 
-    def check_mission_completed(self, mission: str):
+    def check_mission_completed(self):
         """
         어떤 미션이 끝나면 그 미션을 수행했다고 체크한 뒤 기본 주행으로 넘어간다.
         # control.py 가 사용하는 메서드
         :param mission: 미션 이름 string (self.modes dictionary 참조)
         """
-        try:
-            mission_num = self.MODES[mission]
-            self._mission_checklist[mission_num] = True
-            self._detected_mission_number = self.MODES["default"]
-            self._current_mode = self.MODES["default"]
-        except KeyError as e:
-            print(e)
-
-    def check_u_turn_complete(self):
-        """
-        유턴을 끝내고 나면 다음 미션인 횡단보도로 넘어간다. (보험용)
-        """
-        self._mission_checklist[self.MODES["u_turn"]] = True
-        self._detected_mission_number = self.MODES["crosswalk"]
-
-    def check_crosswalk_complete(self):
-        """
-        횡단보도 미션을 끝내고 나면 다음 미션인 타겟차 트래킹으로 넘어간다. (보험용)
-        """
-        self._mission_checklist[self.MODES["crosswalk"]] = True
-        self._detected_mission_number = self.MODES["target_tracking"]
+        self.reset_to_default()
 
     def is_next_mission(self, mission: str):
         try:

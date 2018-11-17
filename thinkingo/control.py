@@ -506,7 +506,7 @@ class Control(Subroutine):
                 if self.speed_platform == 0:
                     steer = 0
                     speed = 0
-                    self.data.check_mission_completed("u_turn")
+                    self.data.check_mission_completed()
 
         self.gear = gear
         self.speed = speed
@@ -565,7 +565,7 @@ class Control(Subroutine):
         elif self.c_sit == 1:
             if self.mode1 == 0:
                 if light_signal is True:
-                    self.data.check_mission_completed("crosswalk")
+                    self.data.check_mission_completed()
                 else:
                     speed = 0
                     brake = 0
@@ -580,7 +580,7 @@ class Control(Subroutine):
                     speed = 40
                     brake = 0
                     self.data.light_signal = "green_light"
-                    self.data.check_mission_completed("crosswalk")
+                    self.data.check_mission_completed()
 
         if self.mode == 0:
             gear1, speed1, steer1, brake1 = self.__accel__(gear, speed, steer, brake)
@@ -632,7 +632,7 @@ class Control(Subroutine):
                     brake = 60
 
             if distance is 6.00:
-                self.data.check_mission_completed("target_tracking")
+                self.data.check_mission_completed()
                 self.t_sit = 2
 
         elif self.t_sit == 2:
