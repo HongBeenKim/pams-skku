@@ -39,6 +39,7 @@ class SignCam(Subroutine):
 
             if self.ready_for_mission and (self.data.current_mode == 2 or self.data.current_mode == 4):
                 self.ready_for_mission = False
+                self.data.light_reset()
 
             if self.data.is_in_mission():
                 continue
