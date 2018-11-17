@@ -49,7 +49,7 @@ weightsfile = "module/data/yolo-sign_17200.weights"
 classes = load_classes('module/data/sign.names')
 
 # parameters
-confidence = float(0.5)
+confidence = float(0.1)
 nms_thesh = float(0.4)
 CUDA = torch.cuda.is_available()
 num_classes = 9
@@ -113,9 +113,9 @@ def run_yolo_sign(model, frame, SHOW):
             Datas.append(Data)
 
         for Data in Datas:
-            if (Data[0] == 8 or Data[0] == 9) and (Data[1] > 0.6):
+            if (Data[0] == 8 or Data[0] == 9) and (Data[1] > 0.3):
                 Traffics.append(Data)
-            if (Data[0] == 6 or Data[0] == 7) and (Data[1] > 0.85):
+            if (Data[0] == 6 or Data[0] == 7) and (Data[1] > 0.8):
                 Parkings.append(Data)
             elif (Data[0] == 1 or Data[0] == 2 or Data[0] == 3 or Data[0] == 4 or Data[0] == 5) and (Data[1] > 0.95):
                 Signs.append(Data)
