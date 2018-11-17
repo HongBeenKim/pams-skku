@@ -88,7 +88,6 @@ class Control(Subroutine):
             packet = self.read_packet_from_planner()
             speed_platform, pmode, enc_platform = self.read_car_platform_status()
             gear, speed, steer, brake = self.do_mission(packet, speed_platform, enc_platform, pmode)
-            print (self.data.light_signal)
             if self.smode == 0:
                 self.data.set_control_value(gear, speed, steer, brake)
             elif self.smode == 1:
@@ -155,7 +154,6 @@ class Control(Subroutine):
             self.enc_platform = enc_platform
 
         self.pmode = pmode
-        print(self.pmode)
 
         gear = speed = steer = brake = 0
         if self.mission_num == self.data.MODES["default"]:
@@ -274,8 +272,6 @@ class Control(Subroutine):
                     if self.st1 == 0:
                         self.st1 = time.time()
                     self.st2 = time.time()
-
-                print(self.st2 - self.st1)
 
                 if self.st2 - self.st1 < 10:
                     gear1 = 0
