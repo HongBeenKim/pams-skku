@@ -71,8 +71,15 @@ class MotionPlanner(Subroutine):
             # 2. 유턴 상황
             # 미션넘버, 전방 거리, 전방 각도, 크로스 에러, 기울기
             elif self.data.current_mode == self.data.MODES["u_turn"]:
-                front_dist, angle, right_dist = self.U_turn_data(U_TURN_ANGLE)
-                frame = self.lane_handler.lane_detection2()
+                lidar_frame, front_dist, angle, right_dist = self.U_turn_data(U_TURN_ANGLE)
+                lane_frame = self.lane_handler.lane_detection2()
+                lane_frame = cv2.resize(lane_frame, (500, 250))
+                frame = None
+                try:
+                    frame = np.concatenate((lidar_frame, lane_frame), axis=0)
+                except ValueError as e:
+                    print("PLANNER: ", e)
+                self.data.planner_monitoring_frame = (frame, 1000, 500)
 
                 if self.lane_handler.left_coefficients is not None and self.lane_handler.right_coefficients is not None:
                     path_coefficients = (self.lane_handler.left_coefficients + self.lane_handler.right_coefficients) / 2
@@ -309,9 +316,8 @@ class MotionPlanner(Subroutine):
         cv2.circle(lidar_mat, (int(x_pixel_size / 2), int(y_pixel_size)), 1, BLUE, U_TURN_LIDAR_CIRCLE_SIZE)
 
         #  이미지 띄우는 곳
-        resized = cv2.resize(lidar_mat, (1000, 500))
-        self.data.planner_monitoring_frame = (resized, 1000, 500)
-        return front_min_dist, front_degree, lidar_right_distance_cm
+        resized = cv2.resize(lidar_mat, (500, 250))
+        return resized, front_min_dist, front_degree, lidar_right_distance_cm
 
     def calculate_distance_phase_target(self):
         lidar_raw_data = self.data_stream.lidar_data
