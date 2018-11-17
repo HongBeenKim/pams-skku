@@ -29,9 +29,6 @@ class SignCam(Subroutine):
             time.sleep(0.03)  # for threading schedule
             if self.source.mid_frame is None:
                 continue
-
-            if self.data.is_in_mission():
-                continue
             else:
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
@@ -81,8 +78,8 @@ class SignCam(Subroutine):
         max_index = np.argmax(parking_values)
 
         if checkers[max_index] != 10:
-            self.reset_option_buffer()
             self.data.parking_location = self.ModeList[checkers[max_index]]
+            self.reset_option_buffer()
             
     # 어떤 신호등인지 알려주기
     def light_selection(self):
@@ -93,8 +90,8 @@ class SignCam(Subroutine):
 
         max_index = np.argmax(light_values)
         if checkers[max_index] != 11:
-            self.reset_option_buffer()
             self.data.light_signal = self.ModeList[checkers[max_index]]
+            self.reset_option_buffer()
 
     def reset_sign_buffer(self):
         self.sign_data = [0 for row in range(BUFFER_SIZE)]
