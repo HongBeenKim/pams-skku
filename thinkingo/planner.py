@@ -79,7 +79,7 @@ class MotionPlanner(Subroutine):
                     frame = np.concatenate((lidar_frame, lane_frame), axis=0)
                 except ValueError as e:
                     print("PLANNER: ", e)
-                self.data.planner_monitoring_frame = (frame, 1000, 500)
+                self.data.planner_monitoring_frame = (frame, 500, 500)
 
                 if self.lane_handler.left_coefficients is not None and self.lane_handler.right_coefficients is not None:
                     path_coefficients = (self.lane_handler.left_coefficients + self.lane_handler.right_coefficients) / 2
