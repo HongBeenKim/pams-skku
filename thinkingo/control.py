@@ -646,6 +646,8 @@ class Control(Subroutine):
 
     def __parking__(self, front_distance, line_distance, line_theta, stop_distance):  # (전방 장애물 거리,
         # 주차 공간 선 절편 거리, 주차 공간 양 선의 중심의 기울기 각도, 정지선 거리)
+        self.direction = self.data.parking_lot
+
         gear = 0
         speed = 60  # 60
         steer = 0
@@ -663,7 +665,7 @@ class Control(Subroutine):
                 speed = 60
 
         elif self.p_sit == 1:
-            if self.direction == 0:
+            if self.direction == 6:
 
                 if self.pt1 == 0:
                     self.pt1 = self.enc_platform
@@ -671,10 +673,10 @@ class Control(Subroutine):
 
                 term_1 = self.pt2 - self.pt1
 
-                if term_1 < 135:
+                if term_1 < 140:
                     steer = -1970
                     speed = 40  # 50
-                elif term_1 > 135:
+                elif term_1 > 140:
                     steer = -1970
                     speed = 0
                     brake = 80
@@ -682,17 +684,17 @@ class Control(Subroutine):
                     if self.speed_platform == 0:
                         self.p_sit = 2
 
-            elif self.direction == 1:
+            elif self.direction == 7:
                 if self.pt1 == 0:
                     self.pt1 = self.enc_platform
                 self.pt2 = self.enc_platform
 
                 term_1 = self.pt2 - self.pt1
 
-                if term_1 < 170:
+                if term_1 < 176:
                     steer = 1970
                     speed = 40  # 50
-                elif term_1 > 170:
+                elif term_1 > 176:
                     steer = 1970
                     speed = 0
                     brake = 80
@@ -707,12 +709,12 @@ class Control(Subroutine):
 
             term_2 = self.pt4 - self.pt3
 
-            if self.direction == 0:
+            if self.direction == 6:
 
-                if term_2 < 170:
+                if term_2 < 176:
                     steer = 1970
                     speed = 40  # 50
-                elif term_2 > 170:
+                elif term_2 > 176:
                     steer = 1970
                     speed = 0
                     brake = 80
@@ -720,11 +722,11 @@ class Control(Subroutine):
                     if self.speed_platform == 0:
                         self.p_sit = 3
 
-            if self.direction == 1:
-                if term_2 < 135:
+            if self.direction == 7:
+                if term_2 < 140:
                     steer = -1970
                     speed = 40  # 50
-                elif term_2 > 135:
+                elif term_2 > 140:
                     steer = -1970
                     speed = 0
                     brake = 80
@@ -740,12 +742,12 @@ class Control(Subroutine):
 
                 term_3 = self.pt6 - self.pt5
 
-                if self.direction == 0:
+                if self.direction == 6:
 
-                    if term_3 < 180:
+                    if term_3 < 140:
                         steer = 0
                         speed = 40  # 50
-                    elif term_3 > 180:
+                    elif term_3 > 140:
                         steer = 0
                         speed = 0
                         brake = 80
@@ -753,7 +755,7 @@ class Control(Subroutine):
                         if self.speed_platform == 0:
                             self.p_sit = 5
 
-                elif self.direction == 1:
+                elif self.direction == 7:
                     if term_3 < 180:
                         steer = 0
                         speed = 40  # 50
