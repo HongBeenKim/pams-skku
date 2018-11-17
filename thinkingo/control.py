@@ -87,14 +87,10 @@ class Control(Subroutine):
             speed_platform, pmode, enc_platform = self.read_car_platform_status()
             gear, speed, steer, brake = self.do_mission(packet, speed_platform, enc_platform, pmode)
             print(self.speed_platform)
-            if self.mode == 0:
-                a_speed, a_brake = self.__accel__(speed, brake)
-            elif self.mode == 1:
-                a_speed, a_brake = speed, brake
             if self.smode == 0:
-                self.data.set_control_value(gear, a_speed, steer, a_brake)
+                self.data.set_control_value(gear, speed, steer, brake)
             elif self.smode == 1:
-                self.data.set_control_value(self.__start__(gear, a_speed, steer, a_brake))
+                self.data.set_control_value(self.__start__(gear, speed, steer, brake))
             time.sleep(0.01)
             if self.data.is_all_system_stop():
                 break
@@ -149,7 +145,7 @@ class Control(Subroutine):
         if speed_platform is None:
             self.speed_platform = 0
         else:
-            self.speed_platform = speed_platform
+            self.speed_platform = speed_platform * 11
         if enc_platform is None:
             self.enc_platform = 0
         else:
@@ -247,7 +243,7 @@ class Control(Subroutine):
 
         return gear, speed, steer, brake
 
-    def __accel__(self, speed, brake):
+    def __accel__(self, gear, speed, steer, brake):
         if self.speed_platform < (speed / 2):
             self.accel_speed = speed * 2
             self.accel_brake = brake
@@ -255,7 +251,7 @@ class Control(Subroutine):
             self.accel_speed = speed
             self.accel_brake = brake
 
-        return self.accel_speed, self.accel_brake
+        return gear, self.accel_speed, steer, self.accel_brake
 
     def __start__(self, gear, speed, steer, brake):
         if self.start == 0:
@@ -325,14 +321,23 @@ class Control(Subroutine):
                     self.steer_past = -27.746
 
                 if abs(steer_now) > 15:
-                    speed = 36
+                    speed = 42
                 else:
-                    speed = 40
+                    speed = 48
 
-                self.gear = gear
-                self.speed = speed
-                self.steer = steer
-                self.brake = brake
+                if self.mode == 0:
+                    gear1, speed1, steer1, brake1 = self.__accel__(gear, speed, steer, brake)
+
+                    self.gear = gear1
+                    self.speed = speed1
+                    self.steer = steer1
+                    self.brake = brake1
+
+                elif self.mode == 1:
+                    self.gear = gear
+                    self.speed = speed
+                    self.steer = steer
+                    self.brake = brake
 
                 return self.gear, self.speed, self.steer, self.brake
 
@@ -344,7 +349,7 @@ class Control(Subroutine):
         adjust = 0.05
         car_circle = 1
 
-        speed_mission = 40
+        speed_mission = 42
         speed = speed_mission
 
         if obs_r < 2:
@@ -396,10 +401,19 @@ class Control(Subroutine):
             speed = 0
             brake = 60
 
-        self.gear = gear
-        self.speed = speed
-        self.steer = steer
-        self.brake = brake
+        if self.mode == 0:
+            gear1, speed1, steer1, brake1 = self.__accel__(gear, speed, steer, brake)
+
+            self.gear = gear1
+            self.speed = speed1
+            self.steer = steer1
+            self.brake = brake1
+
+        elif self.mode == 1:
+            self.gear = gear
+            self.speed = speed
+            self.steer = steer
+            self.brake = brake
 
         return self.gear, self.speed, self.steer, self.brake
 
@@ -487,19 +501,19 @@ class Control(Subroutine):
 
     def __cross__(self, stop_line, light_signal):  # (정지선 거리, 신호등 신호)
         steer = 0
-        speed = 60
+        speed = 40
         gear = 0
         brake = 0
 
         if self.c_sit == 0:
             if 1.5 < abs(stop_line) < 2:
-                speed = 36
+                speed = 30
             elif abs(stop_line) < 1.5:
                 speed = 0
                 brake = 60
                 self.c_sit = 1
             else:
-                speed = 60
+                speed = 40
 
         elif self.c_sit == 1:
             if self.mode1 == 0:
@@ -516,26 +530,35 @@ class Control(Subroutine):
                 if self.ct2 - self.ct1 < 10:
                     return 0, 0, 0, 0
                 elif self.ct2 - self.ct1 > 10:
-                    speed = 48
+                    speed = 40
                     brake = 0
                     self.data.light_signal = "green_light"
                     self.data.check_mission_completed("crosswalk")
 
-        self.gear = gear
-        self.speed = speed
-        self.steer = steer
-        self.brake = brake
+        if self.mode == 0:
+            gear1, speed1, steer1, brake1 = self.__accel__(gear, speed, steer, brake)
+
+            self.gear = gear1
+            self.speed = speed1
+            self.steer = steer1
+            self.brake = brake1
+
+        elif self.mode == 1:
+            self.gear = gear
+            self.speed = speed
+            self.steer = steer
+            self.brake = brake
 
         return self.gear, self.speed, self.steer, self.brake
 
     def __target__(self, distance, cross_track_error, theta):  # (차량과의 거리, cross_track_error, 차선 기울기 각도)
-        speed = 48
+        speed = 40
         gear = 0
         brake = 0
 
         steer = self.__target_steer__(cross_track_error * 1, theta * 1)
 
-        time_change = 0.05  # 값 갱신 속도, 수정바람
+        time_change = 0.1  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
             if distance < 3.2:
@@ -549,15 +572,16 @@ class Control(Subroutine):
         elif self.t_sit == 1:
             self.speed_past = self.speed_platform
             velocity = distance - 3.0
+
+            if velocity < 0.1:
+                velocity = 0
+
             speed = self.speed_past + (velocity * 3.6) / time_change
 
             if velocity < 0:
                 if distance < 1:
                     speed = 0
                     brake = 60
-
-            if speed > 50:  # 60
-                speed = 50  # 60
 
             if distance is 6.00:
                 self.data.check_mission_completed("target_tracking")
@@ -566,10 +590,25 @@ class Control(Subroutine):
         elif self.t_sit == 2:
             return 0, 0, 0, 0
 
-        self.gear = gear
-        self.speed = speed
-        self.steer = steer
-        self.brake = brake
+        if self.mode == 0:
+            gear1, speed1, steer1, brake1 = self.__accel__(gear, speed, steer, brake)
+
+            self.gear = gear1
+            self.speed = speed1
+            self.steer = steer1
+            self.brake = brake1
+
+            if self.speed > 50:  # 60
+                self.speed = 50  # 60
+
+        elif self.mode == 1:
+            self.gear = gear
+            self.speed = speed
+            self.steer = steer
+            self.brake = brake
+
+            if self.speed > 50:  # 60
+                self.speed = 50  # 60
 
         return self.gear, self.speed, self.steer, self.brake
 
