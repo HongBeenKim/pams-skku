@@ -34,8 +34,8 @@ class SignCam(Subroutine):
                                            or self.data.current_mode == 5):
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
-                self.light_selection()
                 self.parking_lot_selection()
+                self.light_selection()
 
             if self.ready_for_mission and (self.data.current_mode == 2 or self.data.current_mode == 4):
                 self.ready_for_mission = False
@@ -92,7 +92,6 @@ class SignCam(Subroutine):
 
         if checkers[max_index] != 10:
             self.reset_option_buffer()
-            self.ready_for_mission = False
             self.data.parking_location = self.ModeList[checkers[max_index]]
             
     # 어떤 신호등인지 알려주기

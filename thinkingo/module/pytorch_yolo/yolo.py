@@ -50,7 +50,9 @@ classes = load_classes('module/data/sign.names')
 
 # parameters
 confidence = float(0.1)
-nms_thesh = float(0.4)
+
+4
+4nms_thesh = float(0.4)
 CUDA = torch.cuda.is_available()
 num_classes = 9
 
