@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import datetime
+import time
 import sys
 
 sys.path.append(".")
@@ -39,6 +40,8 @@ class Monitoring(Subroutine):
         today = datetime.datetime.now()
         time_label = today.strftime("%Y-%m-%d-%H-%M-%S")
         self.monitor_writer = cv2.VideoWriter(DATA_ROOT_PATH + time_label + ".avi", fourcc, 60, self.video_writer_size)
+
+        self.start_time = time.time()
 
     def main(self):
         cv2.imshow('ThinKingo monitoring', self.canvas)
@@ -163,6 +166,13 @@ class Monitoring(Subroutine):
                             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                             fontScale=1,
                             color=(255, 255, 255), thickness=FONT_THICKNESS)
+
+        now_time = time.time() - self.start_time
+        now_time = 'After Program Start: ' + '{:.2f}'.format(now_time) + ' sec'
+        frame = cv2.putText(img=frame, text=now_time, org=(0, 72),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=0.7, color=(100, 255, 0), thickness=1)
+
         return frame
 
     def get_planner_frame(self):
