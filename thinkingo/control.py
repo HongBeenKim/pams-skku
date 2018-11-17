@@ -590,11 +590,11 @@ class Control(Subroutine):
                 self.ct3 = self.enc_platform
             self.ct4 = self.enc_platform
 
-            if self.ct4 - self.ct3 < 100:
+            if self.ct4 - self.ct3 < 200:
                 speed = 60
                 brake = 0
 
-            elif self.ct4 - self.ct3 > 100:
+            elif self.ct4 - self.ct3 > 200:
                 speed = 20
                 brake = 0
                 self.data.check_mission_completed()
