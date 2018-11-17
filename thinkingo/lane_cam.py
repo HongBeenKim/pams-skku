@@ -28,11 +28,14 @@ class LaneCam():
     Bird_view_matrix_L = cv2.getPerspectiveTransform(pts1_L, pts2_L)
     Bird_view_matrix_R = cv2.getPerspectiveTransform(pts1_R, pts2_R)
 
-    # lower_white = np.array([187, 180, 160], dtype=np.uint8)
+    lower_white = np.array([187, 180, 160], dtype=np.uint8)
+    upper_white = np.array([255, 254, 255], dtype=np.uint8)
+
+    # lower_white = np.array([150, 150, 150], dtype=np.uint8)
     # upper_white = np.array([255, 254, 255], dtype=np.uint8)
 
-    lower_white = np.array([150, 150, 150], dtype=np.uint8)
-    upper_white = np.array([255, 254, 255], dtype=np.uint8)
+    lower_yellow = np.array([0, 70, 120], dtype=np.uint8)
+    upper_yellow = np.array([179, 255, 255], dtype=np.uint8)
 
     def __init__(self, data_source: Source):
         self.data_source = data_source
@@ -321,7 +324,7 @@ class LaneCam():
 
             # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
             # 차선이 없는 것으로 간주함
-            if (row_sum[start_point] > 7650):
+            if (row_sum[start_point] >= 5100):
                 self.left_current_points = np.array([0] * 5)
                 self.left_current_points[0] = start_point
 
@@ -426,7 +429,7 @@ class LaneCam():
 
             # 차선의 실마리를 찾을 때, 길이가 7650 / 255 = 30픽셀 이상 될때만 차선으로 인정하고, 그렇지 않을 경우
             # 차선이 없는 것으로 간주함
-            if (row_sum[start_point] > 7650):
+            if (row_sum[start_point] >= 5100):
                 self.right_current_points = np.array([0] * 5)
                 self.right_current_points[0] = start_point
 
