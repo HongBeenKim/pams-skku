@@ -263,7 +263,7 @@ class Control(Subroutine):
 
         if self.start == 0:
             if self.check == 0:
-                if self.data.light_signal is None or self.data.light_signal == 9:
+                if self.data.light_signal is None or self.data.light_signal == self.data.LIGHT_MODE["red_light"]:
                     gear1 = 0
                     speed1 = 0
                     steer1 = 0
@@ -286,7 +286,7 @@ class Control(Subroutine):
                     self.start = 1
                     self.data.light_signal = "green_light"
 
-            if self.data.light_signal == 8:
+            if self.data.light_signal == self.data.LIGHT_MODE["green_light"]:
                 self.check = 1
                 self.start = 1
 
@@ -297,7 +297,7 @@ class Control(Subroutine):
             return gear1, speed1, steer1, brake1
 
         else:
-            if self.data.light_signal == 8:
+            if self.data.light_signal == self.data.LIGHT_MODE["green_light"]:
                 gear1 = gear
                 speed1 = speed
                 steer1 = steer
@@ -310,7 +310,7 @@ class Control(Subroutine):
                     steer1 = steer
                     brake1 = brake
 
-                if self.data.light_signal == 9:
+                if self.data.light_signal == self.data.LIGHT_MODE["red_light"]:
                     gear1 = 0
                     speed1 = 0
                     steer1 = 0
