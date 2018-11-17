@@ -18,7 +18,7 @@ class Control(Subroutine):
         super().__init__(data)
 
         self.smode = 0
-        self.mode = 1
+        self.mode = 0
         self.mode1 = 0
         self.mode2 = 0
         self.st1 = 0
