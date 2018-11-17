@@ -1,4 +1,4 @@
-#TODO: 협로 끝나고 차선 잘 보게 만들기 (유턴 끝나고도 마찬가지)
+# TODO: 협로 끝나고 차선 잘 보게 만들기 (유턴 끝나고도 마찬가지)
 
 import cv2
 import numpy as np
@@ -33,6 +33,7 @@ class LaneCam():
 
     lower_white = np.array([150, 150, 150], dtype=np.uint8)
     upper_white = np.array([255, 254, 255], dtype=np.uint8)
+
     def __init__(self, data_source: Source):
         self.data_source = data_source
 
@@ -282,7 +283,7 @@ class LaneCam():
 
             final_interception = mid_pt1[0] - 400
             final_angle = mid_angle
-            
+
         return temp_frame, final_interception, final_angle
 
     def findCenterofMass(self, src):
@@ -550,7 +551,6 @@ class LaneCam():
             for i in range(0, 300):
                 cv2.circle(filtered_L, (int(transformed_x[i]), int(transformed_y_L[i])), 2, 150, -1)
 
-
             if self.right_current_points is not None:
                 xs_valid = []
                 ys_R_valid = []
@@ -585,6 +585,7 @@ class LaneCam():
         final = cv2.flip(cv2.transpose(filtered_both), 1)
 
         return cv2.cvtColor(final, cv2.COLOR_GRAY2BGR)
+
 
 if __name__ == "__main__":
     import threading
