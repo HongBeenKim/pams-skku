@@ -566,7 +566,7 @@ class Control(Subroutine):
 
         elif self.c_sit == 1:
             if self.mode1 == 0:
-                if light_signal is True:
+                if self.data.light_signal == 8:
                     self.c_sit = 2
                     speed = 0
                 else:
