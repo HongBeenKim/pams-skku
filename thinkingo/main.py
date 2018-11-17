@@ -21,7 +21,7 @@ def main():
     """
     test from keyboard input
     """
-    database.debug_flag = True
+    #database.debug_flag = True
 
     # sensor data
     data_source = Source(database)
