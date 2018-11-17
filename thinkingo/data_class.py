@@ -130,6 +130,8 @@ class Data(object):
         """
         self._detected_mission_number = self.MODES["default"]
         self._current_mode = self.MODES["default"]
+        self._light_signal = None
+        self._parking_lot = None
 
     def check_mission_completed(self, mission: str):
         """

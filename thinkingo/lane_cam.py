@@ -282,7 +282,7 @@ class LaneCam():
 
             final_interception = mid_pt1[0] - 400
             final_angle = mid_angle
-        cv2.imshow('test', temp_frame)
+            
         return temp_frame, final_interception, final_angle
 
     def findCenterofMass(self, src):
