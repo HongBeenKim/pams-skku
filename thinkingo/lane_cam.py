@@ -202,7 +202,7 @@ class LaneCam():
                 slope = ((y2 - y1) / (x1 - x2)) if (x1 != x2) else 10000
                 length = np.sqrt((y2 - y1) ** 2 + (x1 - x2) ** 2)
 
-            if abs(slope) < 0.05 and length > 40:
+            if abs(slope) < 0.1 and length > 40:
                 stop_line = lines[rand]
                 break
 

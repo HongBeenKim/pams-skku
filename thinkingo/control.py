@@ -134,7 +134,7 @@ class Control(Subroutine):
             packet[3] = 오른쪽 거리 (안씀, 하지만 그냥 내버려둠)
             #TODO: packet[4] 채우기 @김홍빈
             packet[4] = 차선의 바닥 절편만 건네주기, 차선 없으면 None
-        
+
         3. crosswalk
             packet[1] = 정지선으로 부터 거리, 넘겨받는 단위: cm
         4. target_tracking
@@ -464,7 +464,7 @@ class Control(Subroutine):
     def __turn__(self, turn_distance, front_theta, cross_track_error, theta):  # (전방 장애물 거리, 전방 각도, 오른쪽 직각 거리)
         self.data.light_reset()
         gear = 0
-        speed = 60
+        speed = 30
         steer = 0
         brake = 0
 
@@ -472,14 +472,14 @@ class Control(Subroutine):
             steer = self.__turn_steer__(cross_track_error, theta)
             if turn_distance < 6:
                 speed = 0
-                brake = 60
+                brake = 80
 
                 if self.speed_platform == 0:
                     self.theta_turn = front_theta
                     steer = 0
                     self.u_sit = 1
             else:
-                speed = 60
+                speed = 30
 
         elif self.u_sit == 1:
             correction_enc = ((90 - self.theta_turn) / 180) * 786
@@ -491,11 +491,11 @@ class Control(Subroutine):
             if (self.ct2 - self.ct1) < 600:
                 steer = -1350.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 805 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
+            elif 530 <= (self.ct2 - self.ct1) <= 800 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
                 speed = 48
                 steer = -1350.79
 
-            elif (self.ct2 - self.ct1) >= 805 + correction_enc:
+            elif (self.ct2 - self.ct1) >= 800 + correction_enc:
                 steer = -1350.79
                 speed = 0
                 brake = 60
@@ -555,7 +555,8 @@ class Control(Subroutine):
             elif abs(stop_line) < 1.5:
                 speed = 0
                 brake = 60
-                self.c_sit = 1
+                if self.speed_platform == 0:
+                    self.c_sit = 1
             else:
                 speed = 40
 
@@ -564,16 +565,17 @@ class Control(Subroutine):
                 if self.data.light_signal == 8:
                     self.c_sit = 2
                     speed = 0
+                    brake = 20
                 else:
                     speed = 0
-                    brake = 0
+                    brake = 20
 
                 if self.ct1 == 0:
                     self.ct1 = time.time()
                 self.ct2 = time.time()
 
                 if self.ct2 - self.ct1 < 10:
-                    return 0, 0, 0, 0
+                    return 0, 0, 0, 100
                 elif self.ct2 - self.ct1 > 10:
                     speed = 40
                     brake = 0
@@ -804,10 +806,10 @@ class Control(Subroutine):
 
                 if self.direction == 6:
 
-                    if term_3 < 140:
+                    if term_3 < 160:
                         steer = 0
                         speed = 40  # 50
-                    elif term_3 > 140:
+                    elif term_3 > 160:
                         steer = 0
                         speed = 0
                         brake = 80
@@ -816,10 +818,10 @@ class Control(Subroutine):
                             self.p_sit = 5
 
                 elif self.direction == 7:
-                    if term_3 < 180:
+                    if term_3 < 160:
                         steer = 0
                         speed = 40  # 50
-                    elif term_3 > 180:
+                    elif term_3 > 160:
                         steer = 0
                         speed = 0
                         brake = 80
