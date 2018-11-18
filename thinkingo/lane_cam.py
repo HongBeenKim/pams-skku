@@ -1,5 +1,3 @@
-# TODO: 협로 끝나고 차선 잘 보게 만들기 (유턴 끝나고도 마찬가지)
-
 import cv2
 import numpy as np
 import sys
