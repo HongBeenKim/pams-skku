@@ -34,7 +34,15 @@ main.py
 _Thinking Kingo: 생각하는 은행잎, Kingo 는 성균관대학교의 상징인 은행잎을 뜻합니다._
 
 ## Labeling Tool
-표지판 데이터셋을 만들기 쉽게 해 주는 라벨링 툴입니다.
+`Labeling Tool` 디렉토리에서는 표지판 데이터셋 생성합니다.
+
+```text
+[Labeling Tool]
+background                  # 표지판을 붙여 넣을 배경을 모아놓은 디렉토리
+target                      # 학습을 위한 표지판들을 모아놓은 디렉토리
+auto_augmentation.py        # 생성된 데이터셋에 적절한 augmentation으로 다양한 데이터셋을 생성
+generate_trimmed_target.py  # 표지판을 적절하게 잘라내어 배경의 적절한 위치에 삽입 및 자동 라벨링
+```
 
 ## Data Logging Set
 데이터 로깅과 관련한 코드들을 모아둔 툴 셋입니다. [자세한 설명](https://github.com/HongBeenKim/pams-skku/pull/4)
