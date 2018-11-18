@@ -6,7 +6,6 @@ import numpy as np
 import sys
 import math
 
-# TODO: @김홍빈 신호등 보는 미션 후 light_reset() 메서드로 리셋하도록 수정하기
 sys.path.append(".")
 from subroutine import Subroutine
 from data_class import Data
@@ -42,15 +41,15 @@ class MotionPlanner(Subroutine):
             time.sleep(0.01)  # for threading schedule
             # 0. default는 표지판과 차선만 본다
             if self.data.current_mode == self.data.MODES["default"]:
-                #frame, intercept, angle = self.lane_handler.lane_detection()
+                # frame, intercept, angle = self.lane_handler.lane_detection()
                 frame = self.lane_handler.lane_detection2()
 
                 if self.lane_handler.left_coefficients is not None and self.lane_handler.right_coefficients is not None:
                     path_coefficients = (self.lane_handler.left_coefficients + self.lane_handler.right_coefficients) / 2
                     path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
-                    self.data.planner_to_control_packet = (
-                        self.data.MODES["default"], path.get_value(-10), path.get_derivative(-10), None, None)
+                    self.data.planner_to_control_packet = (self.data.MODES["default"], path.get_value(-10),
+                                                           path.get_derivative(-10), None, None)
 
                 else:
                     self.data.planner_to_control_packet = (self.data.MODES["default"], None, None, None, None)
@@ -85,8 +84,8 @@ class MotionPlanner(Subroutine):
                     path_coefficients = (self.lane_handler.left_coefficients + self.lane_handler.right_coefficients) / 2
                     path = Parabola(path_coefficients[2], path_coefficients[1], path_coefficients[0])
 
-                    self.data.planner_to_control_packet = (
-                        self.data.MODES["u_turn"], front_dist, angle, path.get_value(-10), path.get_derivative(-10))
+                    self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist,
+                                                           angle, path.get_value(-10), path.get_derivative(-10))
 
                 else:
                     self.data.planner_to_control_packet = (self.data.MODES["u_turn"], front_dist, angle, None, None)
@@ -102,10 +101,10 @@ class MotionPlanner(Subroutine):
             elif self.data.current_mode == self.data.MODES["target_tracking"]:
                 dist_frame, min_dist = self.calculate_distance_phase_target()  # 684 342
                 frame, intercept, angle = self.lane_handler.lane_detection()  # 800 158
-                self.data.planner_to_control_packet = (self.data.MODES["target_tracking"], min_dist, intercept, angle, None)
+                self.data.planner_to_control_packet = (self.data.MODES["target_tracking"],
+                                                       min_dist, intercept, angle, None)
 
                 # send a frame to monitoring system
-                # TODO: need to test
                 try:
                     dist_frame = np.concatenate((dist_frame, np.zeros((342, 116, 3), dtype=np.uint8)), axis=1)
                     frame = np.concatenate((frame, dist_frame), axis=0)
@@ -116,8 +115,8 @@ class MotionPlanner(Subroutine):
 
             elif self.data.current_mode == self.data.MODES["parking"]:
                 frame, dist_to_barrier, interception, angle, stop_dist = self.lane_handler.parking_line_detection()
-                self.data.planner_to_control_packet = (
-                self.data.MODES["parking"], dist_to_barrier, interception, angle, stop_dist)
+                self.data.planner_to_control_packet = (self.data.MODES["parking"],
+                                                       dist_to_barrier, interception, angle, stop_dist)
                 self.data.planner_monitoring_frame = (frame, 600, 300)
 
             if self.data.is_all_system_stop():
@@ -274,19 +273,7 @@ class MotionPlanner(Subroutine):
             return max_dist, target
 
     def U_turn_data(self, U_angle):
-
-        """
-        특정 각도에서만 부채살을 적용시키는 프로그램.
-        필요에 따라 부채살이 필요할 경우를 대비하여 추가 코드 작업을 할 예정이다
-        (2018-11-15 오전 7시까지)
-
-        Input       : U_angle             유턴시 전방 scan 각도. 기준은 90도를 기준으로 좌우 대칭.
-                                          i.e) U_TURN_ANGLE=30 이면 75도~105도를 읽는다
-    
-        Edited 2018-11-15 AM 01:15
-        """
-
-        # 전방 시야각을 설정한다. 이 각도의 데이터만 passing할 예정.
+        # 전방 시야각을 설정한다.
         angle_start = 180 - U_angle
         angle_end = 180 + U_angle
 
@@ -370,13 +357,14 @@ class MotionPlanner(Subroutine):
             img = self.data_stream.get_lidar_ndarray_data(500, 1000, 5)
             distance = int(distance)
             img = cv2.line(img, (500 - int(car_width / 2), 500),
-                           (500 -int(car_width / 2) , 0), (0, 0, 255), 2)
+                           (500 - int(car_width / 2), 0), (0, 0, 255), 2)
             img = cv2.line(img, (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500),
-                           (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance),(255, 255, 0), 2)
+                           (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 - distance), (255, 255, 0),
+                           2)
             img = cv2.line(img, (500 + int(car_width / 2), 500),
-                           (500 + int(car_width / 2) , 0), (0, 0, 255), 2)
+                           (500 + int(car_width / 2), 0), (0, 0, 255), 2)
             img = cv2.putText(img, "%d" % distance,
-                              (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 -distance, ),
+                              (int(500 + distance * math.cos(min_theta * math.pi / 360)), 500 - distance,),
                               cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 255, 0))
             img = cv2.resize(img, (684, 342))
             return img, distance
