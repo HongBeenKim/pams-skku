@@ -34,7 +34,7 @@ main.py
 _Thinking Kingo: 생각하는 은행잎, Kingo 는 성균관대학교의 상징인 은행잎을 뜻합니다._
 
 ## Labeling Tool
-`Labeling Tool` 디렉토리에서는 표지판 데이터셋 생성합니다.
+`Labeling Tool` 디렉토리에서는 표지판 데이터셋을 생성합니다.
 
 ```text
 [Labeling Tool]
