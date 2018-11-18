@@ -1,5 +1,3 @@
-# TODO: light, parking A, B 모니터링 할 수 있도록 만들기
-
 import cv2
 import numpy as np
 import datetime
@@ -50,10 +48,7 @@ class Monitoring(Subroutine):
             car_frame = self.put_car_status_and_mode()  # 240 600
             mid_cam_monitor = self.get_mid_cam_frame()  # 240 400
             planner_monitor = self.get_planner_frame()  # 500 1000
-            # TODO: after refactor, need to test
             control_stat_frame = self.put_control_status()  # 80 1000
-
-            # TODO: add signal monitoring, need to test
             light_and_parking_signal_frame = self.put_light_and_parking_signal()
 
             try:
@@ -189,7 +184,7 @@ class Monitoring(Subroutine):
             right_padding = np.zeros(shape=(padding2_y, padding2_x, 3), dtype=np.uint8)
 
             try:
-                frame = np.concatenate((frame, under_padding), axis=0)  # FIXME
+                frame = np.concatenate((frame, under_padding), axis=0)
                 frame = np.concatenate((frame, right_padding), axis=1)
             except ValueError as e:
                 print("MONITORING planner: ", e)
