@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# TODO: 다양한 정확도로 표지판을 인식해보고 적당한 경계값 찾아내기
+# TODO: 다양한 정확도로 표지판을 인식해보고 적당한 경계값 찾아내기 (잘 안 된다)
 from module.pytorch_yolo import yolo
 from subroutine import Subroutine
 from data_class import Data
@@ -23,7 +23,7 @@ class SignCam(Subroutine):
         self.sign_data = [0 for row in range(BUFFER_SIZE)]
         self.counter = [0 for col in range(12)]
         self.counter[0] = self.counter[10] = self.counter[11] = BUFFER_SIZE
-        
+
     def main(self):
         while True:
             time.sleep(0.03)  # for threading schedule
@@ -80,7 +80,7 @@ class SignCam(Subroutine):
         if checkers[max_index] != 10:
             self.data.parking_location = self.ModeList[checkers[max_index]]
             self.reset_option_buffer()
-            
+
     # 어떤 신호등인지 알려주기
     def light_selection(self):
         checkers = [8, 9, 11]
@@ -105,7 +105,6 @@ class SignCam(Subroutine):
         self.counter[10] = self.counter[11] = BUFFER_SIZE
 
 
-
 if __name__ == "__main__":
     import threading
 
@@ -128,7 +127,6 @@ if __name__ == "__main__":
     """
     # start_from_crosswalk(test_data)
     # start_from_u_turn(test_data)
-
 
     data_source_thread = threading.Thread(target=test_source.mid_cam_stream_main)
     sign_cam_thread = threading.Thread(target=test_sign_cam.main)
