@@ -32,7 +32,7 @@ class SignCam(Subroutine):
             else:
                 self.frame = self.source.mid_frame.copy()
                 self.data_update()
-                #self.sign_selection()
+                self.sign_selection()
                 self.light_selection()
                 self.parking_lot_selection()
 
