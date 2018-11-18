@@ -1,6 +1,6 @@
 """
 SubRoutine 클래스들은 다음과 같은 구조를 갖습니다.
-해당 루틴: lane cam, sign cam, LiDAR, planner, control, platform communicator
+해당 루틴: data source, sign cam, LiDAR, planner, control, car platform communicator, monitoring
 """
 from data_class import Data
 
