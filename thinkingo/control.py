@@ -1,6 +1,3 @@
-# TODO: 신호등 인식이 끝까지 안될 경우 10초 대기 후 출발 매크로 짜기
-# TODO: 횡단보도 신호등 매크로 짜기
-# TODO: 주차 매크로 두 가지 버전으로 짜기: 대충 주차공간 인식할 수 있는 각도로 틀어주기 & 주차 완료하기
 import sys
 
 sys.path.append(".")
@@ -132,7 +129,6 @@ class Control(Subroutine):
             packet[1] = 전방 거리
             packet[2] =  전방 각도
             packet[3] = 오른쪽 거리 (안씀, 하지만 그냥 내버려둠)
-            #TODO: packet[4] 채우기 @김홍빈
             packet[4] = 차선의 바닥 절편만 건네주기, 차선 없으면 None
 
         3. crosswalk
@@ -140,7 +136,6 @@ class Control(Subroutine):
         4. target_tracking
             packet[1] = target car 와의 거리, 넘겨받는 단위: cm
         5. parking
-            TODO: 매크로 만들기 @박준혁
         :return: 리턴 값은 없습니다.
         """
 
@@ -194,7 +189,8 @@ class Control(Subroutine):
             if packet[3] is None or packet[4] is None:
                 self.packet[3] = 0
                 self.packet[4] = 0
-            gear, speed, steer, brake = self.__turn__(self.packet[1] / 100, self.packet[2], self.packet[3] / 100, self.packet[4])
+            gear, speed, steer, brake = self.__turn__(self.packet[1] / 100, self.packet[2], self.packet[3] / 100,
+                                                      self.packet[4])
 
         elif self.mission_num == self.data.MODES["crosswalk"]:
             self.packet[0] = packet[0]
@@ -240,7 +236,8 @@ class Control(Subroutine):
             if packet[4] is None:
                 self.packet[4] = 3
 
-            gear, speed, steer, brake = self.__parking__(self.packet[1] / 100, self.packet[2] / 100, self.packet[3], self.packet[4] / 100)
+            gear, speed, steer, brake = self.__parking__(self.packet[1] / 100, self.packet[2] / 100, self.packet[3],
+                                                         self.packet[4] / 100)
 
         return gear, speed, steer, brake
 
@@ -314,7 +311,6 @@ class Control(Subroutine):
                     brake1 = 0
 
             return gear1, speed1, steer1, brake1
-
 
     def __theta__(self, linear):
         tan_value = linear * (-1)
@@ -491,7 +487,7 @@ class Control(Subroutine):
             if (self.ct2 - self.ct1) < 600:
                 steer = -1350.79
 
-            elif 530 <= (self.ct2 - self.ct1) <= 805 + correction_enc:  # TODO: 엔코더 수정하기 @박준혁
+            elif 530 <= (self.ct2 - self.ct1) <= 805 + correction_enc:
                 speed = 48
                 steer = -1350.79
 
@@ -622,7 +618,7 @@ class Control(Subroutine):
         time_change = 0.1  # 값 갱신 속도, 수정바람
 
         if self.t_sit == 0:
-            if distance < 1.2:  # TODO: 미션 규정에 맞게 정지거리 수정
+            if distance < 1.2:
                 speed = 0
                 brake = 80
                 if self.speed_platform == 0:
