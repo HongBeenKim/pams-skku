@@ -1,2 +1,5 @@
 numpy
 pyserial
+opencv-python
+torch
+pycuda
