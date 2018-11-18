@@ -61,6 +61,7 @@ class Monitoring(Subroutine):
                 self.init_canvas()
 
             cv2.imshow('ThinKingo monitoring', self.canvas)
+            # for debugging
             self.monitor_writer.write(self.canvas)
             c = cv2.waitKey(1) & 0xff
             if c == ord('0'):
@@ -141,14 +142,14 @@ class Monitoring(Subroutine):
         elif gear == SerialPacket.GEAR_BACKWARD:
             gear_string = 'Rear   '
 
-        gear_speed_string = gear_string + '{:4.2f}'.format(speed) + 'kph'
-        steer_direction_string = 'Left    ' if steer > 0 else 'Right   '
+        gear_speed_string = gear_string + '{:4.1f}'.format(speed)
+        steer_direction_string = 'Left    ' if steer < 0 else 'Right   '
         if steer == 0:
             steer_direction_string = 'Straight'
 
-        steer_string = steer_direction_string + '{:5.2f}'.format(abs(steer)) + 'deg'
+        steer_string = steer_direction_string + '{:5.1f}'.format(abs(steer))
 
-        brake_string = 'Brake' + '{:7.2f}'.format(brake)
+        brake_string = 'Brake' + '{:7.1f}'.format(brake)
         frame = cv2.putText(img=frame, text=gear_speed_string, org=(150, 50),
                             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                             fontScale=1,
