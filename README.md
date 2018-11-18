@@ -16,6 +16,21 @@
 ## ThinKingo
 `thinkingo` 디렉토리에서 저희가 제작한 자율주행 시스템 소스 코드를 관리합니다.
 
+```text
+[thinkingo]
+data_class.py
+subroutine.py
+main.py
+├ monitoring.py  # 모니터링 시스템
+├ car_platform.py  # 차량 플랫폼 통신
+│ └ serial_packet.py
+├ sign_cam.py  # 표지판 인식
+│ └ module.pytorch_yolo.yolo.py
+├ planner.py  # 경로 계획
+│ ├ lane_cam.py
+│ └ parabola.py
+└ control.py  # 차량 제어
+```
 _Thinking Kingo: 생각하는 은행잎, Kingo 는 성균관대학교의 상징인 은행잎을 뜻합니다._
 
 ## Labeling Tool
