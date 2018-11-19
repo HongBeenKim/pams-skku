@@ -133,31 +133,10 @@ class Data(object):
 
     def check_mission_completed(self):
         """
-        어떤 미션이 끝나면 그 미션을 수행했다고 체크한 뒤 기본 주행으로 넘어간다.
-        # control.py 가 사용하는 메서드
-        :param mission: 미션 이름 string (self.modes dictionary 참조)
+        어떤 미션이 끝나면 기본 주행으로 넘어간다.
+        control.py 나 planner.py 중 미션 탈출 조건을 검사하는 곳에서 사용하는 메서드
         """
         self.reset_to_default()
-
-    def is_next_mission(self, mission: str):
-        try:
-            if self.MODES[mission] == self.MODES["default"]:
-                return True
-            result = False
-            for num, okay in self._mission_checklist.items():
-                if okay:
-                    continue
-                else:
-                    if num == self.MODES[mission]:
-                        result = True
-                        break
-                    else:
-                        result = False
-                        break
-            return result
-        except KeyError as e:  # dictionary not has such key
-            print(e)
-            return False
 
     def is_in_mission(self):
         if self._current_mode == 0:
@@ -187,6 +166,9 @@ class Data(object):
 
     @property
     def light_signal(self):
+        """
+        :return: int 8 or 9
+        """
         return self._light_signal
 
     @light_signal.setter
