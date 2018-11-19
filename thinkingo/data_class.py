@@ -5,8 +5,6 @@ import os
 sys.path.append(".")
 from serial_packet import SerialPacket
 
-NUM_OF_MISSION = 5  # 기본 주행 제외한 개수
-
 PLANNER_FRAME_X = 1000
 PLANNER_FRAME_Y = 500
 
