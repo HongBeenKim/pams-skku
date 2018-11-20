@@ -16,7 +16,7 @@
 ## ThinkinGo
 `thinkingo` 디렉토리에서 저희가 제작한 자율주행 시스템 소스 코드를 관리합니다.
 
-```text
+```python
 [thinkingo]
 data_class.py
 subroutine.py
@@ -24,6 +24,7 @@ main.py
 ├ monitoring.py  # 모니터링 시스템
 ├ car_platform.py  # 차량 플랫폼 통신
 │ └ serial_packet.py
+├ data_source.py  # cam, lidar stream
 ├ sign_cam.py  # 표지판 인식
 │ └ module.pytorch_yolo.yolo.py
 ├ planner.py  # 경로 계획
