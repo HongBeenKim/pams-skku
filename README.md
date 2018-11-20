@@ -13,7 +13,7 @@
 성균관대학교 HEVEN 팀 4위 (총 4개 팀 중)
 
 # Project Directory
-## ThinKingo
+## ThinkinGo
 `thinkingo` 디렉토리에서 저희가 제작한 자율주행 시스템 소스 코드를 관리합니다.
 
 ```text
