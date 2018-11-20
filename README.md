@@ -34,6 +34,18 @@ main.py
 ```
 _Thinking Kingo: 생각하는 은행잎, Kingo 는 성균관대학교의 상징인 은행잎을 뜻합니다._
 
+### Multithreading
+각 subroutine은 동일한 데이터 공간에 접근하기 위해 multi threading으로 구현되어 있습니다.
+
+* 해당 subroutine: `monitoring` `data_source` `car_platform` `sign_cam` `planner` `control`
+
+#### Data Space
+`data_class.py`에 정의된 `class Data` 의 인스턴스를 각 subroutine에게 레퍼런스로 넘겨주어 동일한 데이터 공간에 접근할 수 있도록 합니다.
+
+#### 구현하지 않은 내용
+* thread join
+* thread lock
+
 ## Labeling Tool
 `Labeling Tool` 디렉토리에서는 표지판 데이터셋을 생성합니다.
 
