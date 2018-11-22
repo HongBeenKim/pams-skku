@@ -19,14 +19,15 @@
     * [Data Space](https://github.com/HongBeenKim/pams-skku#111-data-space)
     * [구현하지 않은 내용](https://github.com/HongBeenKim/pams-skku#112-%EA%B5%AC%ED%98%84%ED%95%98%EC%A7%80-%EC%95%8A%EC%9D%80-%EB%82%B4%EC%9A%A9)
 * [Labeling Tool](https://github.com/HongBeenKim/pams-skku#2-labeling-tool)
-  * [Cut and Merge]()
-    * [***Warning!!***]()
-  * [Using `imgaug` Python Module]()
-    * [Data Augmentation]()
+  * [Cut and Merge](https://github.com/HongBeenKim/pams-skku#21-cut-and-merge)
+    * [Warning!!](https://github.com/HongBeenKim/pams-skku#211-warning)
+  * [Using `imgaug` Python Module](https://github.com/HongBeenKim/pams-skku#22-imgaug-python-module)
+    * [Data Augmentation](https://github.com/HongBeenKim/pams-skku#221-data-augmentation)
 * [Data Logging Set](https://github.com/HongBeenKim/pams-skku#3-data-logging-set)
 * [Test](https://github.com/HongBeenKim/pams-skku#4-test)
 
 <hr/>
+
 ## 1. ThinkinGo
 
  `thinkingo` 디렉토리에서 저희가 제작한 자율주행 시스템 소스 코드를 관리합니다.
@@ -62,6 +63,7 @@ _Thinking Kingo: 생각하는 은행잎, Kingo 는 성균관대학교의 상징�
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; thread lock
 
 <hr/>
+
 ## 2. Labeling Tool
 
  `Labeling Tool` 디렉토리에서는 표지판 데이터셋을 생성합니다.
@@ -88,9 +90,11 @@ generate_trimmed_target.py  # 표지판을 적절하게 잘라내어 배경의 �
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ***Data Augmentation*** 은 데이터 셋이 충분하거나 다양하지 않을 때, ***Brightness***, ***Saturation*** 을 변경하거나, <br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ***Dropout***, ***Blur*** 처리 혹은 ***Affine transform***, ***padding*** 등을 진행할 수 있습니다.
 
 <hr/>
+
 ## 3. Data Logging Set
 `data_logging_set` 디렉토리는 데이터 로깅과 관련한 툴 셋이 있습니다. [자세한 설명](https://github.com/HongBeenKim/pams-skku/pull/4)
 
 <hr/>
+
 ## 4. Test
 `test` 디렉토리는 Test 코드를 위한 디렉토리입니다.
