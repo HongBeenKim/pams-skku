@@ -63,11 +63,11 @@ generate_trimmed_target.py  # 표지판을 적절하게 잘라내어 배경의 �
 `background` 내의 배경사진에 합쳐줍니다.
 
 ### 2.2 `imgaug` Python Module
-생성한 데이터 셋을 [imgaug](https://github.com/aleju/imgaug) 모듈을 사용하여 *Data Augmentation* 을 진행하였습니다.
+생성한 데이터 셋을 [imgaug](https://github.com/aleju/imgaug) 모듈을 사용하여 ***Data Augmentation*** 을 진행하였습니다.
 
 #### 2.2.1 Data Augmentation
-*Data Augmentation* 은 데이터 셋이 충분하거나 다양하지 않을 때, *Brightness*, *Saturation* 을 변경하거나,
-*Dropout*, *Blur* 처리 혹은 *Affine transform*, *padding* 등을 진행할 수 있습니다.
+***Data Augmentation*** 은 데이터 셋이 충분하거나 다양하지 않을 때, ***Brightness***, ***Saturation*** 을 변경하거나,
+***Dropout***, ***Blur*** 처리 혹은 ***Affine transform***, ***padding*** 등을 진행할 수 있습니다.
 
 ## 3. Data Logging Set
 데이터 로깅과 관련한 코드들을 모아둔 툴 셋입니다. [자세한 설명](https://github.com/HongBeenKim/pams-skku/pull/4)
