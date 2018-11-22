@@ -1,5 +1,8 @@
+
 # Team. SKKU at PAMS
 저희는 2018 판교 자율주행 모터쇼(PAMS 2018, Pangyo Autonomous Motor Show)의<br /> 대학생 자동차 융합기술 경진대회 자율주행 부문을 준비하고 출전했던 성균관대학교 팀입니다.
+
+<hr/>
 
 ### 대회 개요
 * 대회명: PAMS 2018 대학생 자동차 융합기술 경진대회 / 자율주행 부문
@@ -12,6 +15,8 @@
 김홍빈 노인호 박주은 박준혁 유지찬 임정한 한일석
 ### 대회 결과
 성균관대학교 HEVEN 팀 4위 (총 4개 팀 중)
+
+<hr/>
 
 # Project Directory
 * [ThinkinGo](https://github.com/HongBeenKim/pams-skku#1-thinkingo)
