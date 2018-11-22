@@ -80,8 +80,8 @@ generate_trimmed_target.py  # 표지판을 적절하게 잘라내어 배경의 �
 &nbsp;&nbsp;&nbsp;&nbsp;잘린 부분을 `background` 내의 배경사진에 합쳐주며, YOLO에 필요한 라벨정보와 함께 저장됩니다.
 
 #### &nbsp;&nbsp;&nbsp;&nbsp;2.1.1 ***Warning!!***
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *** Target이 볼록 다각형이 아니면 원하는 이미지가 나오지 않습니다. *** <br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *** Target이 오목한 모양을 포함하고 있다면, 코드를 수정하여야 할 것 입니다. ***
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ***Target이 볼록 다각형이 아니면 원하는 이미지가 나오지 않습니다.*** <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ***Target이 오목한 모양을 포함하고 있다면, 코드를 수정하여야 할 것 입니다.***
 
 ### &nbsp;&nbsp;2.2 `imgaug` Python Module
  &nbsp;&nbsp;&nbsp;&nbsp;생성한 데이터 셋을 [imgaug](https://github.com/aleju/imgaug) 모듈을 사용하여 ***Data Augmentation*** 을 진행하였습니다.
