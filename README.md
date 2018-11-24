@@ -15,6 +15,8 @@
 김홍빈 노인호 박주은 박준혁 유지찬 임정한 한일석
 ### 대회 결과
 성균관대학교 HEVEN 팀 4위 (총 4개 팀 중)
+### 후기
+[Nov. 20, 2018 thinkingo review](https://www.slideshare.net/ssuser4d0bd1/nov-20-2018-thinkingo-review-123864879?ref=https://www.slideshare.net/ssuser4d0bd1/slideshelf)
 
 <hr/>
 
