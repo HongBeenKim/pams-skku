@@ -18,7 +18,7 @@
 ### 후기
 * [Nov. 20, 2018 thinkingo review](https://www.slideshare.net/ssuser4d0bd1/nov-20-2018-thinkingo-review-123864879?ref=https://www.slideshare.net/ssuser4d0bd1/slideshelf)
 * [자율주행 시스템 thinkingo 구조](https://jueun-park.github.io/2018-11-25/thinkingo-system-architecture) `박주은`
-* [잡다한 개발 로그 - YOLO v3으로 표지판 인식하기](https://x2ever.github.io/2018/12/05/YOLO-Review.html) `한일석`
+* [YOLO v3로 표지판 인식하기](http://localhost:4000/YOLO-Review/) `한일석`
 
 <hr/>
 
